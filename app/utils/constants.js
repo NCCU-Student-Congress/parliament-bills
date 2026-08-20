@@ -4,7 +4,7 @@ export const SITE_CONFIG = {
   fullName: '國立臺北大學三峽校區學生議會',
   englishName: 'NTPU Student Congress (Sanxia Campus)',
   domain: 'sxcongress.ntpusu.org',
-  email: 'ntpuscs@gmail.com',
+  email: 'ntpuscs@gm.ntpu.edu.tw',
   githubRepo: 'https://github.com/ntpusu/open-parliament',
 };
 
@@ -21,7 +21,7 @@ export const ORG_DATA = {
 
 // 外部連結設定
 export const EXTERNAL_LINKS = {
-  mainWebsite: 'https://ntpusu.org/',
+  mainWebsite: 'https://ntpusu.ntpu.edu.tw/',
 };
 
 // 主視覺顏色
