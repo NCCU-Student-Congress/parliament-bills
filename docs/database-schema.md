@@ -79,6 +79,7 @@ interface Bill {
 ```ts
 interface CommitteeReportsResponse {
   cachedAt: string;
+  count: number;
   data: CommitteeReportItem[];
 }
 ```
@@ -86,6 +87,7 @@ interface CommitteeReportsResponse {
 | Field | Type | Notes |
 | --- | --- | --- |
 | `cachedAt` | `string` | 資料產生或快取時間。 |
+| `count` | `number` | 報告筆數。 |
 | `data` | `CommitteeReportItem[]` | 委員會政策建議報告清單。 |
 
 ### CommitteeReportItem
@@ -195,6 +197,180 @@ interface GovernmentResponse {
 - `時間戳記`
 
 `server/api/bills/SpecificClassic/[id].get.ts` 也呼叫了 `fetchAllBillsFromGoogleSheets()`，但目前 repo 內沒有此函式定義。這一段應視為 legacy 或未完成程式，不建議直接作為 D1 schema 依據。
+
+## Fetched Data Examples
+
+以下樣本是在 2026-09-09 直接從目前 CDN 資料來源抓取後整理。為了讓文件聚焦 schema，長文字欄位只保留短例子。
+
+### Source Summary
+
+| Source File | CDN URL | `cachedAt` | Rows |
+| --- | --- | --- | --- |
+| `bill_latestTerm.json` | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/bill_latestTerm.json` | `2026-09-08T20:39:03.536Z` | 19 |
+| `bill_pastTerms.json` | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/bill_pastTerms.json` | `2026-07-13T19:19:05.195Z` | 374 |
+| `committeeReports.json` | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/committeeReports.json` | `2026-04-03T07:49:43.236Z` | 2 |
+
+### Example: Latest Term Bill
+
+```json
+{
+  "rowIndex": 376,
+  "billNumber": "27屆北大峽議字第1號",
+  "term": 27,
+  "serialNumber": 1,
+  "submittedAt": "2026/7/6 上午 1:53:50",
+  "proposingEntity": "三峽校區學生會 會長副會長",
+  "proposerName": "謝明勳",
+  "contactName": "謝明勳",
+  "billType": "預算案",
+  "subject": "有關第27屆第一期間暑期預算案，是否有當？敬請公決。",
+  "description": "一、為維持本會暑假期間會務能正常運作...",
+  "proposedAction": "敬請貴會審議後，函請會長公告之。",
+  "attachments": [
+    "https://docs.google.com/spreadsheets/d/1MnHguBp2kxXTW4-8uZzttNtvqw62lQTI/edit?usp=sharing&ouid=111956381691113417844&rtpof=true&sd=true",
+    "https://drive.google.com/open?id=1y8J9Qir1TVNwMAwGgOID18xC_NAWOvbn"
+  ],
+  "scheduledSession": "27屆第1次臨時會"
+}
+```
+
+### Example: Past Term Bill
+
+```json
+{
+  "rowIndex": 2,
+  "billNumber": "23屆北大峽議字第1號",
+  "term": 23,
+  "serialNumber": 1,
+  "submittedAt": "2022/8/2 下午 9:29:00",
+  "proposingEntity": "三峽校區學生會 會長副會長",
+  "proposerName": "李芝玉",
+  "contactName": "無",
+  "billType": "人事案",
+  "subject": "有關本會廖柔綺等 13 人人事案，敬請公決。",
+  "description": "一、敬請貴會依職權完成人事案，並函請會長任命之。",
+  "proposedAction": "一、 秘書長被提名人廖柔綺人事簡歷表...",
+  "attachments": [
+    "https://drive.google.com/open?id=1lSA-L36QLPMuOnWgqmk69093i3uw7NgJ"
+  ],
+  "scheduledSession": "23屆第1次臨時會，活動部部長陳偉翰部分延至23屆第2次臨時會審議。"
+}
+```
+
+### Example: Committee Report Item
+
+```json
+{
+  "rowIndex": 1,
+  "proposal": {
+    "timestamp": "2026/2/10 下午 9:42:09",
+    "proposer": "傅冠紘",
+    "committee": "法制委員會",
+    "toDept": "選舉委員會",
+    "subject": "選舉投票時間延長",
+    "description": "有鑑於近年來投票率持續低迷已成學生自治現實...",
+    "suggestion": "自第二十七屆學生會長、學生議員選舉起，延長投票時間至二日。"
+  },
+  "committeeReport": {
+    "serialNumber": "法26/1",
+    "scheduledMeeting": "26屆第1次法制委員會",
+    "committeeResolution": "一、照案通過...",
+    "reportLink": "https://ntpusu.org/wp-content/uploads/2026/02/1150226_法制委員會建議報告.pdf",
+    "hasReport": true
+  },
+  "governmentResponse": {
+    "text": "詳見： https://ntpusu.org/wp-content/uploads/2026/04/1150325_選委會復法制委回覆報告.pdf",
+    "refNumber": "",
+    "hasResponse": true
+  }
+}
+```
+
+### Example: D1 Rows After Import
+
+如果把上面的最新屆議案匯入 D1，`bills` 和 `bill_attachments` 會長得像這樣：
+
+```sql
+INSERT INTO bills (
+  row_index,
+  bill_number,
+  term,
+  serial_number,
+  submitted_at,
+  proposing_entity,
+  proposer_name,
+  contact_name,
+  bill_type,
+  subject,
+  description,
+  proposed_action,
+  scheduled_session,
+  source_dataset,
+  cached_at
+) VALUES (
+  376,
+  '27屆北大峽議字第1號',
+  27,
+  1,
+  '2026/7/6 上午 1:53:50',
+  '三峽校區學生會 會長副會長',
+  '謝明勳',
+  '謝明勳',
+  '預算案',
+  '有關第27屆第一期間暑期預算案，是否有當？敬請公決。',
+  '一、為維持本會暑假期間會務能正常運作...',
+  '敬請貴會審議後，函請會長公告之。',
+  '27屆第1次臨時會',
+  'bill_latestTerm',
+  '2026-09-08T20:39:03.536Z'
+);
+
+INSERT INTO bill_attachments (bill_id, position, url) VALUES
+  (1, 1, 'https://docs.google.com/spreadsheets/d/1MnHguBp2kxXTW4-8uZzttNtvqw62lQTI/edit?usp=sharing&ouid=111956381691113417844&rtpof=true&sd=true'),
+  (1, 2, 'https://drive.google.com/open?id=1y8J9Qir1TVNwMAwGgOID18xC_NAWOvbn');
+```
+
+委員會報告如果採用初期攤平單表設計，會長得像這樣：
+
+```sql
+INSERT INTO committee_report_items (
+  row_index,
+  cached_at,
+  proposal_timestamp,
+  proposal_proposer,
+  proposal_committee,
+  proposal_to_dept,
+  proposal_subject,
+  proposal_description,
+  proposal_suggestion,
+  has_report,
+  scheduled_meeting,
+  report_serial_number,
+  committee_resolution,
+  report_link,
+  has_response,
+  response_text,
+  response_ref_number
+) VALUES (
+  1,
+  '2026-04-03T07:49:43.236Z',
+  '2026/2/10 下午 9:42:09',
+  '傅冠紘',
+  '法制委員會',
+  '選舉委員會',
+  '選舉投票時間延長',
+  '有鑑於近年來投票率持續低迷已成學生自治現實...',
+  '自第二十七屆學生會長、學生議員選舉起，延長投票時間至二日。',
+  1,
+  '26屆第1次法制委員會',
+  '法26/1',
+  '一、照案通過...',
+  'https://ntpusu.org/wp-content/uploads/2026/02/1150226_法制委員會建議報告.pdf',
+  1,
+  '詳見： https://ntpusu.org/wp-content/uploads/2026/04/1150325_選委會復法制委回覆報告.pdf',
+  ''
+);
+```
 
 ## Suggested D1 Schema
 
