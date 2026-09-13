@@ -32,6 +32,12 @@
             議案查詢
           </NuxtLink>
           <NuxtLink
+            to="/bill/new"
+            class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-400 transition-colors"
+          >
+            新增議案
+          </NuxtLink>
+          <NuxtLink
             to="/committee-reports"
             class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-400 transition-colors"
           >
@@ -85,6 +91,14 @@
             @click="closeMobileMenu"
           >
             議案查詢
+          </NuxtLink>
+
+          <NuxtLink
+            to="/bill/new"
+            class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-400 transition-colors py-2"
+            @click="closeMobileMenu"
+          >
+            新增議案
           </NuxtLink>
 
           <NuxtLink
