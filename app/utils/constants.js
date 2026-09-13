@@ -21,7 +21,7 @@ export const ORG_DATA = {
 
 // 外部連結設定
 export const EXTERNAL_LINKS = {
-  mainWebsite: 'https://ntpusu.ntpu.edu.tw/',
+  mainWebsite: 'https://sc.video.nccu.edu.tw/',
 };
 
 // 主視覺顏色

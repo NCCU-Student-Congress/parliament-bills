@@ -5,10 +5,9 @@
         <!-- 組織資訊 -->
         <div>
           <p class="mb-2 text-xs font-black text-[#ff4d5a]">議事資訊公開</p>
-          <h3 class="mb-1 text-lg font-black">
-            {{ SITE_CONFIG.fullName }}
-          </h3>
-          <p class="text-sm text-white/80">議案資料、委員會報告與秘書處文件草擬服務</p>
+          <h3 class="mb-1 text-lg font-black">國立政治大學學生議會</h3>
+          <p class="text-sm font-bold text-white/90">NCCU STUDENT CONGRESS</p>
+          <p class="mt-1 text-sm text-white/80">臺北市文山區指南路二段 64 號 | nccuscc@gmail.com</p>
         </div>
 
         <!-- 連結和版權資訊 -->
@@ -28,7 +27,7 @@
               <span>開放原始碼</span>
             </a>
           </div>
-          <p class="text-sm text-white/70">© {{ currentYear }} {{ SITE_CONFIG.fullName }}秘書處</p>
+          <p class="text-sm text-white/70">© {{ currentYear }} 國立政治大學學生議會</p>
         </div>
       </div>
     </div>
