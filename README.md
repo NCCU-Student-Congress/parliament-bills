@@ -40,7 +40,7 @@
 - **框架**：Nuxt 4
 - **樣式**：Tailwind CSS
 - **圖示庫**：Heroicons
-- **資料來源**：另於 [ntpusu/legislative-data](https://github.com/ntpusu/legislative-data) 儲存之
+- **議案資料庫**：Cloudflare D1
 - **部署環境**：Cloudflare Pages [![Powered by Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?logo=cloudflare)](https://pages.cloudflare.com/)
 
 - **套件管理**：pnpm (Node.js 環境)

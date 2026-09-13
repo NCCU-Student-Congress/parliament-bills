@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     results = await billService.getBillsByTerm(termNumber);
   }
 
-  // 預設回傳最新屆次（即使資料仍屬舊屆，首頁仍應顯示最新可用的議案）
+  // 預設回傳 D1 中最新屆次的議案
   else {
     results = await billService.getLatestTermBills();
   }

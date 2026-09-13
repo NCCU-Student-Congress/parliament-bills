@@ -1,6 +1,6 @@
 # D1 Bills Setup
 
-Bills now use Cloudflare D1 as the server-side data source. The public API still returns the existing bill JSON shape:
+Bills use Cloudflare D1 as the only runtime server-side data source. The database starts empty unless bills are created through the write API/UI. The public API still returns the existing bill JSON shape:
 
 ```ts
 {
@@ -48,31 +48,9 @@ It creates:
 
 The API maps snake_case D1 rows back to the existing camelCase `Bill` shape.
 
-## Seed From Existing Data Repo
+## Data Policy
 
-The existing source repo should be fetched into the ignored local directory:
-
-```text
-tmp/legislative-data-main
-```
-
-Generate seed SQL:
-
-```bash
-pnpm --silent db:seed:sql > tmp/seed-bills.sql
-```
-
-Then execute it with Wrangler against the intended D1 database. Example:
-
-```bash
-wrangler d1 execute parliament-bills --file tmp/seed-bills.sql
-```
-
-Wrangler D1 commands execute against the local database by default. Add `--remote` only when intentionally writing the remote D1 database:
-
-```bash
-wrangler d1 execute parliament-bills --remote --file tmp/seed-bills.sql
-```
+Do not import the old public `legislative-data` bill JSON into D1. New bill records should be created through `POST /api/bills` or the temporary `/bill/new` UI.
 
 ## API
 
