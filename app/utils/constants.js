@@ -1,6 +1,6 @@
 // 網站基本設定
 export const SITE_CONFIG = {
-  name: '北大三峽議事資訊',
+  name: '政大學生議會議案系統',
   fullName: '國立臺北大學三峽校區學生議會',
   englishName: 'NTPU Student Congress (Sanxia Campus)',
   domain: 'sxcongress.ntpusu.org',

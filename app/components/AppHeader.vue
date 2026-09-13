@@ -6,26 +6,14 @@
       <div class="flex min-h-16 items-center justify-between gap-4">
         <!-- Logo 和網站名稱 -->
         <div class="flex min-w-0 items-center">
-          <NuxtLink
-            to="/"
-            class="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-80"
-          >
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                ></path>
-              </svg>
-            </div>
-            <div class="min-w-0">
-              <p class="text-[10px] font-black text-primary">議事資訊系統</p>
-              <h1 class="truncate text-lg font-black text-[#12122b] sm:text-xl">
-                {{ SITE_CONFIG.name }}
-              </h1>
-            </div>
+          <NuxtLink to="/" class="flex min-w-0 items-center transition-opacity hover:opacity-80">
+            <img
+              src="/site-logo/nccu-student-congress.png"
+              alt="國立政治大學學生議會 NCCU Student Congress"
+              width="853"
+              height="157"
+              class="h-10 w-auto max-w-[min(62vw,300px)] object-contain sm:h-11"
+            />
           </NuxtLink>
         </div>
 
@@ -102,7 +90,7 @@
 
 <script setup>
   import { ref } from 'vue';
-  import { EXTERNAL_LINKS, SITE_CONFIG } from '~/utils/constants.js';
+  import { EXTERNAL_LINKS } from '~/utils/constants.js';
 
   const mobileMenuOpen = ref(false);
 
