@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: '無效的議案參數' });
   }
 
-  const billService = useBillService();
+  const billService = useBillService(event);
   const bill = await billService.getBillById(term, num);
 
   if (!bill) {

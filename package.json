@@ -9,6 +9,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "db:seed:sql": "node scripts/build-bills-seed.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

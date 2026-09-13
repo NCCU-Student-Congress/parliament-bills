@@ -2,7 +2,7 @@
 // 支援 Query: ?term=26, ?limit=10, ?type=all
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
-  const billService = useBillService();
+  const billService = useBillService(event);
 
   let results: any[] = [];
 

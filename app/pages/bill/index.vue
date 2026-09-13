@@ -3,6 +3,12 @@
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">議案查詢</h1>
       <p class="text-gray-600 dark:text-gray-300">點選屆次，查看該屆學生議會議案資料</p>
+      <NuxtLink
+        to="/bill/new"
+        class="inline-flex items-center mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+      >
+        新增議案
+      </NuxtLink>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

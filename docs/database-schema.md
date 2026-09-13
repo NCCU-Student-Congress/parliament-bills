@@ -1,6 +1,6 @@
 # Database Schema Notes
 
-本專案目前沒有直接連線到 SQL、D1、Firebase、Supabase 或其他內建資料庫。正式資料來源是另一個 repo 的 JSON 檔：
+本專案過去沒有直接連線到 SQL、D1、Firebase、Supabase 或其他內建資料庫；正式資料來源是另一個 repo 的 JSON 檔：
 
 ```text
 https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data
@@ -12,7 +12,7 @@ https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data
 - `bill_pastTerms.json`
 - `committeeReports.json`
 
-本文件整理的是目前程式碼實際依賴的資料契約，並附上未來改用 Cloudflare D1 時可參考的 relational schema 草稿。
+本文件整理的是既有 JSON 資料契約，以及改用 Cloudflare D1 時沿用的 relational schema。
 
 ## Current JSON Contracts
 
@@ -27,10 +27,10 @@ interface BillResponse {
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
+| Field      | Type     | Notes                |
+| ---------- | -------- | -------------------- |
 | `cachedAt` | `string` | 資料產生或快取時間。 |
-| `data` | `Bill[]` | 議案清單。 |
+| `data`     | `Bill[]` | 議案清單。           |
 
 ### Bill
 
@@ -55,22 +55,22 @@ interface Bill {
 }
 ```
 
-| Field | Type | Nullable | Current Usage |
-| --- | --- | --- | --- |
-| `rowIndex` | `number` | No | 全域流水號；未編號議案詳情頁使用 `/bill/unnumbered/:rowIndex`。 |
-| `billNumber` | `string` | No | 完整議案編號，例如 `26屆北大峽議字第4號`；空字串代表尚未正式編號。 |
-| `term` | `number` | Yes | 屆次；用於屆次列表與詳情頁路由。 |
-| `serialNumber` | `number` | Yes | 該屆內流水號；用於 `/bill/:term/:number`。 |
-| `submittedAt` | `string` | No | 提案時間；目前以字串顯示及篩選。 |
-| `proposingEntity` | `string` | No | 提案機關或議員類型，例如 `本會議員`、`本會議長`。 |
-| `proposerName` | `string` | No | 機關主管或議員姓名。 |
-| `contactName` | `string` | No | 聯絡人。 |
-| `billType` | `string` | No | 提案類型；列表篩選使用。 |
-| `subject` | `string` | No | 案由；搜尋、列表、詳情、秘書處草擬系統使用。 |
-| `description` | `string` | No | 說明；詳情頁與會議紀錄草稿使用。 |
-| `proposedAction` | `string` | No | 辦法；詳情頁與會議紀錄草稿使用。 |
-| `attachments` | `string[]` | No | 附件 URL 清單。 |
-| `scheduledSession` | `string` | No | 排入會議。 |
+| Field              | Type       | Nullable | Current Usage                                                      |
+| ------------------ | ---------- | -------- | ------------------------------------------------------------------ |
+| `rowIndex`         | `number`   | No       | 全域流水號；未編號議案詳情頁使用 `/bill/unnumbered/:rowIndex`。    |
+| `billNumber`       | `string`   | No       | 完整議案編號，例如 `26屆北大峽議字第4號`；空字串代表尚未正式編號。 |
+| `term`             | `number`   | Yes      | 屆次；用於屆次列表與詳情頁路由。                                   |
+| `serialNumber`     | `number`   | Yes      | 該屆內流水號；用於 `/bill/:term/:number`。                         |
+| `submittedAt`      | `string`   | No       | 提案時間；目前以字串顯示及篩選。                                   |
+| `proposingEntity`  | `string`   | No       | 提案機關或議員類型，例如 `本會議員`、`本會議長`。                  |
+| `proposerName`     | `string`   | No       | 機關主管或議員姓名。                                               |
+| `contactName`      | `string`   | No       | 聯絡人。                                                           |
+| `billType`         | `string`   | No       | 提案類型；列表篩選使用。                                           |
+| `subject`          | `string`   | No       | 案由；搜尋、列表、詳情、秘書處草擬系統使用。                       |
+| `description`      | `string`   | No       | 說明；詳情頁與會議紀錄草稿使用。                                   |
+| `proposedAction`   | `string`   | No       | 辦法；詳情頁與會議紀錄草稿使用。                                   |
+| `attachments`      | `string[]` | No       | 附件 URL 清單。                                                    |
+| `scheduledSession` | `string`   | No       | 排入會議。                                                         |
 
 ### CommitteeReportsResponse
 
@@ -84,11 +84,11 @@ interface CommitteeReportsResponse {
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `cachedAt` | `string` | 資料產生或快取時間。 |
-| `count` | `number` | 報告筆數。 |
-| `data` | `CommitteeReportItem[]` | 委員會政策建議報告清單。 |
+| Field      | Type                    | Notes                    |
+| ---------- | ----------------------- | ------------------------ |
+| `cachedAt` | `string`                | 資料產生或快取時間。     |
+| `count`    | `number`                | 報告筆數。               |
+| `data`     | `CommitteeReportItem[]` | 委員會政策建議報告清單。 |
 
 ### CommitteeReportItem
 
@@ -101,12 +101,12 @@ interface CommitteeReportItem {
 }
 ```
 
-| Field | Type | Nullable | Current Usage |
-| --- | --- | --- | --- |
-| `rowIndex` | `number` | No | fallback 顯示編號，例如 `#12`。 |
-| `proposal` | `CommitteeProposal` | Yes | 委員提案資料。 |
-| `committeeReport` | `CommitteeReport` | Yes | 委員會審查及建議報告資料。 |
-| `governmentResponse` | `GovernmentResponse` | Yes | 學生會回覆資料。 |
+| Field                | Type                 | Nullable | Current Usage                   |
+| -------------------- | -------------------- | -------- | ------------------------------- |
+| `rowIndex`           | `number`             | No       | fallback 顯示編號，例如 `#12`。 |
+| `proposal`           | `CommitteeProposal`  | Yes      | 委員提案資料。                  |
+| `committeeReport`    | `CommitteeReport`    | Yes      | 委員會審查及建議報告資料。      |
+| `governmentResponse` | `GovernmentResponse` | Yes      | 學生會回覆資料。                |
 
 ### CommitteeProposal
 
@@ -122,15 +122,15 @@ interface CommitteeProposal {
 }
 ```
 
-| Field | Type | Current Usage |
-| --- | --- | --- |
-| `timestamp` | `string` | 提交時間。 |
-| `proposer` | `string` | 提案議員。 |
-| `committee` | `string` | 委員會名稱；篩選使用。 |
-| `toDept` | `string` | 建議部門。 |
-| `subject` | `string` | 主旨；搜尋、列表、詳情使用。 |
-| `description` | `string` | 說明。 |
-| `suggestion` | `string` | 建議方案。 |
+| Field         | Type     | Current Usage                |
+| ------------- | -------- | ---------------------------- |
+| `timestamp`   | `string` | 提交時間。                   |
+| `proposer`    | `string` | 提案議員。                   |
+| `committee`   | `string` | 委員會名稱；篩選使用。       |
+| `toDept`      | `string` | 建議部門。                   |
+| `subject`     | `string` | 主旨；搜尋、列表、詳情使用。 |
+| `description` | `string` | 說明。                       |
+| `suggestion`  | `string` | 建議方案。                   |
 
 ### CommitteeReport
 
@@ -144,13 +144,13 @@ interface CommitteeReport {
 }
 ```
 
-| Field | Type | Current Usage |
-| --- | --- | --- |
-| `hasReport` | `boolean` | 狀態判斷；`true` 且尚無回覆時顯示 `待回覆`。 |
-| `scheduledMeeting` | `string` | 排入會議。 |
-| `serialNumber` | `string` | 秘書處追蹤字號。 |
-| `committeeResolution` | `string` | 委員會決議摘要。 |
-| `reportLink` | `string` | 完整報告文件連結。 |
+| Field                 | Type      | Current Usage                                |
+| --------------------- | --------- | -------------------------------------------- |
+| `hasReport`           | `boolean` | 狀態判斷；`true` 且尚無回覆時顯示 `待回覆`。 |
+| `scheduledMeeting`    | `string`  | 排入會議。                                   |
+| `serialNumber`        | `string`  | 秘書處追蹤字號。                             |
+| `committeeResolution` | `string`  | 委員會決議摘要。                             |
+| `reportLink`          | `string`  | 完整報告文件連結。                           |
 
 ### GovernmentResponse
 
@@ -162,11 +162,11 @@ interface GovernmentResponse {
 }
 ```
 
-| Field | Type | Current Usage |
-| --- | --- | --- |
-| `hasResponse` | `boolean` | 狀態判斷；`true` 顯示 `已回覆`。 |
-| `text` | `string` | 學生會回覆內容；支援自動連結 `https://` URL。 |
-| `refNumber` | `string` | 參照提案編號。 |
+| Field         | Type      | Current Usage                                 |
+| ------------- | --------- | --------------------------------------------- |
+| `hasResponse` | `boolean` | 狀態判斷；`true` 顯示 `已回覆`。              |
+| `text`        | `string`  | 學生會回覆內容；支援自動連結 `https://` URL。 |
+| `refNumber`   | `string`  | 參照提案編號。                                |
 
 ## Derived Application State
 
@@ -204,11 +204,11 @@ interface GovernmentResponse {
 
 ### Source Summary
 
-| Source File | CDN URL | `cachedAt` | Rows |
-| --- | --- | --- | --- |
-| `bill_latestTerm.json` | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/bill_latestTerm.json` | `2026-09-08T20:39:03.536Z` | 19 |
-| `bill_pastTerms.json` | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/bill_pastTerms.json` | `2026-07-13T19:19:05.195Z` | 374 |
-| `committeeReports.json` | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/committeeReports.json` | `2026-04-03T07:49:43.236Z` | 2 |
+| Source File             | CDN URL                                                                               | `cachedAt`                 | Rows |
+| ----------------------- | ------------------------------------------------------------------------------------- | -------------------------- | ---- |
+| `bill_latestTerm.json`  | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/bill_latestTerm.json`  | `2026-09-08T20:39:03.536Z` | 19   |
+| `bill_pastTerms.json`   | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/bill_pastTerms.json`   | `2026-07-13T19:19:05.195Z` | 374  |
+| `committeeReports.json` | `https://cdn.jsdelivr.net/gh/ntpusu/legislative-data@main/data/committeeReports.json` | `2026-04-03T07:49:43.236Z` | 2    |
 
 ### Example: Latest Term Bill
 
@@ -250,9 +250,7 @@ interface GovernmentResponse {
   "subject": "有關本會廖柔綺等 13 人人事案，敬請公決。",
   "description": "一、敬請貴會依職權完成人事案，並函請會長任命之。",
   "proposedAction": "一、 秘書長被提名人廖柔綺人事簡歷表...",
-  "attachments": [
-    "https://drive.google.com/open?id=1lSA-L36QLPMuOnWgqmk69093i3uw7NgJ"
-  ],
+  "attachments": ["https://drive.google.com/open?id=1lSA-L36QLPMuOnWgqmk69093i3uw7NgJ"],
   "scheduledSession": "23屆第1次臨時會，活動部部長陳偉翰部分延至23屆第2次臨時會審議。"
 }
 ```
