@@ -14,9 +14,10 @@ export const ORG_DATA = {
   nameZhShort: '北大三峽議會',
   nameEnFull: 'NTPU Student Congress (Sanxia Campus)',
   nameEnShort: 'NTPUSCS',
-  email: 'ntpuscs@gmail.com',
-  office: '商學大樓 B1F08 室',
-  meetingRoom: '綜合體育館 2F44 室',
+  email: 'nccuscc@gmail.com',
+  office: '國立政治大學學生議會辦公室',
+  meetingRoom: '四維堂',
+  address: '臺北市文山區指南路二段 64 號',
 };
 
 // 外部連結設定

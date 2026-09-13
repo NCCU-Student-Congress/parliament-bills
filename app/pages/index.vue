@@ -73,14 +73,13 @@
           <span class="home-module-kicker">聯絡資訊</span>
           <strong>聯絡我們</strong>
           <span>辦公室：{{ ORG_DATA.office }}</span>
-          <span>議場：{{ ORG_DATA.meetingRoom }}</span>
+          <span>位置：{{ ORG_DATA.meetingRoom }}</span>
+          <span>地址：{{ ORG_DATA.address }}</span>
           <a
-            href="https://pili.app/email-html/show/?text=ntpuscs%40gmail.com&title=%E4%B8%89%E5%B3%BD%E6%A0%A1%E5%8D%80%E5%AD%B8%E7%94%9F%E8%AD%B0%E6%9C%83%20%E7%A7%98%E6%9B%B8%E8%99%95"
+            :href="`mailto:${ORG_DATA.email}`"
             class="mt-auto font-black text-primary underline underline-offset-4"
-            target="_blank"
-            rel="noopener noreferrer"
           >
-            展開電子郵件
+            {{ ORG_DATA.email }}
           </a>
         </div>
       </div>
