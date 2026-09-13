@@ -5,18 +5,8 @@ export default defineNuxtConfig({
   devtools: {
     enabled: process.env.NODE_ENV === 'development',
   },
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode'],
+  modules: ['@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
-  colorMode: {
-    preference: 'system',
-    fallback: 'light',
-    hid: 'nuxt-color-mode-script',
-    globalName: '__NUXT_COLOR_MODE__',
-    componentName: 'ColorScheme',
-    classPrefix: '',
-    classSuffix: '',
-    storageKey: 'nuxt-color-mode',
-  },
   runtimeConfig: {
     public: {
       baseUrl: 'https://sxcongress.ntpusu.org/',
@@ -49,11 +39,11 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    '/committee-reports': { 
-      redirect: { 
-        to: 'https://ntpusu.ntpu.edu.tw/p/412-1015-245.php?Lang=zh-tw', 
-        statusCode: 301 
-      } 
+    '/committee-reports': {
+      redirect: {
+        to: 'https://ntpusu.ntpu.edu.tw/p/412-1015-245.php?Lang=zh-tw',
+        statusCode: 301,
+      },
     },
-  }
+  },
 });

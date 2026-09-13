@@ -1,8 +1,8 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">即時查詢議案</h1>
-      <p class="text-gray-600 dark:text-gray-300">經典介面，提供歷屆所有議案即時查詢</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">即時查詢議案</h1>
+      <p class="text-gray-600">經典介面，提供歷屆所有議案即時查詢</p>
     </div>
 
     <div class="w-full max-w-[1000px] h-[450px] mx-auto bg-primary-100">
@@ -13,7 +13,7 @@
       />
     </div>
 
-    <div class="mt-12 text-center text-gray-500 dark:text-gray-400">
+    <div class="mt-12 text-center text-gray-500">
       <p>
         如果在網頁中看不到提案查詢系統畫面，請您<a
           href="https://www.appsheet.com/start/44df5ea0-8f78-4d04-b897-79d7ca662248"
@@ -29,7 +29,7 @@
       <NuxtLink
         to="/bill"
         rel="noopener noreferrer"
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
       >
         新版查詢介面
         <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+  <div class="app-shell min-h-screen">
     <NuxtRouteAnnouncer />
     <NuxtLayout>
       <NuxtPage />
@@ -29,92 +29,196 @@
 </script>
 
 <style>
-  /* 全域樣式 */
+  :root {
+    --sc-navy: #000024;
+    --sc-navy-dark: #000018;
+    --sc-navy-light: #1c1c4a;
+    --sc-accent: #e60012;
+    --sc-accent-light: #ff4d5a;
+    --sc-page-bg: #f5f5f7;
+    --sc-text: #12122b;
+    --sc-text-muted: #5a5a70;
+    --sc-line: #dcdce2;
+    --sc-surface: #ffffff;
+    --sc-radius: 12px;
+    --sc-shadow: 0 10px 40px rgba(0, 0, 36, 0.06);
+  }
+
   * {
     box-sizing: border-box;
   }
 
   body {
+    margin: 0;
+    color: var(--sc-text);
+    background: var(--sc-page-bg);
     font-family:
       -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     overflow-y: scroll;
   }
 
-  /* 響應式表格樣式 */
+  a {
+    color: inherit;
+  }
+
+  .app-shell {
+    background: transparent;
+  }
+
+  .responsive-table,
+  .overflow-x-auto {
+    scrollbar-color: var(--sc-navy) var(--sc-line);
+  }
+
   .responsive-table {
-    @apply overflow-x-auto;
+    overflow-x: auto;
   }
 
   .responsive-table table {
-    @apply min-w-full divide-y divide-gray-200 dark:divide-gray-700;
+    min-width: 100%;
+    border: 1px solid var(--sc-line);
+    border-top: 3px solid var(--sc-navy);
+    background: var(--sc-surface);
+    border-collapse: collapse;
   }
 
   .responsive-table th {
-    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+    padding: 0.75rem 1.5rem;
+    text-align: left;
+    color: var(--sc-text);
+    background: var(--sc-page-bg);
+    border-bottom: 1px solid var(--sc-line);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
   }
 
   .responsive-table td {
-    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100;
+    padding: 1rem 1.5rem;
+    color: var(--sc-text);
+    border-bottom: 1px solid var(--sc-line);
+    font-size: 0.875rem;
+    white-space: nowrap;
   }
 
-  /* 分頁樣式 */
   .pagination {
-    @apply flex justify-center items-center space-x-2 mt-6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
   }
 
   .pagination button {
-    @apply px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300;
+    padding: 0.5rem 0.75rem;
+    color: var(--sc-text);
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-line);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
   }
 
   .pagination button.active {
-    @apply bg-primary text-white border-primary;
+    color: #fff;
+    background: var(--sc-navy);
+    border-color: var(--sc-navy);
   }
 
   .pagination button:disabled {
-    @apply opacity-50 cursor-not-allowed;
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 
-  /* 篩選表單樣式 */
   .filter-form {
-    @apply space-y-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg;
+    padding: 1.5rem;
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-line);
+    border-radius: var(--sc-radius);
   }
 
   .filter-form label {
-    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+    display: block;
+    color: var(--sc-text);
+    font-size: 0.875rem;
+    font-weight: 800;
   }
 
   .filter-form input,
-  .filter-form select {
-    @apply mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100;
+  .filter-form select,
+  input,
+  select,
+  textarea {
+    border: 1px solid var(--sc-line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--sc-text);
+    box-shadow: none;
   }
 
-  /* 議案卡片樣式 */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--sc-accent);
+    outline: 3px solid rgba(230, 0, 18, 0.18);
+    outline-offset: 0;
+  }
+
   .bill-card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700;
+    position: relative;
+    padding: 1.5rem;
+    color: var(--sc-text);
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-line);
+    border-top: 4px solid var(--sc-navy);
+    border-radius: var(--sc-radius);
+    box-shadow: var(--sc-shadow);
+    transition:
+      transform 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .bill-card:hover {
+    box-shadow: 0 14px 34px rgba(0, 0, 36, 0.12);
+    transform: translateY(-2px);
   }
 
   .bill-card h3 {
-    @apply text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2;
+    margin-bottom: 0.5rem;
+    color: var(--sc-text);
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1.45;
   }
 
   .bill-card .bill-number {
-    @apply text-sm text-gray-600 dark:text-gray-400;
+    color: var(--sc-text-muted);
+    font-size: 0.875rem;
   }
 
-  /* 麵包屑導覽樣式 */
   .breadcrumb {
-    @apply flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-4;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--sc-text-muted);
+    font-size: 0.875rem;
   }
 
-  .breadcrumb a {
-    @apply text-primary hover:text-primary-600 dark:hover:text-primary-400;
+  .breadcrumb a,
+  .text-primary {
+    color: var(--sc-navy);
+  }
+
+  .breadcrumb a:hover,
+  .hover\:text-primary:hover {
+    color: var(--sc-accent);
   }
 
   .breadcrumb span {
-    @apply text-gray-400 dark:text-gray-500;
+    color: var(--sc-text-muted);
   }
 
-  /* 載入動畫 */
   @keyframes spin {
     to {
       transform: rotate(360deg);
@@ -122,96 +226,131 @@
   }
 
   .loading {
-    @apply inline-block w-4 h-4 border-2 border-gray-200 border-t-primary rounded-full;
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--sc-line);
+    border-top-color: var(--sc-accent);
+    border-radius: 9999px;
     animation: spin 1s linear infinite;
   }
 
-  /* 錯誤提示樣式 */
   .error-message {
-    @apply bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md;
+    padding: 0.75rem 1rem;
+    color: #7f1d1d;
+    background: #fef2f2;
+    border: 2px solid #991b1b;
   }
 
-  .error-message.dark {
-    @apply bg-red-900/50 border-red-800 text-red-300;
-  }
-
-  /* 成功提示樣式 */
   .success-message {
-    @apply bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md;
+    padding: 0.75rem 1rem;
+    color: #14532d;
+    background: #f0fdf4;
+    border: 2px solid #15803d;
   }
 
-  .success-message.dark {
-    @apply bg-green-900/50 border-green-800 text-green-300;
-  }
-
-  /* 空狀態樣式 */
   .empty-state {
-    @apply text-center py-12;
+    padding-block: 3rem;
+    text-align: center;
   }
 
   .empty-state h3 {
-    @apply text-lg font-medium text-gray-900 dark:text-gray-100 mb-2;
+    margin-bottom: 0.5rem;
+    color: var(--sc-text);
+    font-size: 1.125rem;
+    font-weight: 800;
   }
 
   .empty-state p {
-    @apply text-gray-600 dark:text-gray-400;
+    color: var(--sc-text-muted);
   }
 
-  /* 按鈕樣式 */
   .btn {
-    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--sc-navy);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 800;
+    line-height: 1.2;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
   }
 
   .btn-primary {
-    @apply text-white bg-primary hover:bg-primary-600 focus:ring-primary;
+    color: #fff;
+    background: var(--sc-navy);
+    border-color: var(--sc-navy);
+  }
+
+  .btn-primary:hover {
+    background: var(--sc-navy-light);
+    border-color: var(--sc-navy-light);
   }
 
   .btn-secondary {
-    @apply text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:ring-primary dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700;
+    color: var(--sc-navy);
+    background: var(--sc-surface);
+    border-color: var(--sc-navy);
+  }
+
+  .btn-secondary:hover {
+    background: var(--sc-page-bg);
   }
 
   .btn-sm {
-    @apply px-3 py-1.5 text-xs;
+    min-height: 2rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
   }
 
   .btn-lg {
-    @apply px-6 py-3 text-base;
+    min-height: 3rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
   }
 
-  /* 卡片佈局 */
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-line);
+    border-radius: var(--sc-radius);
+    box-shadow: var(--sc-shadow);
   }
 
   .card-header {
-    @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--sc-line);
   }
 
   .card-body {
-    @apply px-6 py-4;
+    padding: 1.5rem;
   }
 
   .card-footer {
-    @apply px-6 py-4 border-t border-gray-200 dark:border-gray-700;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--sc-line);
   }
 
-  /* 響應式設計 */
   @media (max-width: 640px) {
     .responsive-table {
-      @apply text-sm;
+      font-size: 0.875rem;
     }
 
     .responsive-table th,
     .responsive-table td {
-      @apply px-3 py-2;
+      padding: 0.5rem 0.75rem;
     }
 
     .bill-card {
-      @apply p-4;
+      padding: 1rem;
     }
 
     .filter-form {
-      @apply p-4;
+      padding: 1rem;
     }
   }
 </style>

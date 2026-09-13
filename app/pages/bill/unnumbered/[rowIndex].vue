@@ -7,7 +7,7 @@
   </p>
   <p v-if="status === 'pending'">載入中。</p>
   <p v-if="error">{{ error }}</p>
-  <div v-else-if="bill" class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+  <div v-else-if="bill" class="mt-4 p-4 bg-gray-100 rounded-lg">
     <p>系統查得以下議案總流水號編號為{{ bill?.rowIndex }}之議案：</p>
     <p class="text-lg font-bold mb-2">【案由】{{ bill.subject }}</p>
     <p class="mb-1">
@@ -27,7 +27,7 @@
             :href="attachment"
             target="_blank"
             rel="noopener"
-            class="text-blue-600 dark:text-blue-400 hover:underline"
+            class="text-blue-600 hover:underline"
           >
             附件 {{ index + 1 }}
           </a>

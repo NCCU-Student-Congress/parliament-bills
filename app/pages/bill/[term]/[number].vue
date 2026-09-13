@@ -7,7 +7,7 @@
 
     <!-- 導覽列與麵包屑：列印時隱藏 -->
     <nav class="mb-6 print:hidden">
-      <ol class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <ol class="flex items-center space-x-2 text-sm text-gray-600">
         <li>
           <NuxtLink to="/" class="hover:text-primary">首頁</NuxtLink>
         </li>
@@ -20,41 +20,34 @@
           <NuxtLink :to="`/bill/${term}`" class="hover:text-primary">第{{ term }}屆</NuxtLink>
         </li>
         <li>/</li>
-        <li class="text-gray-900 dark:text-white">第{{ number }}號</li>
+        <li class="text-gray-900">第{{ number }}號</li>
       </ol>
     </nav>
 
-    <div
-      v-if="error"
-      class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg print:hidden"
-    >
+    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg print:hidden">
       <div class="flex items-center">
         <ExclamationTriangleIcon class="h-5 w-5 text-red-500 mr-2" />
-        <p class="text-red-700 dark:text-red-300">找不到議案：{{ term }}屆第{{ number }}號</p>
-        <p class="text-red-700 dark:text-red-300">{{ error.message || '載入資料失敗' }}</p>
+        <p class="text-red-700">找不到議案：{{ term }}屆第{{ number }}號</p>
+        <p class="text-red-700">{{ error.message || '載入資料失敗' }}</p>
       </div>
     </div>
 
     <div v-if="status === 'pending'" class="flex justify-center items-center py-12 print:hidden">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      <span class="ml-2 text-gray-600 dark:text-gray-300">載入中...</span>
+      <span class="ml-2 text-gray-600">載入中...</span>
     </div>
 
     <div v-if="status !== 'pending' && !error && bill" class="space-y-6">
-      <div
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 print:hidden"
-      >
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 print:hidden">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">
           {{ bill.billNumber }}
         </h1>
-        <p class="text-lg text-gray-700 dark:text-gray-300">{{ bill.subject }}</p>
+        <p class="text-lg text-gray-700">{{ bill.subject }}</p>
       </div>
 
-      <div
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
-      >
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 print:hidden">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">詳細資料</h2>
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 print:hidden">
+          <h2 class="text-lg font-semibold text-gray-900">詳細資料</h2>
         </div>
         <div>
           <table class="w-full">
@@ -65,12 +58,12 @@
                 class="block sm:table-row border-b sm:border-0 last:border-b-0"
               >
                 <td
-                  class="block sm:table-cell px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50 w-full sm:w-1/4 border-b-0 sm:border-b"
+                  class="block sm:table-cell px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-50 w-full sm:w-1/4 border-b-0 sm:border-b"
                 >
                   {{ field.label }}
                 </td>
                 <td
-                  class="block sm:table-cell px-6 py-4 text-sm text-gray-700 dark:text-gray-300 border-b-0 sm:border-b"
+                  class="block sm:table-cell px-6 py-4 text-sm text-gray-700 border-b-0 sm:border-b"
                 >
                   <div v-if="field.key === 'attachments'" class="space-y-2">
                     <!-- 非列印模式：顯示連結 -->
@@ -84,19 +77,14 @@
                           :href="attachment.url"
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="inline-flex items-center text-primary-400 hover:text-primary-600 dark:hover:text-white hover:underline"
+                          class="inline-flex items-center text-primary-400 hover:text-primary-600 hover:underline"
                         >
                           <DocumentIcon class="h-4 w-4 mr-1" />
                           {{ attachment.name }}
                           <ArrowTopRightOnSquareIcon class="h-3 w-3 ml-1" />
                         </a>
                       </div>
-                      <div
-                        v-if="bill.attachments.length === 0"
-                        class="text-gray-500 dark:text-gray-400"
-                      >
-                        無附件
-                      </div>
+                      <div v-if="bill.attachments.length === 0" class="text-gray-500">無附件</div>
                     </div>
                     <!-- 列印模式：顯示純文字 -->
                     <div class="hidden print:block break-all">
@@ -143,14 +131,14 @@
         </NuxtLink>
         <button
           @click="copyUrl"
-          class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors dark:bg-primary-400 dark:hover:bg-primary-300"
+          class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
         >
           <LinkIcon class="h-4 w-4 mr-2" />
           複製連結
         </button>
         <button
           @click="printPage"
-          class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors dark:bg-green-700 dark:hover:bg-green-800"
+          class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <PrinterIcon class="h-4 w-4 mr-2" />
           列印
@@ -160,8 +148,8 @@
 
     <div v-if="!pending && !error && !bill" class="text-center py-12 print:hidden">
       <DocumentTextIcon class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">找不到此議案</h3>
-      <p class="text-gray-600 dark:text-gray-300">請確認議案編號是否正確</p>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">找不到此議案</h3>
+      <p class="text-gray-600">請確認議案編號是否正確</p>
       <div class="mt-4">
         <NuxtLink
           :to="`/bill/${term}`"

@@ -1,32 +1,27 @@
 <!-- app/pages/committee-reports.vue -->
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+  <div class="min-h-screen bg-gray-50 transition-colors duration-300">
     <!-- ── 頁首區塊 ─────────────────────────────────────────── -->
-    <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+    <div class="bg-white border-b border-gray-200">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
-        <nav class="flex items-center gap-2 py-3 text-sm text-gray-500 dark:text-gray-400">
-          <NuxtLink
-            to="/"
-            class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-          >
-            首頁
-          </NuxtLink>
-          <span class="text-gray-300 dark:text-gray-600">/</span>
-          <span class="text-gray-900 dark:text-gray-100 font-medium">委員會報告</span>
+        <nav class="flex items-center gap-2 py-3 text-sm text-gray-500">
+          <NuxtLink to="/" class="hover:text-primary-600 transition-colors"> 首頁 </NuxtLink>
+          <span class="text-gray-300">/</span>
+          <span class="text-gray-900 font-medium">委員會報告</span>
         </nav>
 
         <!-- 標題列 -->
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 pt-2">
           <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
               委員會政策建議報告
             </h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">及學生會回覆</p>
+            <p class="mt-1 text-sm text-gray-500">及學生會回覆</p>
           </div>
 
           <!-- 資料更新時間 -->
-          <p v-if="cachedAt" class="text-xs text-gray-400 dark:text-gray-500 shrink-0 pb-1">
+          <p v-if="cachedAt" class="text-xs text-gray-400 shrink-0 pb-1">
             資料截至 {{ formatDate(cachedAt) }}
           </p>
         </div>
@@ -39,7 +34,7 @@
         <!-- 關鍵字搜尋 -->
         <div class="relative flex-1 max-w-xs">
           <span
-            class="absolute inset-y-0 left-3 flex items-center text-gray-400 dark:text-gray-500 pointer-events-none"
+            class="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none"
           >
             <svg
               class="w-4 h-4"
@@ -59,14 +54,14 @@
             v-model="searchQuery"
             type="text"
             placeholder="搜尋主旨…"
-            class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+            class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
           />
         </div>
 
         <!-- 委員會篩選 -->
         <select
           v-model="selectedCommittee"
-          class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+          class="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
         >
           <option value="">所有委員會</option>
           <option v-for="c in committeeOptions" :key="c" :value="c">{{ c }}</option>
@@ -82,7 +77,7 @@
               'px-3 py-2 text-sm rounded-lg border font-medium transition-all duration-150',
               responseFilter === opt.value
                 ? 'bg-primary-600 border-primary-600 text-white shadow-sm'
-                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary-400 dark:hover:border-primary-500',
+                : 'bg-white border-gray-200 text-gray-600 hover:border-primary-400',
             ]"
           >
             {{ opt.label }}
@@ -91,27 +86,19 @@
       </div>
 
       <!-- 結果計數 -->
-      <p class="mt-3 text-xs text-gray-400 dark:text-gray-500">
-        共 {{ filteredReports.length }} 筆結果
-      </p>
+      <p class="mt-3 text-xs text-gray-400">共 {{ filteredReports.length }} 筆結果</p>
     </div>
 
     <!-- ── 卡片列表 ─────────────────────────────────────────── -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
       <!-- 載入中 -->
       <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          v-for="i in 6"
-          :key="i"
-          class="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse"
-        />
+        <div v-for="i in 6" :key="i" class="h-44 rounded-xl bg-gray-100 animate-pulse" />
       </div>
 
       <!-- 錯誤 -->
       <div v-else-if="error" class="flex flex-col items-center justify-center py-24 text-center">
-        <div
-          class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4"
-        >
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
           <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
@@ -121,7 +108,7 @@
             />
           </svg>
         </div>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">資料載入失敗，請稍後再試。</p>
+        <p class="text-gray-500 text-sm">資料載入失敗，請稍後再試。</p>
       </div>
 
       <!-- 空結果 -->
@@ -129,9 +116,7 @@
         v-else-if="filteredReports.length === 0"
         class="flex flex-col items-center justify-center py-24 text-center"
       >
-        <div
-          class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4"
-        >
+        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
           <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
@@ -141,7 +126,7 @@
             />
           </svg>
         </div>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">找不到符合條件的建議報告。</p>
+        <p class="text-gray-500 text-sm">找不到符合條件的建議報告。</p>
       </div>
 
       <!-- 卡片 grid -->
@@ -150,7 +135,7 @@
           v-for="report in filteredReports"
           :key="report.rowIndex"
           @click="openModal(report)"
-          class="group text-left rounded-xl border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-primary-400 dark:hover:border-primary-600 hover:shadow-md dark:hover:shadow-primary-950/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 overflow-hidden"
+          class="group text-left rounded-xl border bg-white border-gray-200 hover:border-primary-400 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 overflow-hidden"
         >
           <!-- 頂部色條 -->
           <div
@@ -161,7 +146,7 @@
             <!-- 編號 + 狀態標籤 -->
             <div class="flex items-center justify-between gap-2 mb-3">
               <span
-                class="text-xs font-mono font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-2 py-0.5 rounded"
+                class="text-xs font-mono font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded"
               >
                 {{ report.committeeReport?.serialNumber || `#${report.rowIndex}` }}
               </span>
@@ -175,14 +160,14 @@
 
             <!-- 主旨 -->
             <h3
-              class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-2 mb-3 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors"
+              class="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 mb-3 group-hover:text-primary-700 transition-colors"
             >
               {{ report.proposal?.subject || '（未填主旨）' }}
             </h3>
 
             <!-- meta 資訊 -->
             <div class="space-y-1">
-              <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+              <p class="text-xs text-gray-500 flex items-center gap-1.5">
                 <svg
                   class="w-3.5 h-3.5 shrink-0"
                   fill="none"
@@ -198,7 +183,7 @@
                 </svg>
                 {{ report.proposal?.proposer + '議員' || '—' }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+              <p class="text-xs text-gray-500 flex items-center gap-1.5">
                 <svg
                   class="w-3.5 h-3.5 shrink-0"
                   fill="none"
@@ -216,7 +201,7 @@
               </p>
               <p
                 v-if="report.committeeReport?.scheduledMeeting"
-                class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5"
+                class="text-xs text-gray-500 flex items-center gap-1.5"
               >
                 <svg
                   class="w-3.5 h-3.5 shrink-0"
@@ -254,10 +239,7 @@
         @click.self="closeModal"
       >
         <!-- 遮罩 -->
-        <div
-          class="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
-          @click="closeModal"
-        />
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal" />
 
         <!-- 彈窗主體 -->
         <Transition
@@ -271,7 +253,7 @@
         >
           <div
             v-if="selectedReport"
-            class="relative z-10 w-full max-w-2xl max-h-[85vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+            class="relative z-10 w-full max-w-2xl max-h-[85vh] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden"
           >
             <!-- Modal 頂部色條 -->
             <div
@@ -280,11 +262,11 @@
 
             <!-- Modal Header -->
             <div
-              class="flex items-start justify-between gap-4 px-6 py-5 border-b border-gray-100 dark:border-gray-800 shrink-0"
+              class="flex items-start justify-between gap-4 px-6 py-5 border-b border-gray-100 shrink-0"
             >
               <div class="flex items-center gap-3 min-w-0">
                 <span
-                  class="text-xs font-mono font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-2.5 py-1 rounded shrink-0"
+                  class="text-xs font-mono font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded shrink-0"
                 >
                   {{
                     selectedReport.committeeReport?.serialNumber || `#${selectedReport.rowIndex}`
@@ -299,7 +281,7 @@
               </div>
               <button
                 @click="closeModal"
-                class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+                class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
                 aria-label="關閉"
               >
                 <svg
@@ -318,7 +300,7 @@
             <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
               <!-- 主旨 -->
               <div>
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-snug">
+                <h2 class="text-lg font-bold text-gray-900 leading-snug">
                   {{ selectedReport.proposal?.subject || '（未填主旨）' }}
                 </h2>
               </div>
@@ -339,7 +321,7 @@
                 />
               </div>
 
-              <hr class="border-gray-100 dark:border-gray-800" />
+              <hr class="border-gray-100" />
 
               <!-- 說明 -->
               <ModalSection title="說明" :content="selectedReport.proposal?.description" />
@@ -357,16 +339,14 @@
 
               <!-- 建議報告連結 -->
               <div v-if="selectedReport.committeeReport?.reportLink">
-                <p
-                  class="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2"
-                >
+                <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
                   建議報告連結
                 </p>
                 <a
                   :href="selectedReport.committeeReport.reportLink"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline underline-offset-2 transition-colors"
+                  class="inline-flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2 transition-colors"
                 >
                   <svg
                     class="w-4 h-4"
@@ -387,12 +367,10 @@
 
               <!-- 學生會回覆 -->
               <template v-if="selectedReport.governmentResponse?.hasResponse">
-                <hr class="border-gray-100 dark:border-gray-800" />
-                <div
-                  class="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4"
-                >
+                <hr class="border-gray-100" />
+                <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
                   <p
-                    class="text-xs font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-1.5"
+                    class="text-xs font-semibold uppercase tracking-widest text-emerald-700 mb-3 flex items-center gap-1.5"
                   >
                     <svg
                       class="w-3.5 h-3.5"
@@ -408,11 +386,11 @@
                   <LinkedText
                     v-if="selectedReport.governmentResponse?.text"
                     :text="selectedReport.governmentResponse.text"
-                    class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line leading-relaxed"
+                    class="text-sm text-gray-800 whitespace-pre-line leading-relaxed"
                   />
                   <p
                     v-if="selectedReport.governmentResponse?.refNumber"
-                    class="text-xs text-emerald-700 dark:text-emerald-400 mt-2"
+                    class="text-xs text-emerald-700 mt-2"
                   >
                     請參閱「{{ selectedReport.governmentResponse.refNumber }}」提案。
                   </p>
@@ -421,12 +399,10 @@
             </div>
 
             <!-- Modal Footer -->
-            <div
-              class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 shrink-0 flex justify-end"
-            >
+            <div class="px-6 py-4 border-t border-gray-100 shrink-0 flex justify-end">
               <button
                 @click="closeModal"
-                class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
               >
                 關閉
               </button>
@@ -505,8 +481,8 @@
                 target: '_blank',
                 rel: 'noopener noreferrer',
                 class:
-                  'text-primary-600 dark:text-primary-400 underline underline-offset-2 ' +
-                  'hover:text-primary-700 dark:hover:text-primary-300 ' +
+                  'text-primary-600 underline underline-offset-2 ' +
+                  'hover:text-primary-700 ' +
                   'break-all transition-colors',
               },
               part.value,
@@ -531,12 +507,11 @@
           h(
             'p',
             {
-              class:
-                'text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-0.5',
+              class: 'text-xs font-semibold uppercase tracking-widest text-gray-400 mb-0.5',
             },
             props.label,
           ),
-          h('p', { class: 'text-sm text-gray-800 dark:text-gray-200' }, props.value),
+          h('p', { class: 'text-sm text-gray-800' }, props.value),
         ]);
       };
     },
@@ -552,8 +527,7 @@
           h(
             'p',
             {
-              class:
-                'text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2',
+              class: 'text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2',
             },
             props.title,
           ),
@@ -561,8 +535,8 @@
             'p',
             {
               class: props.accent
-                ? 'text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line leading-relaxed bg-primary-50 dark:bg-primary-950/30 border border-primary-100 dark:border-primary-900 rounded-lg p-3'
-                : 'text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed',
+                ? 'text-sm text-gray-800 whitespace-pre-line leading-relaxed bg-primary-50 border border-primary-100 rounded-lg p-3'
+                : 'text-sm text-gray-700 whitespace-pre-line leading-relaxed',
             },
             props.content,
           ),
@@ -612,11 +586,9 @@
 
   function statusClass(report) {
     const s = getStatus(report);
-    if (s === 'replied')
-      return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800';
-    if (s === 'pending')
-      return 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800';
-    return 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 ring-1 ring-gray-200 dark:ring-gray-700';
+    if (s === 'replied') return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+    if (s === 'pending') return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
+    return 'bg-gray-100 text-gray-500 ring-1 ring-gray-200';
   }
 
   // 委員會下拉選項

@@ -1,182 +1,108 @@
 <template>
-  <div class="max-w-6xl mx-auto">
-    <!-- 主標題區塊 -->
-    <div class="text-center mb-12">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-        {{ SITE_CONFIG.name }}
-      </h1>
-      <p class="text-xl text-gray-600 dark:text-gray-400">
-        {{ SITE_CONFIG.fullName }}
-      </p>
-    </div>
-
-    <!-- 服務區塊 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <!-- 議案查詢 -->
-      <div class="card">
-        <div class="card-body">
-          <div class="flex items-center mb-4">
-            <div
-              class="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center mr-3"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">議案查詢</h2>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 mb-4">
-            查詢歷屆議案資料，支援多種篩選條件和分頁瀏覽。
-          </p>
-          <NuxtLink to="/bill" class="btn btn-primary">
-            開始查詢
-            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </NuxtLink>
+  <div class="space-y-10">
+    <section class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div
+        class="rounded-xl border border-[#dcdce2] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,36,0.06)] sm:p-8"
+      >
+        <p class="mb-3 text-sm font-black text-[#e60012]">
+          {{ SITE_CONFIG.fullName }}
+        </p>
+        <h1 class="max-w-4xl text-4xl font-black leading-tight text-[#12122b] sm:text-5xl">
+          {{ SITE_CONFIG.name }}
+        </h1>
+        <p class="mt-5 max-w-2xl text-lg font-bold leading-relaxed text-[#5a5a70]">
+          查詢議案、檢視委員會報告，並提供秘書處草擬議事文件的日常工作入口。
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <NuxtLink to="/bill" class="btn btn-primary">議案查詢</NuxtLink>
+          <NuxtLink to="/bill/new" class="btn btn-secondary">新增議案</NuxtLink>
         </div>
       </div>
 
-      <!-- 會議紀錄 -->
-      <div class="card">
-        <div class="card-body">
-          <div class="flex items-center mb-4">
-            <div
-              class="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center mr-3"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">委員會報告</h2>
+      <aside
+        class="grid overflow-hidden rounded-xl border border-primary bg-gradient-to-br from-[#1c1c4a] via-[#000024] to-[#000018] text-white shadow-[0_10px_40px_rgba(0,0,36,0.16)]"
+      >
+        <div class="border-b border-white/20 p-5">
+          <p class="text-xs font-black text-[#ff4d5a]">目前屆次</p>
+          <p class="mt-2 text-4xl font-black">第 {{ getCurrentTerm() }} 屆</p>
+        </div>
+        <div class="grid grid-cols-2">
+          <div class="border-r border-white/20 p-5">
+            <p class="text-xs font-black text-[#ff4d5a]">議案總數</p>
+            <p class="mt-2 text-3xl font-black">{{ stats.totalBills }}</p>
           </div>
-          <p class="text-gray-600 dark:text-gray-400 mb-4">委員會建議報告及學生會回覆。</p>
-          <NuxtLink to="/committee-reports" class="btn btn-primary">
-            查看報告
-            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </NuxtLink>
+          <div class="p-5">
+            <p class="text-xs font-black text-[#ff4d5a]">本屆議案</p>
+            <p class="mt-2 text-3xl font-black">{{ stats.thisTermBills }}</p>
+          </div>
+        </div>
+        <div class="p-5 text-sm font-bold leading-relaxed text-white/80">
+          資料欄位維持既有格式，供議事查詢與內部作業使用。
+        </div>
+      </aside>
+    </section>
+
+    <section>
+      <div class="mb-4 flex items-end justify-between gap-4 border-b border-[#dcdce2] pb-3">
+        <div>
+          <p class="text-sm font-black text-[#e60012]">常用功能</p>
+          <h2 class="text-2xl font-black text-[#12122b]">服務入口</h2>
         </div>
       </div>
 
-      <!-- 內部服務 -->
-      <div class="card">
-        <div class="card-body">
-          <div class="flex items-center mb-4">
-            <div
-              class="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center mr-3"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">文件草擬輔助</h2>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 mb-4">供秘書處內部用以輔助草擬議事文件。</p>
-          <NuxtLink to="/secretariat" class="btn btn-primary">
-            進入系統
-            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </NuxtLink>
-        </div>
-      </div>
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <NuxtLink to="/bill" class="home-module">
+          <span class="home-module-kicker">議案資料</span>
+          <strong>議案查詢</strong>
+          <span>查詢歷屆議案資料，支援多種篩選條件和分頁瀏覽。</span>
+        </NuxtLink>
 
-      <!-- 本會聯絡方式 -->
-      <div class="card">
-        <div class="card-body">
-          <div class="flex items-center mb-4">
-            <div
-              class="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center mr-3"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2H8V5z"
-                />
-              </svg>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">聯絡我們</h2>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 mb-2 text-sm">
-            <strong>辦公室：</strong><br />
-            {{ ORG_DATA.office }}
-          </p>
-          <p class="text-gray-600 dark:text-gray-400 mb-2 text-sm">
-            <strong>議場：</strong><br />
-            {{ ORG_DATA.meetingRoom }}
-          </p>
-          <p class="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-            <strong>電子郵件：</strong><br />
-            <a
-              href="https://pili.app/email-html/show/?text=ntpuscs%40gmail.com&title=%E4%B8%89%E5%B3%BD%E6%A0%A1%E5%8D%80%E5%AD%B8%E7%94%9F%E8%AD%B0%E6%9C%83%20%E7%A7%98%E6%9B%B8%E8%99%95"
-              class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              請點此展開
-            </a>
-          </p>
+        <NuxtLink to="/committee-reports" class="home-module">
+          <span class="home-module-kicker">委員會</span>
+          <strong>委員會報告</strong>
+          <span>委員會建議報告及學生會回覆。</span>
+        </NuxtLink>
+
+        <NuxtLink to="/secretariat" class="home-module">
+          <span class="home-module-kicker">秘書處</span>
+          <strong>文件草擬輔助</strong>
+          <span>供秘書處內部用以輔助草擬議事文件。</span>
+        </NuxtLink>
+
+        <div class="home-module">
+          <span class="home-module-kicker">聯絡資訊</span>
+          <strong>聯絡我們</strong>
+          <span>辦公室：{{ ORG_DATA.office }}</span>
+          <span>議場：{{ ORG_DATA.meetingRoom }}</span>
+          <a
+            href="https://pili.app/email-html/show/?text=ntpuscs%40gmail.com&title=%E4%B8%89%E5%B3%BD%E6%A0%A1%E5%8D%80%E5%AD%B8%E7%94%9F%E8%AD%B0%E6%9C%83%20%E7%A7%98%E6%9B%B8%E8%99%95"
+            class="mt-auto font-black text-primary underline underline-offset-4"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            展開電子郵件
+          </a>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- 統計資訊 (維護中) -->
-    <!-- <div class="mt-12 bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+    <!-- <div class="mt-12 bg-gray-50 rounded-lg p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
         系統統計(維護中)
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="text-center">
           <div class="text-3xl font-bold text-secondary mb-2">{{ stats.totalBills }}</div>
-          <div class="text-gray-600 dark:text-gray-400">總議案數</div>
+          <div class="text-gray-600">總議案數</div>
         </div>
         <div class="text-center">
           <div class="text-3xl font-bold text-secondary mb-2">{{ getCurrentTerm() }}</div>
-          <div class="text-gray-600 dark:text-gray-400">目前屆次</div>
+          <div class="text-gray-600">目前屆次</div>
         </div>
         <div class="text-center">
           <div class="text-3xl font-bold text-secondary mb-2">{{ stats.thisTermBills }}</div>
-          <div class="text-gray-600 dark:text-gray-400">本屆議案數</div>
+          <div class="text-gray-600">本屆議案數</div>
         </div>
       </div>
     </div>-->
@@ -184,8 +110,6 @@
 </template>
 
 <script setup>
-  const config = useRuntimeConfig();
-
   // 設定頁面 meta 標籤
   useHead({
     title: SITE_CONFIG.name,
@@ -214,5 +138,49 @@
 
   import { getCurrentTerm } from '../../shared/utils/term.js';
 
-  import { EXTERNAL_LINKS, SITE_CONFIG } from '~/utils/constants.js';
+  import { ORG_DATA, SITE_CONFIG } from '~/utils/constants.js';
 </script>
+
+<style scoped>
+  .home-module {
+    display: flex;
+    min-height: 14rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    border: 1px solid #dcdce2;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 1.25rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 36, 0.05);
+    transition:
+      transform 160ms ease,
+      box-shadow 160ms ease,
+      background-color 160ms ease;
+  }
+
+  .home-module:hover {
+    border-color: #000024;
+    box-shadow: 0 14px 34px rgba(0, 0, 36, 0.12);
+    transform: translateY(-3px);
+  }
+
+  .home-module-kicker {
+    color: #e60012;
+    font-size: 0.75rem;
+    font-weight: 900;
+  }
+
+  .home-module strong {
+    color: #12122b;
+    font-size: 1.35rem;
+    font-weight: 900;
+    line-height: 1.3;
+  }
+
+  .home-module span {
+    color: #5a5a70;
+    font-size: 0.95rem;
+    font-weight: 650;
+    line-height: 1.65;
+  }
+</style>

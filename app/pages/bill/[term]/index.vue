@@ -1,7 +1,7 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <nav class="mb-6">
-      <ol class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <ol class="flex items-center space-x-2 text-sm text-gray-600">
         <li>
           <NuxtLink to="/" class="hover:text-primary">首頁</NuxtLink>
         </li>
@@ -10,7 +10,7 @@
           <NuxtLink to="/bill" class="hover:text-primary">議案查詢</NuxtLink>
         </li>
         <li>/</li>
-        <li class="text-gray-900 dark:text-white">第{{ term }}屆</li>
+        <li class="text-gray-900">第{{ term }}屆</li>
       </ol>
     </nav>
 
@@ -33,23 +33,20 @@
     </div>
     <template v-else>
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">第{{ term }}屆議案</h1>
-        <p class="text-gray-600 dark:text-gray-300">查詢第{{ term }}屆學生議會議案資料</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">第{{ term }}屆議案</h1>
+        <p class="text-gray-600">查詢第{{ term }}屆學生議會議案資料</p>
       </div>
 
-      <div
-        v-if="error"
-        class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
-      >
+      <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
         <div class="flex items-center">
           <ExclamationTriangleIcon class="h-5 w-5 text-red-500 mr-2" />
-          <p class="text-red-700 dark:text-red-300">{{ error.message || '載入資料失敗' }}</p>
+          <p class="text-red-700">{{ error.message || '載入資料失敗' }}</p>
         </div>
       </div>
 
       <div v-if="pending" class="flex justify-center items-center py-12">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span class="ml-2 text-gray-600 dark:text-gray-300">載入中...</span>
+        <span class="ml-2 text-gray-600">載入中...</span>
       </div>
 
       <div v-if="!pending && !error" class="mb-8">
@@ -62,9 +59,7 @@
       </div>
 
       <div v-if="!pending && !error && filteredBills.length > 0" class="space-y-6">
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-          共找到 {{ filteredBills.length }} 筆議案
-        </div>
+        <div class="text-sm text-gray-600">共找到 {{ filteredBills.length }} 筆議案</div>
 
         <!-- 上方分頁選單 -->
         <Pagination
@@ -91,14 +86,14 @@
         <DocumentTextIcon class="h-16 w-16 text-gray-400 mx-auto mb-4" />
         <!-- 換屆過渡期：當前屆次尚無議案資料 -->
         <template v-if="term === getCurrentTerm()">
-          <h3 class="text-lg font-medium text-amber-700 dark:text-amber-300 mb-2">
+          <h3 class="text-lg font-medium text-amber-700 mb-2">
             第 {{ term }} 屆尚未有任何提案資料
           </h3>
-          <p class="text-amber-600 dark:text-amber-400">請查看其他屆次，或等待資料更新</p>
+          <p class="text-amber-600">請查看其他屆次，或等待資料更新</p>
         </template>
         <template v-else>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">找不到相關議案</h3>
-          <p class="text-gray-600 dark:text-gray-300">請調整篩選條件或稍後再試</p>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">找不到相關議案</h3>
+          <p class="text-gray-600">請調整篩選條件或稍後再試</p>
         </template>
       </div>
     </template>

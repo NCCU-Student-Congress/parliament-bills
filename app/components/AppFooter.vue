@@ -1,27 +1,24 @@
 <template>
-  <footer
-    class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 print:hidden"
-  >
-    <div class="container mx-auto px-4 py-8">
-      <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+  <footer class="border-t border-primary bg-primary text-white print:hidden">
+    <div class="mx-auto max-w-7xl px-4 py-8">
+      <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
         <!-- 組織資訊 -->
-        <div class="text-center md:text-left">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+        <div>
+          <p class="mb-2 text-xs font-black text-[#ff4d5a]">議事資訊公開</p>
+          <h3 class="mb-1 text-lg font-black">
             {{ SITE_CONFIG.fullName }}
           </h3>
-          <p class="text-gray-600 dark:text-gray-400">
-            {{ SITE_CONFIG.englishName }}
-          </p>
+          <p class="text-sm text-white/80">議案資料、委員會報告與秘書處文件草擬服務</p>
         </div>
 
         <!-- 連結和版權資訊 -->
-        <div class="flex flex-col items-center md:items-end space-y-2">
-          <div class="flex items-center space-x-4">
+        <div class="flex flex-col items-start gap-2 md:items-end">
+          <div class="flex items-center gap-4">
             <a
               :href="SITE_CONFIG.githubRepo"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-400 transition-colors"
+              class="inline-flex items-center gap-2 text-sm font-bold text-white underline decoration-[#ff4d5a] underline-offset-4 transition-colors hover:text-[#ff4d5a]"
             >
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path
@@ -31,9 +28,7 @@
               <span>開放原始碼</span>
             </a>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            © {{ currentYear }} {{ SITE_CONFIG.fullName }}秘書處
-          </p>
+          <p class="text-sm text-white/70">© {{ currentYear }} {{ SITE_CONFIG.fullName }}秘書處</p>
         </div>
       </div>
     </div>

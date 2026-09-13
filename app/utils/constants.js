@@ -26,10 +26,10 @@ export const EXTERNAL_LINKS = {
 
 // 主視覺顏色
 export const THEME_COLORS = {
-  primary: '#0F2D4B',
-  primaryLight: '#1A3A5C',
-  primaryDark: '#0A1F35',
-  secondary: '#4A90E2',
+  primary: '#000024',
+  primaryLight: '#1C1C4A',
+  primaryDark: '#000018',
+  secondary: '#E60012',
   success: '#10B981',
   warning: '#F59E0B',
   error: '#EF4444',
