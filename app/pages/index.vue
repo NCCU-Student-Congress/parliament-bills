@@ -72,9 +72,14 @@
         <div class="home-module">
           <span class="home-module-kicker">聯絡資訊</span>
           <strong>聯絡我們</strong>
-          <span>辦公室：{{ ORG_DATA.office }}</span>
-          <span>位置：{{ ORG_DATA.meetingRoom }}</span>
-          <span>地址：{{ ORG_DATA.address }}</span>
+          <a
+            :href="ORG_DATA.officeLocationUrl"
+            class="font-black text-primary underline underline-offset-4"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            辦公室：{{ ORG_DATA.office }}
+          </a>
           <a
             :href="`mailto:${ORG_DATA.email}`"
             class="mt-auto font-black text-primary underline underline-offset-4"

@@ -15,9 +15,8 @@ export const ORG_DATA = {
   nameEnFull: 'NTPU Student Congress (Sanxia Campus)',
   nameEnShort: 'NTPUSCS',
   email: 'nccuscc@gmail.com',
-  office: '國立政治大學學生議會辦公室',
-  meetingRoom: '四維堂',
-  address: '臺北市文山區指南路二段 64 號',
+  office: '四維堂',
+  officeLocationUrl: 'https://sc.video.nccu.edu.tw/p/location',
 };
 
 // 外部連結設定
