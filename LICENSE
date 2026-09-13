@@ -1,6 +1,17 @@
-MIT License
+Copyright Notice
 
-Copyright (c) 2026 NCCU Student Congress
+Copyright (c) 2026 NCCU Student Congress. All rights reserved.
+
+This repository includes portions derived from NTPUSU/open-parliament. Those
+portions remain licensed under the MIT License below.
+
+Except for portions that are separately licensed under the MIT License below,
+or under another third-party open source license, no permission is granted to
+copy, modify, merge, publish, distribute, sublicense, or sell this software
+without prior written permission from NCCU Student Congress.
+
+MIT License for NTPUSU/open-parliament portions
+
 Copyright (c) 2025 NTPU Student Congress (Sanxia)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

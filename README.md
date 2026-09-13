@@ -48,5 +48,5 @@
 
 ## 授權與聯絡資訊
 
-- **維護單位**：國立臺北大學三峽校區學生議會， Student Congress (Sanxia)
-- **專案授權**：本開源專案依據 [MIT License](./LICENSE) 條款發布。至為歡迎各學生自治組織改作。
+- **維護單位**：國立政治大學學生議會， NCCU Student Congress
+- **專案授權**：本專案採混合授權。國立政治大學學生議會新增或修改之部分保留所有權利；源自 NTPUSU/open-parliament 之部分仍依據 [MIT License](./LICENSE) 條款授權。
