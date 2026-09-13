@@ -4,7 +4,6 @@
       <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
         <!-- 組織資訊 -->
         <div>
-          <p class="mb-2 text-xs font-black text-[#ff4d5a]">議事資訊公開</p>
           <h3 class="mb-1 text-lg font-black">國立政治大學學生議會</h3>
           <p class="text-sm font-bold text-white/90">NCCU STUDENT CONGRESS</p>
           <p class="mt-1 text-sm text-white/80">臺北市文山區指南路二段 64 號 | nccuscc@gmail.com</p>
@@ -27,7 +26,7 @@
               <span>開放原始碼</span>
             </a>
           </div>
-          <p class="text-sm text-white/70">© {{ currentYear }} 國立政治大學學生議會</p>
+          <p class="text-sm text-white/70">© {{ currentYear }} 國立政治大學學生議會秘書處</p>
         </div>
       </div>
     </div>
