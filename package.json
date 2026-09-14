@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
+    "build:pages": "wrangler d1 migrations apply DB --local && nuxt build && wrangler pages dev dist --d1 DB --compatibility-date=2026-02-26",
     "dev": "nuxt dev",
     "dev-mac": "TMPDIR=/tmp nuxt dev",
     "generate": "nuxt generate",
