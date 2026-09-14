@@ -27,16 +27,19 @@
     <div class="grid gap-6 xl:grid-cols-2">
       <section class="admin-section">
         <div class="section-head">
-          <div>
-            <p class="section-kicker">Sessions</p>
-            <h2 class="section-title">會期</h2>
-          </div>
+          <h2 class="section-title">會期</h2>
         </div>
 
-        <form class="form-grid" @submit.prevent="createSession">
+        <form class="form-grid" @submit.prevent="submitSession">
           <label class="field">
             <span>會期代碼</span>
-            <input v-model="sessionForm.id" required class="control" placeholder="271 或 27-1" />
+            <input
+              v-model="sessionForm.id"
+              required
+              class="control"
+              placeholder="271 或 27-1"
+              :disabled="editingSessionId !== null"
+            />
           </label>
           <label class="field">
             <span>名稱</span>
@@ -50,9 +53,19 @@
             <span>結束日期</span>
             <input v-model="sessionForm.endsAt" type="date" class="control" />
           </label>
-          <button class="btn btn-primary form-submit" type="submit" :disabled="isSubmitting">
-            新增會期
-          </button>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+              {{ editingSessionId === null ? '新增會期' : '儲存會期' }}
+            </button>
+            <button
+              v-if="editingSessionId !== null"
+              class="btn btn-secondary"
+              type="button"
+              @click="resetSessionForm"
+            >
+              取消
+            </button>
+          </div>
         </form>
 
         <div class="table-wrap">
@@ -62,6 +75,7 @@
                 <th>代碼</th>
                 <th>名稱</th>
                 <th>期間</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -69,9 +83,23 @@
                 <td>{{ session.id }}</td>
                 <td>{{ session.title }}</td>
                 <td>{{ formatRange(session.startsAt, session.endsAt) }}</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="text-button" type="button" @click="editSession(session)">
+                      編輯
+                    </button>
+                    <button
+                      class="text-button danger"
+                      type="button"
+                      @click="deleteResource('sessions', session.id, '會期')"
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="sessions.length === 0">
-                <td colspan="3" class="empty-cell">尚無會期</td>
+                <td colspan="4" class="empty-cell">尚無會期</td>
               </tr>
             </tbody>
           </table>
@@ -80,13 +108,10 @@
 
       <section class="admin-section">
         <div class="section-head">
-          <div>
-            <p class="section-kicker">Committees</p>
-            <h2 class="section-title">委員會</h2>
-          </div>
+          <h2 class="section-title">委員會</h2>
         </div>
 
-        <form class="form-grid" @submit.prevent="createCommittee">
+        <form class="form-grid" @submit.prevent="submitCommittee">
           <label class="field">
             <span>名稱</span>
             <input v-model="committeeForm.name" required class="control" placeholder="程序委員會" />
@@ -95,9 +120,19 @@
             <span>代碼</span>
             <input v-model="committeeForm.code" class="control" placeholder="procedure" />
           </label>
-          <button class="btn btn-primary form-submit" type="submit" :disabled="isSubmitting">
-            新增委員會
-          </button>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+              {{ editingCommitteeId === null ? '新增委員會' : '儲存委員會' }}
+            </button>
+            <button
+              v-if="editingCommitteeId !== null"
+              class="btn btn-secondary"
+              type="button"
+              @click="resetCommitteeForm"
+            >
+              取消
+            </button>
+          </div>
         </form>
 
         <div class="table-wrap">
@@ -106,15 +141,30 @@
               <tr>
                 <th>名稱</th>
                 <th>代碼</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="committee in committees" :key="committee.id">
                 <td>{{ committee.name }}</td>
                 <td>{{ committee.code || '無' }}</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="text-button" type="button" @click="editCommittee(committee)">
+                      編輯
+                    </button>
+                    <button
+                      class="text-button danger"
+                      type="button"
+                      @click="deleteResource('committees', committee.id, '委員會')"
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="committees.length === 0">
-                <td colspan="2" class="empty-cell">尚無委員會</td>
+                <td colspan="3" class="empty-cell">尚無委員會</td>
               </tr>
             </tbody>
           </table>
@@ -123,13 +173,10 @@
 
       <section class="admin-section">
         <div class="section-head">
-          <div>
-            <p class="section-kicker">Users</p>
-            <h2 class="section-title">人員</h2>
-          </div>
+          <h2 class="section-title">人員</h2>
         </div>
 
-        <form class="form-grid" @submit.prevent="createUser">
+        <form class="form-grid" @submit.prevent="submitUser">
           <label class="field">
             <span>姓名</span>
             <input v-model="userForm.name" required class="control" />
@@ -159,9 +206,19 @@
               </option>
             </select>
           </label>
-          <button class="btn btn-primary form-submit" type="submit" :disabled="isSubmitting">
-            新增人員
-          </button>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+              {{ editingUserId === null ? '新增人員' : '儲存人員' }}
+            </button>
+            <button
+              v-if="editingUserId !== null"
+              class="btn btn-secondary"
+              type="button"
+              @click="resetUserForm"
+            >
+              取消
+            </button>
+          </div>
         </form>
 
         <div class="table-wrap">
@@ -172,6 +229,7 @@
                 <th>Email</th>
                 <th>權限</th>
                 <th>委員會</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -180,9 +238,21 @@
                 <td>{{ user.email }}</td>
                 <td>{{ user.permissionRole }}</td>
                 <td>{{ getCommitteeNames(user.committeeIds) }}</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="text-button" type="button" @click="editUser(user)">編輯</button>
+                    <button
+                      class="text-button danger"
+                      type="button"
+                      @click="deleteResource('users', user.id, '人員')"
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="users.length === 0">
-                <td colspan="4" class="empty-cell">尚無人員</td>
+                <td colspan="5" class="empty-cell">尚無人員</td>
               </tr>
             </tbody>
           </table>
@@ -191,13 +261,10 @@
 
       <section class="admin-section">
         <div class="section-head">
-          <div>
-            <p class="section-kicker">Meetings</p>
-            <h2 class="section-title">會議</h2>
-          </div>
+          <h2 class="section-title">會議</h2>
         </div>
 
-        <form class="form-grid" @submit.prevent="createMeeting">
+        <form class="form-grid" @submit.prevent="submitMeeting">
           <label class="field">
             <span>委員會</span>
             <select v-model="meetingForm.committeeId" required class="control">
@@ -242,9 +309,19 @@
               class="control"
             />
           </label>
-          <button class="btn btn-primary form-submit" type="submit" :disabled="isSubmitting">
-            新增會議
-          </button>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+              {{ editingMeetingId === null ? '新增會議' : '儲存會議' }}
+            </button>
+            <button
+              v-if="editingMeetingId !== null"
+              class="btn btn-secondary"
+              type="button"
+              @click="resetMeetingForm"
+            >
+              取消
+            </button>
+          </div>
         </form>
 
         <div class="table-wrap">
@@ -255,6 +332,7 @@
                 <th>委員會</th>
                 <th>會期</th>
                 <th>截止</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -263,9 +341,23 @@
                 <td>{{ meeting.committeeName || getCommitteeName(meeting.committeeId) }}</td>
                 <td>{{ formatSession(meeting.session) }}</td>
                 <td>{{ formatDateTime(meeting.proposalDeadlineAt) }}</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="text-button" type="button" @click="editMeeting(meeting)">
+                      編輯
+                    </button>
+                    <button
+                      class="text-button danger"
+                      type="button"
+                      @click="deleteResource('meetings', meeting.id, '會議')"
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="meetings.length === 0">
-                <td colspan="4" class="empty-cell">尚無會議</td>
+                <td colspan="5" class="empty-cell">尚無會議</td>
               </tr>
             </tbody>
           </table>
@@ -284,9 +376,15 @@
     title: '後台資料管理',
   });
 
+  type ResourceType = 'committees' | 'sessions' | 'users' | 'meetings';
+
   const notice = ref('');
   const errorMessage = ref('');
   const isSubmitting = ref(false);
+  const editingSessionId = ref<number | null>(null);
+  const editingCommitteeId = ref<number | null>(null);
+  const editingUserId = ref<number | null>(null);
+  const editingMeetingId = ref<number | null>(null);
 
   const sessionForm = reactive({
     id: '',
@@ -328,27 +426,27 @@
   const users = computed(() => usersData.value ?? []);
   const meetings = computed(() => meetingsData.value ?? []);
 
-  async function postJson<T>(url: string, body: unknown): Promise<T> {
+  async function requestJson<T>(url: string, method: string, body?: unknown): Promise<T | null> {
     errorMessage.value = '';
     notice.value = '';
     isSubmitting.value = true;
 
     try {
       const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        method,
+        headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.statusMessage || data?.message || '寫入失敗');
+        throw new Error(data?.statusMessage || data?.message || '操作失敗');
       }
 
       return data as T;
     } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : '寫入失敗';
-      throw error;
+      errorMessage.value = error instanceof Error ? error.message : '操作失敗';
+      return null;
     } finally {
       isSubmitting.value = false;
     }
@@ -358,76 +456,185 @@
     await Promise.all([refreshSessions(), refreshCommittees(), refreshUsers(), refreshMeetings()]);
   }
 
-  async function createSession() {
-    const id = parseTermCode(sessionForm.id);
+  async function submitSession() {
+    const id = editingSessionId.value ?? parseTermCode(sessionForm.id);
     if (!id) {
       errorMessage.value = '會期代碼格式錯誤';
       return;
     }
 
-    await postJson<Session>('/api/sessions', {
+    const payload = {
       id,
       title: sessionForm.title.trim() || formatTermLabel(id),
       startsAt: sessionForm.startsAt,
       endsAt: sessionForm.endsAt,
-    });
+    };
 
-    sessionForm.id = '';
-    sessionForm.title = '';
-    sessionForm.startsAt = '';
-    sessionForm.endsAt = '';
-    notice.value = '已新增會期';
+    const url = editingSessionId.value === null ? '/api/sessions' : `/api/sessions/${id}`;
+    const method = editingSessionId.value === null ? 'POST' : 'PUT';
+    const result = await requestJson<Session>(url, method, payload);
+    if (!result) return;
+
+    resetSessionForm();
+    notice.value = method === 'POST' ? '已新增會期' : '已更新會期';
     await refreshAll();
   }
 
-  async function createCommittee() {
-    await postJson<Committee>('/api/committees', {
+  async function submitCommittee() {
+    const payload = {
       name: committeeForm.name.trim(),
       code: committeeForm.code.trim() || undefined,
-    });
+    };
+    const url =
+      editingCommitteeId.value === null
+        ? '/api/committees'
+        : `/api/committees/${editingCommitteeId.value}`;
+    const method = editingCommitteeId.value === null ? 'POST' : 'PUT';
+    const result = await requestJson<Committee>(url, method, payload);
+    if (!result) return;
 
-    committeeForm.name = '';
-    committeeForm.code = '';
-    notice.value = '已新增委員會';
+    resetCommitteeForm();
+    notice.value = method === 'POST' ? '已新增委員會' : '已更新委員會';
     await refreshAll();
   }
 
-  async function createUser() {
-    await postJson<User>('/api/users', {
+  async function submitUser() {
+    const payload = {
       name: userForm.name.trim(),
       email: userForm.email.trim(),
       permissionRole: userForm.permissionRole,
       committeeIds: userForm.committeeIds.map(Number),
-    });
+    };
+    const url = editingUserId.value === null ? '/api/users' : `/api/users/${editingUserId.value}`;
+    const method = editingUserId.value === null ? 'POST' : 'PUT';
+    const result = await requestJson<User>(url, method, payload);
+    if (!result) return;
 
-    userForm.name = '';
-    userForm.email = '';
-    userForm.permissionRole = 'viewer';
-    userForm.committeeIds = [];
-    notice.value = '已新增人員';
+    resetUserForm();
+    notice.value = method === 'POST' ? '已新增人員' : '已更新人員';
     await refreshAll();
   }
 
-  async function createMeeting() {
-    await postJson<Meeting>('/api/meetings', {
+  async function submitMeeting() {
+    const payload = {
       committeeId: Number(meetingForm.committeeId),
       session: Number(meetingForm.session),
       title: meetingForm.title.trim(),
       meetingDate: toIsoString(meetingForm.meetingDate),
       proposalDeadlineAt: toIsoString(meetingForm.proposalDeadlineAt),
-    });
+    };
+    const url =
+      editingMeetingId.value === null ? '/api/meetings' : `/api/meetings/${editingMeetingId.value}`;
+    const method = editingMeetingId.value === null ? 'POST' : 'PUT';
+    const result = await requestJson<Meeting>(url, method, payload);
+    if (!result) return;
 
+    resetMeetingForm();
+    notice.value = method === 'POST' ? '已新增會議' : '已更新會議';
+    await refreshAll();
+  }
+
+  function editSession(session: Session) {
+    editingSessionId.value = session.id;
+    sessionForm.id = String(session.id);
+    sessionForm.title = session.title;
+    sessionForm.startsAt = toDateInput(session.startsAt);
+    sessionForm.endsAt = toDateInput(session.endsAt);
+  }
+
+  function editCommittee(committee: Committee) {
+    editingCommitteeId.value = committee.id;
+    committeeForm.name = committee.name;
+    committeeForm.code = committee.code;
+  }
+
+  function editUser(user: User) {
+    editingUserId.value = user.id;
+    userForm.name = user.name;
+    userForm.email = user.email;
+    userForm.permissionRole = user.permissionRole;
+    userForm.committeeIds = user.committeeIds.map(String);
+  }
+
+  function editMeeting(meeting: Meeting) {
+    editingMeetingId.value = meeting.id;
+    meetingForm.committeeId = String(meeting.committeeId);
+    meetingForm.session = String(meeting.session);
+    meetingForm.title = meeting.title;
+    meetingForm.meetingDate = toDateTimeInput(meeting.meetingDate);
+    meetingForm.proposalDeadlineAt = toDateTimeInput(meeting.proposalDeadlineAt);
+  }
+
+  async function deleteResource(type: ResourceType, id: number, label: string) {
+    if (typeof window !== 'undefined' && !window.confirm(`確定要刪除這筆${label}資料嗎？`)) {
+      return;
+    }
+
+    const result = await requestJson<{ success: boolean }>(`/api/${type}/${id}`, 'DELETE');
+    if (!result) return;
+
+    clearEditingState(type, id);
+    notice.value = `已刪除${label}`;
+    await refreshAll();
+  }
+
+  function clearEditingState(type: ResourceType, id: number) {
+    if (type === 'sessions' && editingSessionId.value === id) resetSessionForm();
+    if (type === 'committees' && editingCommitteeId.value === id) resetCommitteeForm();
+    if (type === 'users' && editingUserId.value === id) resetUserForm();
+    if (type === 'meetings' && editingMeetingId.value === id) resetMeetingForm();
+  }
+
+  function resetSessionForm() {
+    editingSessionId.value = null;
+    sessionForm.id = '';
+    sessionForm.title = '';
+    sessionForm.startsAt = '';
+    sessionForm.endsAt = '';
+  }
+
+  function resetCommitteeForm() {
+    editingCommitteeId.value = null;
+    committeeForm.name = '';
+    committeeForm.code = '';
+  }
+
+  function resetUserForm() {
+    editingUserId.value = null;
+    userForm.name = '';
+    userForm.email = '';
+    userForm.permissionRole = 'viewer';
+    userForm.committeeIds = [];
+  }
+
+  function resetMeetingForm() {
+    editingMeetingId.value = null;
+    meetingForm.committeeId = '';
+    meetingForm.session = '';
     meetingForm.title = '';
     meetingForm.meetingDate = '';
     meetingForm.proposalDeadlineAt = '';
-    notice.value = '已新增會議';
-    await refreshAll();
   }
 
   function toIsoString(value: string) {
     if (!value) return '';
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toISOString();
+  }
+
+  function toDateInput(value?: string | null) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function toDateTimeInput(value?: string | null) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.slice(0, 16);
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return localDate.toISOString().slice(0, 16);
   }
 
   function formatDate(value?: string | null) {
@@ -494,12 +701,6 @@
     padding-bottom: 0.75rem;
   }
 
-  .section-kicker {
-    color: #e60012;
-    font-size: 0.75rem;
-    font-weight: 900;
-  }
-
   .section-title {
     color: #12122b;
     font-size: 1.25rem;
@@ -538,14 +739,21 @@
     font-weight: 650;
   }
 
+  .control:disabled {
+    background: #f5f5f7;
+    color: #5a5a70;
+  }
+
   .control:focus {
     border-color: #e60012;
     outline: 3px solid rgba(230, 0, 18, 0.18);
   }
 
-  .form-submit {
+  .form-actions {
+    display: flex;
     align-self: end;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .table-wrap {
@@ -555,8 +763,8 @@
 
   .admin-table {
     width: 100%;
+    min-width: 620px;
     border-collapse: collapse;
-    min-width: 520px;
   }
 
   .admin-table th {
@@ -576,6 +784,24 @@
     font-size: 0.875rem;
     font-weight: 650;
     vertical-align: top;
+  }
+
+  .row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .text-button {
+    color: #000024;
+    font-size: 0.875rem;
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .text-button.danger {
+    color: #e60012;
   }
 
   .empty-cell {

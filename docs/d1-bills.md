@@ -47,12 +47,20 @@ Reference data:
 
 - `GET /api/committees`
 - `POST /api/committees`
+- `PUT /api/committees/:id`
+- `DELETE /api/committees/:id`
 - `GET /api/users`
 - `POST /api/users`
+- `PUT /api/users/:id`
+- `DELETE /api/users/:id`
 - `GET /api/sessions`
 - `POST /api/sessions`
+- `PUT /api/sessions/:id`
+- `DELETE /api/sessions/:id`
 - `GET /api/meetings`
 - `POST /api/meetings`
+- `PUT /api/meetings/:id`
+- `DELETE /api/meetings/:id`
 
 Proposal reads:
 
