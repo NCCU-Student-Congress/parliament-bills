@@ -29,14 +29,14 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE TABLE IF NOT EXISTS meetings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  committee_id INTEGER NOT NULL,
+  committee_id INTEGER,
   session INTEGER NOT NULL,
   meeting_date TEXT NOT NULL,
   proposal_deadline_at TEXT NOT NULL,
   title TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE CASCADE,
+  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE SET NULL,
   FOREIGN KEY (session) REFERENCES sessions (id) ON DELETE RESTRICT
 );
 

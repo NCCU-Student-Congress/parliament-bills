@@ -218,8 +218,8 @@
         <form class="form-grid" @submit.prevent="submitMeeting">
           <label class="field">
             <span>委員會</span>
-            <select v-model="meetingForm.committeeId" required class="control">
-              <option value="">請選擇</option>
+            <select v-model="meetingForm.committeeId" class="control">
+              <option value="">大會</option>
               <option
                 v-for="committee in committees"
                 :key="committee.id"
@@ -444,7 +444,7 @@
 
   async function submitMeeting() {
     const payload = {
-      committeeId: Number(meetingForm.committeeId),
+      committeeId: meetingForm.committeeId ? Number(meetingForm.committeeId) : null,
       session: Number(meetingForm.session),
       title: meetingForm.title.trim(),
       meetingDate: toIsoString(meetingForm.meetingDate),
@@ -477,7 +477,7 @@
 
   function editMeeting(meeting: Meeting) {
     editingMeetingId.value = meeting.id;
-    meetingForm.committeeId = String(meeting.committeeId);
+    meetingForm.committeeId = meeting.committeeId ? String(meeting.committeeId) : '';
     meetingForm.session = String(meeting.session);
     meetingForm.title = meeting.title;
     meetingForm.meetingDate = toDateTimeInput(meeting.meetingDate);
@@ -575,7 +575,8 @@
     return sessions.value.find((item) => item.id === session)?.title ?? formatTermLabel(session);
   }
 
-  function getCommitteeName(id: number) {
+  function getCommitteeName(id: number | null) {
+    if (!id) return '大會';
     return committees.value.find((committee) => committee.id === id)?.name ?? '未設定';
   }
 
