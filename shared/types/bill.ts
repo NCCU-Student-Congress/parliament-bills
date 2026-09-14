@@ -29,7 +29,7 @@ export interface Session {
 
 export interface Meeting {
   id: number;
-  committeeId: number;
+  committeeId: number | null;
   committeeName?: string;
   session: number;
   meetingDate: string;

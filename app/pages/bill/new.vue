@@ -78,7 +78,8 @@
         <select v-model="form.meetingId" required class="form-input">
           <option value="">請選擇會議</option>
           <option v-for="meeting in eligibleMeetings" :key="meeting.id" :value="String(meeting.id)">
-            {{ meeting.title }}，截止 {{ formatDateTime(meeting.proposalDeadlineAt) }}
+            {{ meeting.committeeName }}・{{ meeting.title }}，截止
+            {{ formatDateTime(meeting.proposalDeadlineAt) }}
           </option>
         </select>
       </label>
@@ -236,7 +237,11 @@
     const deadlineBase = new Date(form.proposedAt).getTime();
 
     return meetings.value.filter((meeting) => {
-      if (selectedCommitteeId.value && meeting.committeeId !== selectedCommitteeId.value)
+      if (
+        selectedCommitteeId.value &&
+        meeting.committeeId !== null &&
+        meeting.committeeId !== selectedCommitteeId.value
+      )
         return false;
       if (selectedSession.value && meeting.session !== selectedSession.value) return false;
 

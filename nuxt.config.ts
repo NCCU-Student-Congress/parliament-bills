@@ -15,6 +15,11 @@ export default defineNuxtConfig({
   ssr: true, // 確保開啟 SSR
   nitro: {
     preset: 'cloudflare-pages',
+    cloudflare: {
+      dev: {
+        persistDir: '.wrangler/state/v3',
+      },
+    },
   },
   app: {
     head: {
