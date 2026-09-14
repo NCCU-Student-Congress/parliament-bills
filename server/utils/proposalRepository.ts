@@ -233,7 +233,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
   return {
     id: row.id,
     committeeId: row.committee_id,
-    committeeName: row.committee_name ?? '大會',
+    committeeName: row.committee_name ?? '無（大會）',
     session: row.session,
     meetingDate: row.meeting_date,
     proposalDeadlineAt: row.proposal_deadline_at,

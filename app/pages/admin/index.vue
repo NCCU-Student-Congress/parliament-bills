@@ -230,7 +230,7 @@
           <label class="field">
             <span>委員會</span>
             <select v-model="meetingForm.committeeId" class="control">
-              <option value=""></option>
+              <option value="">無（大會）</option>
               <option
                 v-for="committee in committees"
                 :key="committee.id"
@@ -604,7 +604,7 @@
   }
 
   function getCommitteeName(id: number | null) {
-    if (!id) return '大會';
+    if (!id) return '無（大會）';
     return committees.value.find((committee) => committee.id === id)?.name ?? '未設定';
   }
 

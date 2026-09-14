@@ -78,7 +78,7 @@
         <select v-model="form.meetingId" required class="form-input">
           <option value="">請選擇會議</option>
           <option v-for="meeting in eligibleMeetings" :key="meeting.id" :value="String(meeting.id)">
-            {{ meeting.committeeName }}・{{ meeting.title }}，截止
+            {{ formatMeetingCommittee(meeting) }}・{{ meeting.title }}，截止
             {{ formatDateTime(meeting.proposalDeadlineAt) }}
           </option>
         </select>
@@ -286,6 +286,10 @@
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  function formatMeetingCommittee(meeting: Meeting) {
+    return meeting.committeeId === null ? '無（大會）' : meeting.committeeName;
   }
 
   function buildPayload(): ProposalInput {
