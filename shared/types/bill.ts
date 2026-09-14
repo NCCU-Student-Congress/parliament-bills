@@ -18,6 +18,15 @@ export interface User {
   updatedAt?: string;
 }
 
+export interface Session {
+  id: number;
+  title: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Meeting {
   id: number;
   committeeId: number;
@@ -26,7 +35,6 @@ export interface Meeting {
   meetingDate: string;
   proposalDeadlineAt: string;
   title: string;
-  status: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -30,6 +30,18 @@ Stores people for proposer/cosponsor references and future permission management
 `committee_ids` is a JSON array of committee ids. It is only used for filtering in the current
 student council use case.
 
+### `sessions`
+
+Stores managed legislative sessions. The primary key is the existing numeric session code, such as
+`271`.
+
+- `id`
+- `title`
+- `starts_at`
+- `ends_at`
+- `created_at`
+- `updated_at`
+
 ### `meetings`
 
 Stores meetings that proposals can be submitted to.
@@ -40,11 +52,11 @@ Stores meetings that proposals can be submitted to.
 - `meeting_date`
 - `proposal_deadline_at`
 - `title`
-- `status`
 - `created_at`
 - `updated_at`
 
 Proposal deadlines live here. Proposals do not store their own deadline or deadline snapshot.
+`session` references `sessions.id`.
 
 ### `proposals`
 

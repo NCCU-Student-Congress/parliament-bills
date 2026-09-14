@@ -47,13 +47,12 @@
 
         <label class="block">
           <span class="mb-1 block text-sm font-medium text-gray-700">會期</span>
-          <input
-            v-model="form.session"
-            required
-            type="text"
-            class="form-input"
-            placeholder="271 或 27-1"
-          />
+          <select v-model="form.session" required class="form-input">
+            <option value="">請選擇會期</option>
+            <option v-for="session in sessions" :key="session.id" :value="String(session.id)">
+              {{ session.title }}
+            </option>
+          </select>
         </label>
       </div>
 
@@ -152,7 +151,14 @@
 <script setup lang="ts">
   import { computed, reactive, ref, watch } from 'vue';
   import { parseTermCode, getCurrentTerm } from '~~/shared/utils/term';
-  import type { Bill, Committee, Meeting, ProposalInput, User } from '~~/shared/types/bill';
+  import type {
+    Bill,
+    Committee,
+    Meeting,
+    ProposalInput,
+    Session,
+    User,
+  } from '~~/shared/types/bill';
 
   definePageMeta({
     title: '新增議案',
@@ -191,12 +197,20 @@
   const savedBill = ref<Bill | null>(null);
 
   const { data: committeesData } = await useFetch<Committee[]>('/api/committees');
+  const { data: sessionsData } = await useFetch<Session[]>('/api/sessions');
   const { data: usersData } = await useFetch<User[]>('/api/users');
   const { data: meetingsData } = await useFetch<Meeting[]>('/api/meetings');
 
   const committees = computed(() => committeesData.value ?? []);
+  const sessions = computed(() => sessionsData.value ?? []);
   const users = computed(() => usersData.value ?? []);
   const meetings = computed(() => meetingsData.value ?? []);
+
+  if (sessions.value.some((session) => session.id === getCurrentTerm())) {
+    form.session = String(getCurrentTerm());
+  } else {
+    form.session = sessions.value[0]?.id ? String(sessions.value[0].id) : '';
+  }
 
   const selectedCommitteeId = computed(() => Number(form.committeeId) || null);
   const selectedSession = computed(() => parseTermCode(form.session));
@@ -204,6 +218,7 @@
   const setupErrors = computed(() => {
     const errors: string[] = [];
     if (!committees.value.length) errors.push('尚未建立委員會資料。');
+    if (!sessions.value.length) errors.push('尚未建立會期資料。');
     if (!users.value.length) errors.push('尚未建立人員資料。');
     if (!meetings.value.length) errors.push('尚未建立會議資料與提案截止時間。');
     return errors;

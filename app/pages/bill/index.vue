@@ -11,20 +11,25 @@
       </NuxtLink>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div
+      v-if="sessions.length"
+      class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+    >
       <NuxtLink
-        v-for="term in getValidTerms()"
-        :key="term"
-        :to="`/bill/${term}`"
+        v-for="session in sessions"
+        :key="session.id"
+        :to="`/bill/${session.id}`"
         class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
       >
         <div class="p-6">
-          <div class="text-primary text-sm font-semibold mb-2">{{ formatTermLabel(term) }}</div>
+          <div class="text-primary text-sm font-semibold mb-2">
+            {{ session.title || formatTermLabel(session.id) }}
+          </div>
           <h2 class="text-xl font-bold text-gray-900">學生議會</h2>
           <p class="text-gray-600 text-sm mt-2">點擊查看本會期議案</p>
         </div>
         <div
-          v-if="term === getCurrentTerm()"
+          v-if="session.id === getCurrentTerm()"
           class="bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg absolute top-0 right-0"
         >
           目前會期
@@ -32,8 +37,8 @@
       </NuxtLink>
     </div>
 
-    <div class="mt-12 text-center text-gray-500">
-      <p>資料範圍：{{ formatTermLabel(getEarliestTerm()) }}起</p>
+    <div v-else class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-700">
+      尚未建立會期資料。
     </div>
 
     <!-- 舊版查詢系統連結 -->
@@ -79,15 +84,12 @@
 </template>
 
 <script setup>
-  import { computed } from 'vue'; // 確保引入 computed
-  import {
-    formatTermLabel,
-    getCurrentTerm,
-    getEarliestTerm,
-    getValidTerms,
-  } from '../../../shared/utils/term';
+  import { computed } from 'vue';
+  import { formatTermLabel, getCurrentTerm } from '../../../shared/utils/term';
 
   const { data: newestBills, pending, error } = await useFetch(`/api/bills?limit=10`);
+  const { data: sessionsData } = await useFetch('/api/sessions');
+  const sessions = computed(() => sessionsData.value ?? []);
 
   // SEO 設定
   definePageMeta({

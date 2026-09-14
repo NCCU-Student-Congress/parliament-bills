@@ -25,6 +25,7 @@ It creates:
 
 - `committees`
 - `users`
+- `sessions`
 - `meetings`
 - `proposals`
 - `proposal_attachments`
@@ -33,6 +34,7 @@ It creates:
 ## Main Rules
 
 - A proposal has no draft status. Once created, it is a submitted proposal.
+- Meetings and proposals reference `sessions.id`; the id is the existing numeric term code such as `271`.
 - Proposal deadlines belong to meetings: `meetings.proposal_deadline_at`.
 - Proposals do not store a deadline snapshot.
 - User committee membership is stored as a JSON array in `users.committee_ids`.
@@ -47,6 +49,8 @@ Reference data:
 - `POST /api/committees`
 - `GET /api/users`
 - `POST /api/users`
+- `GET /api/sessions`
+- `POST /api/sessions`
 - `GET /api/meetings`
 - `POST /api/meetings`
 

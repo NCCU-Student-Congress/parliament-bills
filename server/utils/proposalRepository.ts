@@ -6,6 +6,7 @@ import type {
   ProposalAttachment,
   ProposalCosponsor,
   ProposalInput,
+  Session,
   User,
 } from '../../shared/types/bill';
 import { getCurrentTerm, parseTermCode } from '../../shared/utils/term';
@@ -29,6 +30,15 @@ interface UserRow {
   updated_at: string;
 }
 
+interface SessionRow {
+  id: number;
+  title: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface MeetingRow {
   id: number;
   committee_id: number;
@@ -37,7 +47,6 @@ interface MeetingRow {
   meeting_date: string;
   proposal_deadline_at: string;
   title: string;
-  status: string;
   created_at: string;
   updated_at: string;
 }
@@ -170,6 +179,17 @@ function rowToUser(row: UserRow): User {
   };
 }
 
+function rowToSession(row: SessionRow): Session {
+  return {
+    id: row.id,
+    title: row.title,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function rowToMeeting(row: MeetingRow): Meeting {
   return {
     id: row.id,
@@ -179,7 +199,6 @@ function rowToMeeting(row: MeetingRow): Meeting {
     meetingDate: row.meeting_date,
     proposalDeadlineAt: row.proposal_deadline_at,
     title: row.title,
-    status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -431,6 +450,49 @@ export function createProposalRepository(db: D1Database) {
     return results.map(rowToCommittee);
   };
 
+  const createSession = async (input: {
+    id?: unknown;
+    title?: unknown;
+    startsAt?: unknown;
+    endsAt?: unknown;
+  }) => {
+    const id = parseTermCode(input.id);
+    const title = cleanString(input.title) || (id ? `${Math.floor(id / 10)}-${id % 10} 會期` : '');
+    const startsAt = cleanString(input.startsAt) || null;
+    const endsAt = cleanString(input.endsAt) || null;
+
+    if (!id) {
+      throw createError({ statusCode: 400, statusMessage: '會期代碼為必填欄位' });
+    }
+
+    const row = await db
+      .prepare(
+        `INSERT INTO sessions (id, title, starts_at, ends_at)
+         VALUES (?, ?, ?, ?)
+         RETURNING id, title, starts_at, ends_at, created_at, updated_at`,
+      )
+      .bind(id, title, startsAt, endsAt)
+      .first<SessionRow>();
+
+    if (!row) {
+      throw createError({ statusCode: 500, statusMessage: '會期寫入失敗' });
+    }
+
+    return rowToSession(row);
+  };
+
+  const getSessions = async () => {
+    const { results = [] } = await db
+      .prepare(
+        `SELECT id, title, starts_at, ends_at, created_at, updated_at
+         FROM sessions
+         ORDER BY id DESC`,
+      )
+      .all<SessionRow>();
+
+    return results.map(rowToSession);
+  };
+
   const createUser = async (input: {
     name?: unknown;
     email?: unknown;
@@ -488,14 +550,12 @@ export function createProposalRepository(db: D1Database) {
     meetingDate?: unknown;
     proposalDeadlineAt?: unknown;
     title?: unknown;
-    status?: unknown;
   }) => {
     const committeeId = toPositiveInteger(input.committeeId);
     const session = parseTermCode(input.session);
     const meetingDate = normalizeDateTime(input.meetingDate, '');
     const proposalDeadlineAt = normalizeDateTime(input.proposalDeadlineAt, '');
     const title = cleanString(input.title);
-    const status = cleanString(input.status) || 'scheduled';
 
     if (!committeeId) {
       throw createError({ statusCode: 400, statusMessage: '委員會為必填欄位' });
@@ -517,6 +577,15 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 400, statusMessage: '會議名稱為必填欄位' });
     }
 
+    const existingSession = await db
+      .prepare('SELECT id FROM sessions WHERE id = ?')
+      .bind(session)
+      .first<{ id: number }>();
+
+    if (!existingSession) {
+      throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
+    }
+
     const row = await db
       .prepare(
         `INSERT INTO meetings (
@@ -524,9 +593,8 @@ export function createProposalRepository(db: D1Database) {
            session,
            meeting_date,
            proposal_deadline_at,
-           title,
-           status
-         ) VALUES (?, ?, ?, ?, ?, ?)
+           title
+         ) VALUES (?, ?, ?, ?, ?)
          RETURNING
            id,
            committee_id,
@@ -534,11 +602,10 @@ export function createProposalRepository(db: D1Database) {
            meeting_date,
            proposal_deadline_at,
            title,
-           status,
            created_at,
            updated_at`,
       )
-      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title, status)
+      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title)
       .first<MeetingRow>();
 
     if (!row) {
@@ -574,7 +641,6 @@ export function createProposalRepository(db: D1Database) {
          meetings.meeting_date,
          meetings.proposal_deadline_at,
          meetings.title,
-         meetings.status,
          meetings.created_at,
          meetings.updated_at
        FROM meetings
@@ -662,6 +728,15 @@ export function createProposalRepository(db: D1Database) {
 
     if (!meeting) {
       throw createError({ statusCode: 400, statusMessage: '找不到指定會議' });
+    }
+
+    const existingSession = await db
+      .prepare('SELECT id FROM sessions WHERE id = ?')
+      .bind(proposal.session)
+      .first<{ id: number }>();
+
+    if (!existingSession) {
+      throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
     }
 
     if (meeting.committee_id !== proposal.committeeId || meeting.session !== proposal.session) {
@@ -759,6 +834,8 @@ export function createProposalRepository(db: D1Database) {
   return {
     createCommittee,
     getCommittees,
+    createSession,
+    getSessions,
     createUser,
     getUsers,
     createMeeting,

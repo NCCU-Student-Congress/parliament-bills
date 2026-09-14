@@ -18,6 +18,15 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS users_permission_role_idx ON users (permission_role);
 
+CREATE TABLE IF NOT EXISTS sessions (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL,
+  starts_at TEXT,
+  ends_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS meetings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   committee_id INTEGER NOT NULL,
@@ -25,10 +34,10 @@ CREATE TABLE IF NOT EXISTS meetings (
   meeting_date TEXT NOT NULL,
   proposal_deadline_at TEXT NOT NULL,
   title TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'scheduled',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE CASCADE
+  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE CASCADE,
+  FOREIGN KEY (session) REFERENCES sessions (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS meetings_committee_session_idx ON meetings (committee_id, session);
@@ -47,6 +56,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE RESTRICT,
+  FOREIGN KEY (session) REFERENCES sessions (id) ON DELETE RESTRICT,
   FOREIGN KEY (proposer_id) REFERENCES users (id) ON DELETE RESTRICT,
   FOREIGN KEY (meeting_id) REFERENCES meetings (id) ON DELETE RESTRICT
 );

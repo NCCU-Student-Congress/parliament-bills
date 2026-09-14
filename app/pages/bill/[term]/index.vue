@@ -106,7 +106,6 @@
     formatTermLabel,
     getCurrentTerm,
     getEarliestTerm,
-    getValidTerms,
     parseTermCode,
   } from '~~/shared/utils/term';
 
@@ -124,14 +123,15 @@
   const term = routeTerm;
   const termLabel = formatTermLabel(term);
 
-  // 判斷是否超出會期範圍
-  const isOutOfRange = computed(() => {
-    return typeof getValidTerms === 'function' && !getValidTerms().includes(term);
-  });
-
   const { data: bills, pending, error, refresh } = await useFetch(`/api/bills?term=${term}`);
   const { data: committeesData } = await useFetch('/api/committees');
+  const { data: sessionsData } = await useFetch('/api/sessions');
   const committees = computed(() => committeesData.value ?? []);
+  const sessions = computed(() => sessionsData.value ?? []);
+
+  const isOutOfRange = computed(() => {
+    return sessions.value.length > 0 && !sessions.value.some((session) => session.id === term);
+  });
 
   // 響應式數據
   const currentPage = ref(1);
