@@ -2,7 +2,7 @@
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-2">議案查詢</h1>
-      <p class="text-gray-600">點選屆次，查看該屆學生議會議案資料</p>
+      <p class="text-gray-600">點選會期，查看該會期學生議會議案資料</p>
       <NuxtLink
         to="/bill/new"
         class="inline-flex items-center mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
@@ -19,21 +19,21 @@
         class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
       >
         <div class="p-6">
-          <div class="text-primary text-sm font-semibold mb-2">第 {{ term }} 屆</div>
+          <div class="text-primary text-sm font-semibold mb-2">{{ formatTermLabel(term) }}</div>
           <h2 class="text-xl font-bold text-gray-900">學生議會</h2>
-          <p class="text-gray-600 text-sm mt-2">點擊查看本屆議案</p>
+          <p class="text-gray-600 text-sm mt-2">點擊查看本會期議案</p>
         </div>
         <div
           v-if="term === getCurrentTerm()"
           class="bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg absolute top-0 right-0"
         >
-          當前屆次
+          目前會期
         </div>
       </NuxtLink>
     </div>
 
     <div class="mt-12 text-center text-gray-500">
-      <p>資料範圍：第 {{ getEarliestTerm() }} 屆起</p>
+      <p>資料範圍：{{ formatTermLabel(getEarliestTerm()) }}起</p>
     </div>
 
     <!-- 舊版查詢系統連結 -->
@@ -80,7 +80,12 @@
 
 <script setup>
   import { computed } from 'vue'; // 確保引入 computed
-  import { getCurrentTerm, getValidTerms, getEarliestTerm } from '../../../shared/utils/term';
+  import {
+    formatTermLabel,
+    getCurrentTerm,
+    getEarliestTerm,
+    getValidTerms,
+  } from '../../../shared/utils/term';
 
   const { data: newestBills, pending, error } = await useFetch(`/api/bills?limit=10`);
 
@@ -98,6 +103,6 @@
 
   /* 確保 NuxtLink 的樣式能正常應用 */
   .grid-cols-1 > a {
-    position: relative; /* 為了 "當前屆次" 標籤的定位 */
+    position: relative; /* 為了 "目前會期" 標籤的定位 */
   }
 </style>

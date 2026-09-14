@@ -3,7 +3,7 @@
     您係透過臨時總流水號查詢議案，這通常代表該議案秘書處尚未為程序審查，故無「北大峽議字」之編號。
   </p>
   <p class="font-bold">
-    <NuxtLink :to="`/bill/${bill.term}`">返回第{{ bill.term }}屆議案列表</NuxtLink>
+    <NuxtLink :to="`/bill/${bill.term}`">返回{{ formatTermLabel(bill.term) }}議案列表</NuxtLink>
   </p>
   <p v-if="status === 'pending'">載入中。</p>
   <p v-if="error">{{ error }}</p>
@@ -38,6 +38,8 @@
   </div>
 </template>
 <script setup>
+  import { formatTermLabel } from '~~/shared/utils/term';
+
   const route = useRoute();
   const routeRowIndex = computed(() => parseInt(route.params.rowIndex));
 

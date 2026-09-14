@@ -1,5 +1,7 @@
 // server/api/bills/index.get.ts
-// 支援 Query: ?term=26, ?limit=10, ?type=all
+import { parseTermCode } from '../../../shared/utils/term';
+
+// 支援 Query: ?term=271, ?limit=10, ?type=all
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const billService = useBillService(event);
@@ -11,13 +13,16 @@ export default defineEventHandler(async (event) => {
     results = await billService.getAllBills();
   }
 
-  // 如果有指定 term，則回傳該屆次的議案
+  // 如果有指定 term，則回傳該會期的議案
   else if (query.term) {
-    const termNumber = parseInt(query.term as string, 10);
+    const termNumber = parseTermCode(query.term);
+    if (!termNumber) {
+      throw createError({ statusCode: 400, statusMessage: '無效的會期參數' });
+    }
     results = await billService.getBillsByTerm(termNumber);
   }
 
-  // 預設回傳 D1 中最新屆次的議案
+  // 預設回傳 D1 中最新會期的議案
   else {
     results = await billService.getLatestTermBills();
   }

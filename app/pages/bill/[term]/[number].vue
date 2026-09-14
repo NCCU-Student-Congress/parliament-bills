@@ -17,7 +17,7 @@
         </li>
         <li>/</li>
         <li>
-          <NuxtLink :to="`/bill/${term}`" class="hover:text-primary">第{{ term }}屆</NuxtLink>
+          <NuxtLink :to="`/bill/${term}`" class="hover:text-primary">{{ termLabel }}</NuxtLink>
         </li>
         <li>/</li>
         <li class="text-gray-900">第{{ number }}號</li>
@@ -27,7 +27,7 @@
     <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg print:hidden">
       <div class="flex items-center">
         <ExclamationTriangleIcon class="h-5 w-5 text-red-500 mr-2" />
-        <p class="text-red-700">找不到議案：{{ term }}屆第{{ number }}號</p>
+        <p class="text-red-700">找不到議案：{{ termLabel }}第{{ number }}號</p>
         <p class="text-red-700">{{ error.message || '載入資料失敗' }}</p>
       </div>
     </div>
@@ -155,7 +155,7 @@
           :to="`/bill/${term}`"
           class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
         >
-          查看第{{ term }}屆議案
+          查看{{ termLabel }}議案
         </NuxtLink>
       </div>
     </div>
@@ -187,17 +187,18 @@
     LinkIcon,
     PrinterIcon,
   } from '@heroicons/vue/24/outline';
-  import { getCurrentTerm } from '#imports';
   import { useRoute, createError, useFetch, useHead } from '#app';
+  import { formatTermLabel, getCurrentTerm, parseTermCode } from '~~/shared/utils/term';
   import { ORG_DATA } from '~/utils/constants';
   import type { Bill } from '~~/shared/types/bill';
 
   // 獲取路由參數
   const route = useRoute();
-  const term = computed(() => parseInt(route.params.term as string));
+  const term = computed(() => parseTermCode(route.params.term));
+  const termLabel = computed(() => formatTermLabel(term.value));
   const number = computed(() => parseInt(route.params.number as string));
 
-  if (!term.value || isNaN(term.value) || !number.value || isNaN(number.value)) {
+  if (!term.value || !number.value || isNaN(number.value)) {
     throw createError({
       statusCode: 404,
       statusMessage: '議案參數欠缺或非數值',
@@ -215,7 +216,7 @@
     if (bill.value?.billNumber) {
       return bill.value.billNumber;
     } else {
-      return `第${getCurrentTerm()}屆未編號議案`;
+      return `${formatTermLabel(getCurrentTerm())}未編號議案`;
     }
   });
 

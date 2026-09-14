@@ -55,22 +55,22 @@ interface Bill {
 }
 ```
 
-| Field              | Type       | Nullable | Current Usage                                                      |
-| ------------------ | ---------- | -------- | ------------------------------------------------------------------ |
-| `rowIndex`         | `number`   | No       | 全域流水號；未編號議案詳情頁使用 `/bill/unnumbered/:rowIndex`。    |
-| `billNumber`       | `string`   | No       | 完整議案編號，例如 `26屆北大峽議字第4號`；空字串代表尚未正式編號。 |
-| `term`             | `number`   | Yes      | 屆次；用於屆次列表與詳情頁路由。                                   |
-| `serialNumber`     | `number`   | Yes      | 該屆內流水號；用於 `/bill/:term/:number`。                         |
-| `submittedAt`      | `string`   | No       | 提案時間；目前以字串顯示及篩選。                                   |
-| `proposingEntity`  | `string`   | No       | 提案機關或議員類型，例如 `本會議員`、`本會議長`。                  |
-| `proposerName`     | `string`   | No       | 機關主管或議員姓名。                                               |
-| `contactName`      | `string`   | No       | 聯絡人。                                                           |
-| `billType`         | `string`   | No       | 提案類型；列表篩選使用。                                           |
-| `subject`          | `string`   | No       | 案由；搜尋、列表、詳情、秘書處草擬系統使用。                       |
-| `description`      | `string`   | No       | 說明；詳情頁與會議紀錄草稿使用。                                   |
-| `proposedAction`   | `string`   | No       | 辦法；詳情頁與會議紀錄草稿使用。                                   |
-| `attachments`      | `string[]` | No       | 附件 URL 清單。                                                    |
-| `scheduledSession` | `string`   | No       | 排入會議。                                                         |
+| Field              | Type       | Nullable | Current Usage                                                     |
+| ------------------ | ---------- | -------- | ----------------------------------------------------------------- |
+| `rowIndex`         | `number`   | No       | 全域流水號；未編號議案詳情頁使用 `/bill/unnumbered/:rowIndex`。   |
+| `billNumber`       | `string`   | No       | 完整議案編號，例如 `271北大峽議字第4號`；空字串代表尚未正式編號。 |
+| `term`             | `number`   | Yes      | 會期代碼，例如 `25-2` 存為 `252`；用於會期列表與詳情頁路由。      |
+| `serialNumber`     | `number`   | Yes      | 該會期內流水號；用於 `/bill/:term/:number`。                      |
+| `submittedAt`      | `string`   | No       | 提案時間；目前以字串顯示及篩選。                                  |
+| `proposingEntity`  | `string`   | No       | 提案機關或議員類型，例如 `本會議員`、`本會議長`。                 |
+| `proposerName`     | `string`   | No       | 機關主管或議員姓名。                                              |
+| `contactName`      | `string`   | No       | 聯絡人。                                                          |
+| `billType`         | `string`   | No       | 提案類型；列表篩選使用。                                          |
+| `subject`          | `string`   | No       | 案由；搜尋、列表、詳情、秘書處草擬系統使用。                      |
+| `description`      | `string`   | No       | 說明；詳情頁與會議紀錄草稿使用。                                  |
+| `proposedAction`   | `string`   | No       | 辦法；詳情頁與會議紀錄草稿使用。                                  |
+| `attachments`      | `string[]` | No       | 附件 URL 清單。                                                   |
+| `scheduledSession` | `string`   | No       | 排入會議。                                                        |
 
 ### CommitteeReportsResponse
 
@@ -172,20 +172,20 @@ interface GovernmentResponse {
 
 ### Current term
 
-目前屆次不是存在資料庫，而是用日期計算：
+目前會期不是存在資料庫，而是用臺北時間日期計算：
 
-- 每年 7 月 1 日到隔年 6 月 30 日為一屆。
-- 例如 2025-07-01 到 2026-06-30 為第 26 屆。
-- 計算公式概念：`baseYear - 1999`。
+- 每年 8 月 1 日到隔年 1 月 31 日為下一屆第 1 會期，例如 `27-1` 存為 `271`。
+- 每年 2 月 1 日到 7 月 31 日為同屆第 2 會期，例如 `26-2` 存為 `262`。
+- 有效資料自 `25-2` 會期起，內部存為 `252`。
 
 ### Legacy JSON split
 
 舊資料 repo 把議案資料拆成兩包：
 
-- `bill_latestTerm.json`：最新可用屆次資料。
-- `bill_pastTerms.json`：歷屆資料。
+- `bill_latestTerm.json`：最新可用會期資料。
+- `bill_pastTerms.json`：歷史會期資料。
 
-D1 runtime 不再使用這個拆分，也不讀取這兩個 JSON。現在最新屆次由 D1 中的 `MAX(term)` 推得，歷屆資料由 D1 查詢條件取得。
+D1 runtime 不再使用這個拆分，也不讀取這兩個 JSON。現在最新會期由 D1 中的 `MAX(term)` 推得，歷史資料由 D1 查詢條件取得。
 
 ## Legacy Shapes
 

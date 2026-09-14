@@ -57,7 +57,7 @@ Do not import the old public `legislative-data` bill JSON into D1. New bill reco
 Read routes:
 
 - `GET /api/bills`
-- `GET /api/bills?term=27`
+- `GET /api/bills?term=271`
 - `GET /api/bills?limit=10`
 - `GET /api/bills?type=all`
 - `GET /api/bills/:term/:number`
@@ -67,7 +67,7 @@ Write route:
 
 - `POST /api/bills`
 
-`POST /api/bills` accepts the existing `Bill` shape. `rowIndex` may be omitted; the server will assign the next available row index. If `billNumber` matches `27屆北大峽議字第1號`, the server derives `term` and `serialNumber` when they are not provided.
+`term` is an integer session code. For example, `25-2` is stored as `252`, `26-2` as `262`, and `27-1` as `271`. `POST /api/bills` accepts the existing `Bill` shape. `rowIndex` may be omitted; the server will assign the next available row index. If `billNumber` matches `271北大峽議字第1號` or `27-1會期北大峽議字第1號`, the server derives `term` and `serialNumber` when they are not provided.
 
 ## UI
 

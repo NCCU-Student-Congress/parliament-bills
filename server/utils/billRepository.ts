@@ -1,5 +1,5 @@
 import type { Bill } from '../../shared/types/bill';
-import { getCurrentTerm } from '../../shared/utils/term';
+import { getCurrentTerm, parseTermCode } from '../../shared/utils/term';
 import type { D1Database } from './d1';
 import { createError } from 'h3';
 
@@ -64,13 +64,13 @@ function parseBillNumber(billNumber: string): Pick<Bill, 'term' | 'serialNumber'
     return { term: getCurrentTerm(), serialNumber: null };
   }
 
-  const match = billNumber.match(/^(\d+)屆北大峽議字第(\d+)號$/);
+  const match = billNumber.match(/^((?:\d+-[12])|(?:\d{3}))(?:屆|會期)?北大峽議字第(\d+)號$/);
   if (!match) {
     return { term: null, serialNumber: null };
   }
 
   return {
-    term: parseInt(match[1], 10),
+    term: parseTermCode(match[1]),
     serialNumber: parseInt(match[2], 10),
   };
 }
@@ -163,7 +163,7 @@ async function resolveRowIndex(db: D1Database, bill: Bill): Promise<number> {
 function normalizeBillInput(input: BillInput): Bill {
   const billNumber = cleanString(input.billNumber);
   const parsed = parseBillNumber(billNumber);
-  const term = toNullableNumber(input.term) ?? parsed.term;
+  const term = parseTermCode(input.term) ?? parsed.term;
   const serialNumber = toNullableNumber(input.serialNumber) ?? parsed.serialNumber;
 
   return {

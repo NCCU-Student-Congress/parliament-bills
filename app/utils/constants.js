@@ -80,14 +80,16 @@ export const EMPTY_MESSAGES = {
 };
 
 // 議案編號正規表達式
-export const BILL_NUMBER_REGEX = /^(\d+)屆北大峽議字第(\d+)號$/;
+export const BILL_NUMBER_REGEX = /^((?:\d+-[12])|(?:\d{3}))(?:屆|會期)?北大峽議字第(\d+)號$/;
 
 // 解析議案編號
 export const parseBillNumber = (billNumber) => {
   const match = billNumber.match(BILL_NUMBER_REGEX);
   if (match) {
+    const term = match[1].includes('-') ? Number(match[1].replace('-', '')) : Number(match[1]);
+
     return {
-      term: parseInt(match[1]),
+      term,
       number: parseInt(match[2]),
     };
   }
@@ -96,7 +98,13 @@ export const parseBillNumber = (billNumber) => {
 
 // 格式化議案編號
 export const formatBillNumber = (term, number) => {
-  return `${term}屆北大峽議字第${number}號`;
+  const numericTerm = Number(term);
+  const formattedTerm =
+    Number.isInteger(numericTerm) && numericTerm >= 100
+      ? `${Math.floor(numericTerm / 10)}-${numericTerm % 10}`
+      : String(term);
+
+  return `${formattedTerm}會期北大峽議字第${number}號`;
 };
 
 // 時間格式化

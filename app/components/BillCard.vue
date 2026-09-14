@@ -13,7 +13,7 @@
         {{ bill.subject }}
       </h3>
       <p class="mb-4 text-sm font-bold text-[#5a5a70]">
-        {{ bill.billNumber !== '' ? bill.billNumber : `${bill.term}屆，尚未編號` }}
+        {{ bill.billNumber !== '' ? bill.billNumber : `${formatTermLabel(bill.term)}，尚未編號` }}
       </p>
       <div class="flex flex-wrap gap-2 mb-3">
         <span
@@ -42,6 +42,8 @@
 </template>
 
 <script setup>
+  import { formatTermLabel } from '~~/shared/utils/term';
+
   defineProps({
     bill: {
       type: Object,

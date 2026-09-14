@@ -2,6 +2,7 @@
 <script setup lang="ts">
   import { ref, watch, onMounted } from 'vue';
   import { useSecretariat } from '~/composables/useSecretariat';
+  import { formatTermLabel } from '~~/shared/utils/term';
 
   // 應用密碼驗證中介軟體
   import { definePageMeta } from '#imports';
@@ -36,7 +37,9 @@
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-3xl">
       <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">草擬會議紀錄</h1>
       <p class="text-gray-600 mb-4 text-center">
-        當前屆期：<span class="font-semibold text-blue-600">{{ currentTerm }}</span>
+        當前屆期：<span class="font-semibold text-blue-600">{{
+          formatTermLabel(currentTerm)
+        }}</span>
       </p>
 
       <div v-if="isLoading" class="text-center text-blue-500 mb-4">載入議案資料中...</div>

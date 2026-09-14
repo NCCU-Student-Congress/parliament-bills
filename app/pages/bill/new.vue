@@ -41,15 +41,15 @@
             v-model="form.billNumber"
             type="text"
             class="form-input"
-            placeholder="27屆北大峽議字第1號"
+            placeholder="271北大峽議字第1號"
           />
         </label>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <label class="block">
-          <span class="block text-sm font-medium text-gray-700 mb-1"> 屆次 </span>
-          <input v-model="form.term" type="number" min="1" class="form-input" />
+          <span class="block text-sm font-medium text-gray-700 mb-1"> 會期代碼 </span>
+          <input v-model="form.term" type="text" class="form-input" placeholder="271 或 27-1" />
         </label>
 
         <label class="block">
@@ -162,6 +162,7 @@
 
 <script setup lang="ts">
   import { computed, reactive, ref } from 'vue';
+  import { parseTermCode } from '~~/shared/utils/term';
   import type { Bill } from '~~/shared/types/bill';
 
   definePageMeta({
@@ -223,7 +224,7 @@
     return {
       rowIndex: toOptionalNumber(form.rowIndex) ?? undefined,
       billNumber: form.billNumber.trim(),
-      term: toOptionalNumber(form.term),
+      term: parseTermCode(form.term),
       serialNumber: toOptionalNumber(form.serialNumber),
       submittedAt: form.submittedAt.trim(),
       proposingEntity: form.proposingEntity.trim(),

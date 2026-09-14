@@ -1,7 +1,9 @@
 // server/api/bills/[term]/[number].get.ts
-// 處理 /api/bills/26/43 這種請求
+import { parseTermCode } from '../../../../shared/utils/term';
+
+// 處理 /api/bills/271/43 這種請求
 export default defineEventHandler(async (event) => {
-  const term = parseInt(getRouterParam(event, 'term') || '0', 10);
+  const term = parseTermCode(getRouterParam(event, 'term'));
   const num = parseInt(getRouterParam(event, 'number') || '0', 10);
 
   if (!term || !num) {

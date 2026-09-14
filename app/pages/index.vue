@@ -23,8 +23,8 @@
         class="grid overflow-hidden rounded-xl border border-primary bg-gradient-to-br from-[#1c1c4a] via-[#000024] to-[#000018] text-white shadow-[0_10px_40px_rgba(0,0,36,0.16)]"
       >
         <div class="border-b border-white/20 p-5">
-          <p class="text-xs font-black text-[#ff4d5a]">目前屆次</p>
-          <p class="mt-2 text-4xl font-black">第 {{ getCurrentTerm() }} 屆</p>
+          <p class="text-xs font-black text-[#ff4d5a]">目前會期</p>
+          <p class="mt-2 text-4xl font-black">{{ formatTermLabel(getCurrentTerm()) }}</p>
         </div>
         <div class="grid grid-cols-2">
           <div class="border-r border-white/20 p-5">
@@ -101,8 +101,10 @@
           <div class="text-gray-600">總議案數</div>
         </div>
         <div class="text-center">
-          <div class="text-3xl font-bold text-secondary mb-2">{{ getCurrentTerm() }}</div>
-          <div class="text-gray-600">目前屆次</div>
+          <div class="text-3xl font-bold text-secondary mb-2">
+            {{ formatTermLabel(getCurrentTerm()) }}
+          </div>
+          <div class="text-gray-600">目前會期</div>
         </div>
         <div class="text-center">
           <div class="text-3xl font-bold text-secondary mb-2">{{ stats.thisTermBills }}</div>
@@ -140,7 +142,7 @@
     }
   });
 
-  import { getCurrentTerm } from '../../shared/utils/term.js';
+  import { formatTermLabel, getCurrentTerm } from '../../shared/utils/term.js';
 
   import { ORG_DATA, SITE_CONFIG } from '~/utils/constants.js';
 </script>

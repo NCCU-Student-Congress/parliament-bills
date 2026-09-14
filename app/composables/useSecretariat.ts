@@ -1,7 +1,7 @@
 // composables/useSecretariat.ts
 import { ref, watch } from 'vue';
 import { useAsyncData } from '#app';
-import { getCurrentTerm } from '../../shared/utils/term';
+import { formatTermLabel, getCurrentTerm } from '../../shared/utils/term';
 import type { Bill } from '../../shared/types/bill';
 
 /**
@@ -69,8 +69,8 @@ export function useSecretariat() {
         .map((num, index) => {
           const bill = bills.value.find((b) => b.serialNumber === num);
           return bill
-            ? `（${toChineseNumeral(index + 1)}）審查${bill.term}屆北大峽議字第${bill.serialNumber}號【${bill.subject}】。`
-            : `（${toChineseNumeral(index + 1)}）無法找到${currentTerm}屆北大峽議字第${num}號議案。`;
+            ? `（${toChineseNumeral(index + 1)}）審查${formatTermLabel(bill.term)}北大峽議字第${bill.serialNumber}號【${bill.subject}】。`
+            : `（${toChineseNumeral(index + 1)}）無法找到${formatTermLabel(currentTerm)}北大峽議字第${num}號議案。`;
         })
         .join('\n') + '\n'
     );
@@ -89,7 +89,7 @@ export function useSecretariat() {
           return (
             [
               `### 第${toChineseNumeral(index + 1)}案`,
-              `編號：${bill.term}屆北大峽議字第${bill.serialNumber}號`,
+              `編號：${formatTermLabel(bill.term)}北大峽議字第${bill.serialNumber}號`,
               `案由：${bill.subject}`,
               `說明：\n${bill.description}`,
               `辦法：${bill.proposedAction}`,
@@ -98,7 +98,7 @@ export function useSecretariat() {
             ].join('\n\n') + '\n\n'
           );
         }
-        return `## 第${toChineseNumeral(index + 1)}案\n\n無法找到${currentTerm}屆北大峽議字第${num}號議案的資料。\n\n`;
+        return `## 第${toChineseNumeral(index + 1)}案\n\n無法找到${formatTermLabel(currentTerm)}北大峽議字第${num}號議案的資料。\n\n`;
       })
       .join('');
   };

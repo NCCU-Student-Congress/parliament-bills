@@ -10,18 +10,18 @@
           <NuxtLink to="/bill" class="hover:text-primary">議案查詢</NuxtLink>
         </li>
         <li>/</li>
-        <li class="text-gray-900">第{{ term }}屆</li>
+        <li class="text-gray-900">{{ termLabel }}</li>
       </ol>
     </nav>
 
     <div v-if="isOutOfRange" class="text-center text-red-500 font-bold my-12">
-      僅有第 23 ~ {{ getCurrentTerm() }} 屆資料
+      僅有 {{ formatTermLabel(getEarliestTerm()) }} ~ {{ formatTermLabel(getCurrentTerm()) }} 資料
       <div class="mt-8 flex justify-center gap-4">
         <NuxtLink
           to="/bill"
           class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
         >
-          各屆議案
+          各會期議案
         </NuxtLink>
         <NuxtLink
           to="/"
@@ -33,8 +33,8 @@
     </div>
     <template v-else>
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">第{{ term }}屆議案</h1>
-        <p class="text-gray-600">查詢第{{ term }}屆學生議會議案資料</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ termLabel }}議案</h1>
+        <p class="text-gray-600">查詢{{ termLabel }}學生議會議案資料</p>
       </div>
 
       <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -52,7 +52,7 @@
       <div v-if="!pending && !error" class="mb-8">
         <BillFilter
           :filters="filters"
-          :available-terms="[parseInt(route.params.term)]"
+          :available-terms="[term]"
           @update:filters="updateFilters"
           @reset-filters="resetFilters"
         />
@@ -84,12 +84,10 @@
 
       <div v-if="!pending && !error && filteredBills.length === 0" class="text-center py-12">
         <DocumentTextIcon class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <!-- 換屆過渡期：當前屆次尚無議案資料 -->
+        <!-- 換屆過渡期：目前會期尚無議案資料 -->
         <template v-if="term === getCurrentTerm()">
-          <h3 class="text-lg font-medium text-amber-700 mb-2">
-            第 {{ term }} 屆尚未有任何提案資料
-          </h3>
-          <p class="text-amber-600">請查看其他屆次，或等待資料更新</p>
+          <h3 class="text-lg font-medium text-amber-700 mb-2">{{ termLabel }}尚未有任何提案資料</h3>
+          <p class="text-amber-600">請查看其他會期，或等待資料更新</p>
         </template>
         <template v-else>
           <h3 class="text-lg font-medium text-gray-900 mb-2">找不到相關議案</h3>
@@ -104,20 +102,29 @@
   import { ref, computed, watch } from 'vue';
   import { useRoute } from 'vue-router';
   import { ExclamationTriangleIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
-  import { getCurrentTerm, getValidTerms } from '~~/shared/utils/term';
+  import {
+    formatTermLabel,
+    getCurrentTerm,
+    getEarliestTerm,
+    getValidTerms,
+    parseTermCode,
+  } from '~~/shared/utils/term';
 
   const route = useRoute();
-  const term = parseInt(route.params.term);
+  const routeTerm = parseTermCode(route.params.term);
 
-  // 驗證屆次參數
-  if (!term || isNaN(term)) {
+  // 驗證會期參數
+  if (!routeTerm) {
     throw createError({
       statusCode: 404,
-      statusMessage: '屆次參數欠缺或非數值',
+      statusMessage: '會期參數欠缺或格式錯誤',
     });
   }
 
-  // 判斷是否超出屆次範圍
+  const term = routeTerm;
+  const termLabel = formatTermLabel(term);
+
+  // 判斷是否超出會期範圍
   const isOutOfRange = computed(() => {
     return typeof getValidTerms === 'function' && !getValidTerms().includes(term);
   });
@@ -128,7 +135,7 @@
   const currentPage = ref(1);
   const itemsPerPage = 10;
 
-  // 篩選器狀態 (為特定屆次頁面調整)
+  // 篩選器狀態 (為特定會期頁面調整)
   const filters = ref({
     term: String(term),
     type: '',
@@ -143,12 +150,12 @@
     return Math.ceil(filteredBills.value.length / itemsPerPage);
   });
 
-  // 監聽路由參數變化，當屆次改變時重設篩選條件並重新載入
+  // 監聽路由參數變化，當會期改變時重設篩選條件並重新載入
   watch(
     () => route.params.term,
     async (newTerm) => {
-      if (newTerm && parseInt(newTerm) !== term) {
-        const newTermParsed = parseInt(newTerm);
+      const newTermParsed = parseTermCode(newTerm);
+      if (newTermParsed && newTermParsed !== term) {
         filters.value.term = String(newTermParsed);
         currentPage.value = 1;
         if (typeof refresh === 'function') await refresh();
@@ -270,11 +277,11 @@
 
   // SEO 設定
   useHead({
-    title: `第${term}屆議案查詢 - 三峽校區議事服務`,
+    title: `${termLabel}議案查詢 - 三峽校區議事服務`,
     meta: [
       {
         name: 'description',
-        content: `查詢三峽校區學生議會第${term}屆議案資料`,
+        content: `查詢三峽校區學生議會${termLabel}議案資料`,
       },
     ],
   });
