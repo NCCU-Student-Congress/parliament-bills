@@ -1,9 +1,7 @@
 <template>
-  <header
-    class="sticky top-0 z-40 border-b border-[#dcdce2] bg-white/95 shadow-sm backdrop-blur print:hidden"
-  >
-    <div class="mx-auto max-w-7xl px-4">
-      <div class="flex min-h-16 items-center justify-between gap-4">
+  <header class="sticky top-0 z-40 h-16 border-b border-[#dcdce2] bg-white shadow-sm print:hidden">
+    <div class="relative mx-auto h-full max-w-7xl px-4">
+      <div class="flex h-full items-center justify-between gap-4">
         <!-- Logo 和網站名稱 -->
         <div class="flex min-w-0 items-center">
           <NuxtLink to="/" class="flex min-w-0 items-center transition-opacity hover:opacity-80">
@@ -12,7 +10,7 @@
               alt="國立政治大學學生議會 NCCU Student Congress"
               width="853"
               height="157"
-              class="h-10 w-auto max-w-[min(62vw,300px)] object-contain sm:h-11"
+              class="h-10 w-auto max-w-[min(62vw,300px)] object-contain"
             />
           </NuxtLink>
         </div>
@@ -54,7 +52,10 @@
       </div>
 
       <!-- 行動版選單 -->
-      <div v-if="mobileMenuOpen" class="border-t border-[#dcdce2] py-4 md:hidden">
+      <div
+        v-if="mobileMenuOpen"
+        class="absolute left-0 right-0 top-full border-b border-t border-[#dcdce2] bg-white px-4 py-4 shadow-lg md:hidden"
+      >
         <nav class="flex flex-col gap-2">
           <NuxtLink to="/bill" class="mobile-nav-link" @click="closeMobileMenu">
             議案查詢
