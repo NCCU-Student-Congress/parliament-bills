@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS meetings_proposal_deadline_at_idx ON meetings (propos
 
 CREATE TABLE IF NOT EXISTS proposals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  committee_id INTEGER NOT NULL,
+  committee_id INTEGER,
   session INTEGER NOT NULL,
   proposed_at TEXT NOT NULL,
   proposer_id INTEGER NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   description TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE RESTRICT,
+  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE SET NULL,
   FOREIGN KEY (session) REFERENCES sessions (id) ON DELETE RESTRICT,
   FOREIGN KEY (proposer_id) REFERENCES users (id) ON DELETE RESTRICT,
   FOREIGN KEY (meeting_id) REFERENCES meetings (id) ON DELETE RESTRICT

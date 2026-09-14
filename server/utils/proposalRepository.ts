@@ -53,8 +53,8 @@ interface MeetingRow {
 
 interface ProposalRow {
   id: number;
-  committee_id: number;
-  committee_name: string;
+  committee_id: number | null;
+  committee_name: string | null;
   session: number;
   proposed_at: string;
   proposer_id: number;
@@ -98,7 +98,7 @@ interface CosponsorRow {
 }
 
 interface NormalizedProposalInput {
-  committeeId: number;
+  committeeId: number | null;
   session: number;
   proposedAt: string;
   proposerId: number;
@@ -282,7 +282,7 @@ function rowToProposal(
   return {
     id: row.id,
     committeeId: row.committee_id,
-    committeeName: row.committee_name,
+    committeeName: row.committee_name ?? '無（大會）',
     session: row.session,
     proposedAt: row.proposed_at,
     proposerId: row.proposer_id,
@@ -418,10 +418,6 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
   const meetingId = toPositiveInteger(input.meetingId);
   const session = parseTermCode(input.session) ?? getCurrentTerm();
   const subject = cleanString(input.subject);
-
-  if (!committeeId) {
-    throw createError({ statusCode: 400, statusMessage: '委員會為必填欄位' });
-  }
 
   if (!session) {
     throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
@@ -910,7 +906,7 @@ export function createProposalRepository(db: D1Database) {
     const statement = db.prepare(
       `SELECT ${PROPOSAL_COLUMNS}
        FROM proposals
-       INNER JOIN committees ON committees.id = proposals.committee_id
+       LEFT JOIN committees ON committees.id = proposals.committee_id
        INNER JOIN users AS proposers ON proposers.id = proposals.proposer_id
        INNER JOIN meetings ON meetings.id = proposals.meeting_id
        ${whereClause}
@@ -990,10 +986,18 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
     }
 
-    if (
-      (meeting.committee_id !== null && meeting.committee_id !== proposal.committeeId) ||
-      meeting.session !== proposal.session
-    ) {
+    if (proposal.committeeId) {
+      const existingCommittee = await db
+        .prepare('SELECT id FROM committees WHERE id = ?')
+        .bind(proposal.committeeId)
+        .first<{ id: number }>();
+
+      if (!existingCommittee) {
+        throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
+      }
+    }
+
+    if (meeting.committee_id !== proposal.committeeId || meeting.session !== proposal.session) {
       throw createError({ statusCode: 400, statusMessage: '會議與委員會或會期不相符' });
     }
 

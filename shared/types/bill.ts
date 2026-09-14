@@ -68,7 +68,7 @@ export interface ProposalCosponsor {
 
 export interface Proposal {
   id: number;
-  committeeId: number;
+  committeeId: number | null;
   committeeName: string;
   session: number;
   proposedAt: string;
@@ -88,7 +88,7 @@ export interface Proposal {
 }
 
 export interface ProposalInput {
-  committeeId: number;
+  committeeId: number | null;
   session: number;
   proposedAt?: string;
   proposerId: number;

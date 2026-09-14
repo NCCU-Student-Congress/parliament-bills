@@ -33,8 +33,8 @@
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label class="block">
           <span class="mb-1 block text-sm font-medium text-gray-700">委員會</span>
-          <select v-model="form.committeeId" required class="form-input">
-            <option value="">請選擇委員會</option>
+          <select v-model="form.committeeId" class="form-input">
+            <option value="">無（大會）</option>
             <option
               v-for="committee in committees"
               :key="committee.id"
@@ -78,7 +78,7 @@
         <select v-model="form.meetingId" required class="form-input">
           <option value="">請選擇會議</option>
           <option v-for="meeting in eligibleMeetings" :key="meeting.id" :value="String(meeting.id)">
-            {{ formatMeetingCommittee(meeting) }}・{{ meeting.title }}，截止
+            {{ meeting.title }}，截止
             {{ formatDateTime(meeting.proposalDeadlineAt) }}
           </option>
         </select>
@@ -218,7 +218,6 @@
 
   const setupErrors = computed(() => {
     const errors: string[] = [];
-    if (!committees.value.length) errors.push('尚未建立委員會資料。');
     if (!sessions.value.length) errors.push('尚未建立會期資料。');
     if (!users.value.length) errors.push('尚未建立人員資料。');
     if (!meetings.value.length) errors.push('尚未建立會議資料與提案截止時間。');
@@ -237,12 +236,7 @@
     const deadlineBase = new Date(form.proposedAt).getTime();
 
     return meetings.value.filter((meeting) => {
-      if (
-        selectedCommitteeId.value &&
-        meeting.committeeId !== null &&
-        meeting.committeeId !== selectedCommitteeId.value
-      )
-        return false;
+      if (meeting.committeeId !== selectedCommitteeId.value) return false;
       if (selectedSession.value && meeting.session !== selectedSession.value) return false;
 
       const deadline = new Date(meeting.proposalDeadlineAt).getTime();
@@ -288,10 +282,6 @@
     });
   }
 
-  function formatMeetingCommittee(meeting: Meeting) {
-    return meeting.committeeId === null ? '無（大會）' : meeting.committeeName;
-  }
-
   function buildPayload(): ProposalInput {
     const session = parseTermCode(form.session);
 
@@ -300,7 +290,7 @@
     }
 
     return {
-      committeeId: Number(form.committeeId),
+      committeeId: selectedCommitteeId.value,
       session,
       proposedAt: new Date(form.proposedAt).toISOString(),
       proposerId: Number(form.proposerId),
