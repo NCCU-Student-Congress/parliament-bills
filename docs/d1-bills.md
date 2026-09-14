@@ -1,37 +1,17 @@
 # D1 Bills Setup
 
-Bills use Cloudflare D1 as the only runtime server-side data source. The database starts empty unless bills are created through the write API/UI. The public API still returns the existing bill JSON shape:
-
-```ts
-{
-  rowIndex: number;
-  billNumber: string;
-  term: number | null;
-  serialNumber: number | null;
-  submittedAt: string;
-  proposingEntity: string;
-  proposerName: string;
-  contactName: string;
-  billType: string;
-  subject: string;
-  description: string;
-  proposedAction: string;
-  attachments: string[];
-  scheduledSession: string;
-}
-```
+Bills now use the proposal schema in Cloudflare D1. The old row index, formal bill number,
+bill type, proposed action, and scheduled session fields are no longer part of the primary model.
 
 ## Binding
 
-The Nuxt server routes expect a Cloudflare D1 binding named:
+Nuxt server routes expect a Cloudflare D1 binding named:
 
 ```text
 DB
 ```
 
-Configure the same binding in Cloudflare Pages: project settings, bindings, D1 database binding.
-
-For local Wrangler-based testing, update `wrangler.toml` with the real D1 `database_id`.
+Configure the same binding in Cloudflare Pages and `wrangler.toml`.
 
 ## Migration
 
@@ -43,33 +23,60 @@ migrations/0001_create_bills.sql
 
 It creates:
 
-- `bills`
-- `bill_attachments`
+- `committees`
+- `users`
+- `meetings`
+- `proposals`
+- `proposal_attachments`
+- `proposal_cosponsors`
 
-The API maps snake_case D1 rows back to the existing camelCase `Bill` shape.
+## Main Rules
 
-## Data Policy
-
-Do not import the old public `legislative-data` bill JSON into D1. New bill records should be created through `POST /api/bills` or the temporary `/bill/new` UI.
+- A proposal has no draft status. Once created, it is a submitted proposal.
+- Proposal deadlines belong to meetings: `meetings.proposal_deadline_at`.
+- Proposals do not store a deadline snapshot.
+- User committee membership is stored as a JSON array in `users.committee_ids`.
+- Attachments are separate records. Link attachments store the URL directly; file attachments can store an R2 key plus metadata.
+- Confirmed cosponsors are `proposal_cosponsors.status = 'confirmed'`.
 
 ## API
 
-Read routes:
+Reference data:
+
+- `GET /api/committees`
+- `POST /api/committees`
+- `GET /api/users`
+- `POST /api/users`
+- `GET /api/meetings`
+- `POST /api/meetings`
+
+Proposal reads:
 
 - `GET /api/bills`
 - `GET /api/bills?term=271`
 - `GET /api/bills?limit=10`
 - `GET /api/bills?type=all`
-- `GET /api/bills/:term/:number`
-- `GET /api/bills/byRowIndex/:rowIndex`
+- `GET /api/proposals/:id`
 
-Write route:
+Proposal writes:
 
 - `POST /api/bills`
 
-`term` is an integer session code. For example, `25-2` is stored as `252`, `26-2` as `262`, and `27-1` as `271`. `POST /api/bills` accepts the existing `Bill` shape. `rowIndex` may be omitted; the server will assign the next available row index. If `billNumber` matches `271北大峽議字第1號` or `27-1會期北大峽議字第1號`, the server derives `term` and `serialNumber` when they are not provided.
+`POST /api/bills` accepts:
 
-## UI
+```ts
+{
+  committeeId: number;
+  session: number;
+  proposedAt?: string;
+  proposerId: number;
+  meetingId: number;
+  subject: string;
+  description?: string;
+  attachments?: Array<string | ProposalAttachment>;
+  cosponsorIds?: number[];
+}
+```
 
 The temporary unprotected write UI is:
 

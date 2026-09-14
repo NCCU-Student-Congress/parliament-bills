@@ -38,7 +38,7 @@ export function useSecretariat() {
       throw new Error('API 回應資料格式不正確或無議案資料。');
     }
 
-    return data.filter((bill) => bill.billNumber);
+    return data;
   });
 
   // 將 asyncData 同步到 bills ref
@@ -67,10 +67,10 @@ export function useSecretariat() {
         .map((s) => parseInt(s.trim(), 10))
         .filter((n) => !isNaN(n))
         .map((num, index) => {
-          const bill = bills.value.find((b) => b.serialNumber === num);
+          const bill = bills.value.find((b) => b.id === num);
           return bill
-            ? `（${toChineseNumeral(index + 1)}）審查${formatTermLabel(bill.term)}北大峽議字第${bill.serialNumber}號【${bill.subject}】。`
-            : `（${toChineseNumeral(index + 1)}）無法找到${formatTermLabel(currentTerm)}北大峽議字第${num}號議案。`;
+            ? `（${toChineseNumeral(index + 1)}）審查${formatTermLabel(bill.session)}【${bill.subject}】。`
+            : `（${toChineseNumeral(index + 1)}）無法找到${formatTermLabel(currentTerm)}索引 ${num} 的議案。`;
         })
         .join('\n') + '\n'
     );
@@ -84,21 +84,22 @@ export function useSecretariat() {
       .map((s) => parseInt(s.trim(), 10))
       .filter((n) => !isNaN(n))
       .map((num, index) => {
-        const bill = bills.value.find((b) => b.serialNumber === num);
+        const bill = bills.value.find((b) => b.id === num);
         if (bill) {
           return (
             [
               `### 第${toChineseNumeral(index + 1)}案`,
-              `編號：${formatTermLabel(bill.term)}北大峽議字第${bill.serialNumber}號`,
+              `會期：${formatTermLabel(bill.session)}`,
+              `委員會：${bill.committeeName}`,
+              `提案人：${bill.proposerName}`,
               `案由：${bill.subject}`,
               `說明：\n${bill.description}`,
-              `辦法：${bill.proposedAction}`,
-              `附件：詳見[已提案件查詢系統](https://sxcongress.ntpusu.org/bill/${bill.term}/${bill.serialNumber})`,
+              `附件：詳見[已提案件查詢系統](https://sxcongress.ntpusu.org/bill/proposal/${bill.id})`,
               `決議：\n　一、提案機關說明及經本會議員詢答完畢。\n　二、議員提案包裹表決，議員附議，通過。\n　三、全案，同意票票，不同意票票，通過。`,
             ].join('\n\n') + '\n\n'
           );
         }
-        return `## 第${toChineseNumeral(index + 1)}案\n\n無法找到${formatTermLabel(currentTerm)}北大峽議字第${num}號議案的資料。\n\n`;
+        return `## 第${toChineseNumeral(index + 1)}案\n\n無法找到${formatTermLabel(currentTerm)}索引 ${num} 的議案資料。\n\n`;
       })
       .join('');
   };

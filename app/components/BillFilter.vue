@@ -25,54 +25,50 @@
     </h3>
     <div v-show="!isCollapsed">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <!-- 編號篩選 -->
         <div class="filter-group">
-          <label class="filter-label"> 編號 </label>
+          <label class="filter-label"> 關鍵字 </label>
           <input
-            v-model="localFilters.編號"
+            v-model="localFilters.keyword"
             type="text"
             class="filter-control"
-            placeholder="請輸入編號關鍵字"
+            placeholder="搜尋案由、說明、提案人"
           />
         </div>
 
-        <!-- 提案機關/議員篩選 -->
         <div class="filter-group">
-          <label class="filter-label"> 提案機關/議員 </label>
-          <input
-            v-model="localFilters['提案機關/議員']"
-            type="text"
-            class="filter-control"
-            placeholder="請輸入提案機關/議員(完整)"
-          />
+          <label class="filter-label"> 委員會 </label>
+          <select v-model="localFilters.committeeId" class="filter-control">
+            <option value="">全部委員會</option>
+            <option
+              v-for="committee in committees"
+              :key="committee.id"
+              :value="String(committee.id)"
+            >
+              {{ committee.name }}
+            </option>
+          </select>
         </div>
 
-        <!-- 提案人篩選 -->
         <div class="filter-group">
           <label class="filter-label"> 提案人 </label>
           <input
-            v-model="localFilters['提案機關主管/提案議員姓名']"
+            v-model="localFilters.proposer"
             type="text"
             class="filter-control"
             placeholder="請輸入提案人姓名"
           />
         </div>
 
-        <!-- 提案類型篩選 -->
         <div class="filter-group">
-          <label class="filter-label"> 提案類型 </label>
-          <select v-model="localFilters.提案類型" class="filter-control">
-            <option value="">全部類型</option>
-            <option value="人事案">人事案</option>
-            <option value="法規案">法規案</option>
-            <option value="預算案">預算案</option>
-            <option value="決議案">決議案</option>
-            <option value="質詢案">質詢案</option>
-            <option value="其他">其他</option>
-          </select>
+          <label class="filter-label"> 排入會議 </label>
+          <input
+            v-model="localFilters.meeting"
+            type="text"
+            class="filter-control"
+            placeholder="請輸入會議關鍵字"
+          />
         </div>
 
-        <!-- 日期範圍篩選 -->
         <div class="filter-group">
           <label class="filter-label"> 提案日期起 </label>
           <input v-model="localFilters.dateFrom" type="date" class="filter-control" />
@@ -81,50 +77,6 @@
         <div class="filter-group">
           <label class="filter-label"> 提案日期迄 </label>
           <input v-model="localFilters.dateTo" type="date" class="filter-control" />
-        </div>
-
-        <!-- 案由篩選 -->
-        <div class="filter-group">
-          <label class="filter-label"> 案由 </label>
-          <input
-            v-model="localFilters.案由"
-            type="text"
-            class="filter-control"
-            placeholder="請輸入案由關鍵字"
-          />
-        </div>
-
-        <!-- 說明篩選 -->
-        <div class="filter-group">
-          <label class="filter-label"> 說明 </label>
-          <input
-            v-model="localFilters.說明"
-            type="text"
-            class="filter-control"
-            placeholder="請輸入說明關鍵字"
-          />
-        </div>
-
-        <!-- 辦法篩選 -->
-        <div class="filter-group">
-          <label class="filter-label"> 辦法 </label>
-          <input
-            v-model="localFilters.辦法"
-            type="text"
-            class="filter-control"
-            placeholder="請輸入辦法關鍵字"
-          />
-        </div>
-
-        <!-- 排入會議篩選 -->
-        <div class="filter-group">
-          <label class="filter-label"> 排入會議 </label>
-          <input
-            v-model="localFilters.排入會議"
-            type="text"
-            class="filter-control"
-            placeholder="排入會議關鍵字..."
-          />
         </div>
       </div>
 
@@ -145,19 +97,19 @@
       type: Object,
       default: () => ({}),
     },
+    committees: {
+      type: Array,
+      default: () => [],
+    },
   });
 
   const emit = defineEmits(['update:filters']);
 
   const localFilters = ref({
-    編號: '',
-    '提案機關/議員': '',
-    '提案機關主管/提案議員姓名': '',
-    提案類型: '',
-    案由: '',
-    說明: '',
-    辦法: '',
-    排入會議: '',
+    keyword: '',
+    committeeId: '',
+    proposer: '',
+    meeting: '',
     dateFrom: '',
     dateTo: '',
     ...props.filters,
@@ -186,14 +138,10 @@
 
   const clearFilters = () => {
     localFilters.value = {
-      編號: '',
-      '提案機關/議員': '',
-      '提案機關主管/提案議員姓名': '',
-      提案類型: '',
-      案由: '',
-      說明: '',
-      辦法: '',
-      排入會議: '',
+      keyword: '',
+      committeeId: '',
+      proposer: '',
+      meeting: '',
       dateFrom: '',
       dateTo: '',
     };

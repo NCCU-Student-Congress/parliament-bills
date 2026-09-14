@@ -1,53 +1,61 @@
 <template>
-  <NuxtLink
-    :to="
-      bill.billNumber !== ''
-        ? `/bill/${bill.term}/${bill.serialNumber}`
-        : `/bill/unnumbered/${bill.rowIndex}`
-    "
-    target="_blank"
-    rel="noopener"
-  >
+  <NuxtLink :to="`/bill/proposal/${bill.id}`" target="_blank" rel="noopener">
     <div class="bill-card cursor-pointer">
       <h3>
         {{ bill.subject }}
       </h3>
       <p class="mb-4 text-sm font-bold text-[#5a5a70]">
-        {{ bill.billNumber !== '' ? bill.billNumber : `${formatTermLabel(bill.term)}，尚未編號` }}
+        {{ formatTermLabel(bill.session) }} · {{ bill.committeeName }}
       </p>
       <div class="flex flex-wrap gap-2 mb-3">
         <span
           class="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-black text-white"
         >
-          {{ bill.billType }}
+          {{ bill.meetingTitle }}
         </span>
         <span class="inline-flex items-center text-xs font-bold text-[#5a5a70]">
-          {{ bill.submittedAt }}
+          {{ formatDateTime(bill.proposedAt) }}
         </span>
       </div>
       <div class="text-sm font-semibold leading-relaxed text-[#12122b]">
-        <p v-if="bill.proposingEntity === '本會議員'">
-          <strong>提案者：</strong>本會{{ bill.proposerName }}議員
-        </p>
-        <p v-else-if="bill.proposingEntity === '本會議長'">
-          <strong>提案者：</strong>本會{{ bill.proposerName }}議長
-        </p>
-        <p v-else><strong>提案者：</strong>{{ bill.proposingEntity }}</p>
+        <p><strong>提案人：</strong>{{ bill.proposerName }}</p>
       </div>
       <div class="mt-1 text-sm font-semibold text-[#12122b]">
-        <p v-if="bill.scheduledSession"><strong>排入會議：</strong>{{ bill.scheduledSession }}</p>
+        <p v-if="confirmedCosponsors.length">
+          <strong>連署人：</strong>{{ confirmedCosponsors.join('、') }}
+        </p>
       </div>
     </div>
   </NuxtLink>
 </template>
 
 <script setup>
+  import { computed } from 'vue';
   import { formatTermLabel } from '~~/shared/utils/term';
 
-  defineProps({
+  const props = defineProps({
     bill: {
       type: Object,
       required: true,
     },
   });
+
+  const confirmedCosponsors = computed(() =>
+    (props.bill.cosponsors ?? [])
+      .filter((cosponsor) => cosponsor.status === 'confirmed')
+      .map((cosponsor) => cosponsor.userName)
+      .filter(Boolean),
+  );
+
+  const formatDateTime = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 </script>

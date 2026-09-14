@@ -72,7 +72,7 @@
       <div class="text-sm text-gray-600">最新 10 筆議案</div>
 
       <div class="grid gap-4">
-        <BillCardSimple v-for="bill in newestBills" :key="bill.rowIndex" :bill="bill" />
+        <BillCardSimple v-for="bill in newestBills" :key="bill.id" :bill="bill" />
       </div>
     </div>
   </div>

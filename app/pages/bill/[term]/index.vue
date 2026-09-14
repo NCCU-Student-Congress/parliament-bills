@@ -52,7 +52,7 @@
       <div v-if="!pending && !error" class="mb-8">
         <BillFilter
           :filters="filters"
-          :available-terms="[term]"
+          :committees="committees"
           @update:filters="updateFilters"
           @reset-filters="resetFilters"
         />
@@ -70,7 +70,7 @@
         />
 
         <div class="grid gap-4">
-          <BillCard v-for="bill in paginatedBills" :key="bill.billNumber" :bill="bill" />
+          <BillCard v-for="bill in paginatedBills" :key="bill.id" :bill="bill" />
         </div>
 
         <!-- 下方分頁選單 -->
@@ -130,6 +130,8 @@
   });
 
   const { data: bills, pending, error, refresh } = await useFetch(`/api/bills?term=${term}`);
+  const { data: committeesData } = await useFetch('/api/committees');
+  const committees = computed(() => committeesData.value ?? []);
 
   // 響應式數據
   const currentPage = ref(1);
@@ -138,8 +140,9 @@
   // 篩選器狀態 (為特定會期頁面調整)
   const filters = ref({
     term: String(term),
-    type: '',
-    agency: '',
+    committeeId: '',
+    proposer: '',
+    meeting: '',
     keyword: '',
     dateFrom: '',
     dateTo: '',
@@ -170,24 +173,41 @@
 
     return bills.value
       .filter((bill) => {
-        // 類型篩選
-        if (filters.value.type && bill.billType !== filters.value.type) return false;
+        if (filters.value.committeeId && bill.committeeId !== Number(filters.value.committeeId)) {
+          return false;
+        }
 
-        // 機關篩選
-        if (filters.value.agency && bill.proposingEntity !== filters.value.agency) return false;
+        if (
+          filters.value.proposer &&
+          !bill.proposerName.toLowerCase().includes(filters.value.proposer.toLowerCase())
+        ) {
+          return false;
+        }
 
-        // 關鍵字篩選
+        if (
+          filters.value.meeting &&
+          !bill.meetingTitle.toLowerCase().includes(filters.value.meeting.toLowerCase())
+        ) {
+          return false;
+        }
+
         if (filters.value.keyword) {
           const keyword = filters.value.keyword.toLowerCase();
-          const content = [bill.subject, bill.description, bill.proposedAction, bill.billNumber]
+          const content = [
+            bill.subject,
+            bill.description,
+            bill.committeeName,
+            bill.meetingTitle,
+            bill.proposerName,
+            ...(bill.cosponsors ?? []).map((cosponsor) => cosponsor.userName),
+          ]
             .filter(Boolean)
             .join(' ')
             .toLowerCase();
           if (!content.includes(keyword)) return false;
         }
 
-        // 日期範圍篩選
-        const billDateISO = normalizeDate(bill.submittedAt);
+        const billDateISO = normalizeDate(bill.proposedAt);
 
         if (billDateISO) {
           if (filters.value.dateFrom && billDateISO < filters.value.dateFrom) return false;
@@ -197,10 +217,9 @@
         return true;
       })
       .sort((a, b) => {
-        const dateA = normalizeDate(a.submittedAt);
-        const dateB = normalizeDate(b.submittedAt);
+        const dateA = normalizeDate(a.proposedAt);
+        const dateB = normalizeDate(b.proposedAt);
         if (!dateA || !dateB) return 0;
-        // 提案時間近→遠：日期較新的排前面
         return new Date(dateB).getTime() - new Date(dateA).getTime();
       });
   });
@@ -221,31 +240,14 @@
   const resetFilters = () => {
     filters.value = {
       term: String(term),
-      type: '',
-      agency: '',
+      committeeId: '',
+      proposer: '',
+      meeting: '',
       keyword: '',
       dateFrom: '',
       dateTo: '',
     };
     currentPage.value = 1;
-  };
-
-  const handlePageChange = (page) => {
-    currentPage.value = page;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // 輔助函數
-  const extractTermFromNumber = (billNumber) => {
-    if (typeof billNumber !== 'string') return null;
-    const match = billNumber.match(/^(\d+)屆/);
-    return match ? parseInt(match[1]) : null;
-  };
-
-  const extractNumberFromNumber = (billNumber) => {
-    if (typeof billNumber !== 'string') return null;
-    const match = billNumber.match(/第(\d+)號$/);
-    return match ? parseInt(match[1]) : null;
   };
 
   const normalizeDate = (date) => {

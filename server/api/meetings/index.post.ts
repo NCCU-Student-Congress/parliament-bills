@@ -1,8 +1,8 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const billService = useBillService(event);
-  const bill = await billService.saveBill(body);
+  const meeting = await billService.createMeeting(body);
 
   setResponseStatus(event, 201);
-  return bill;
+  return meeting;
 });

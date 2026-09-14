@@ -1,8 +1,8 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const billService = useBillService(event);
-  const bill = await billService.saveBill(body);
+  const committee = await billService.createCommittee(body);
 
   setResponseStatus(event, 201);
-  return bill;
+  return committee;
 });
