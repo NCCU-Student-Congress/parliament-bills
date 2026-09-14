@@ -87,3 +87,9 @@ The temporary unprotected write UI is:
 ```text
 /bill/new
 ```
+
+The temporary unprotected reference data admin is:
+
+```text
+/admin
+```
