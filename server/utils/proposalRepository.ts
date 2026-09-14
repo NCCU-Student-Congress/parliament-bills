@@ -9,7 +9,7 @@ import type {
   Session,
   User,
 } from '../../shared/types/bill';
-import { getCurrentTerm, parseTermCode } from '../../shared/utils/term';
+import { getCurrentTerm, getEarliestTerm, parseTermCode } from '../../shared/utils/term';
 import type { D1Database } from './d1';
 
 interface CommitteeRow {
@@ -155,6 +155,33 @@ function parseJsonArray(value: string): number[] {
   } catch {
     return [];
   }
+}
+
+function getNextTermCode(term: number): number {
+  const congress = Math.floor(term / 10);
+  const session = term % 10;
+
+  return session === 1 ? congress * 10 + 2 : (congress + 1) * 10 + 1;
+}
+
+function getSessionDefaults(id: number): Pick<Session, 'title' | 'startsAt' | 'endsAt'> {
+  const congress = Math.floor(id / 10);
+  const session = id % 10;
+  const title = `${congress}-${session} 會期`;
+
+  if (session === 1) {
+    return {
+      title,
+      startsAt: `${congress + 1999}-08-01`,
+      endsAt: `${congress + 2000}-01-31`,
+    };
+  }
+
+  return {
+    title,
+    startsAt: `${congress + 2000}-02-01`,
+    endsAt: `${congress + 2000}-07-31`,
+  };
 }
 
 function rowToCommittee(row: CommitteeRow): Committee {
@@ -491,20 +518,15 @@ export function createProposalRepository(db: D1Database) {
     return results.map(rowToCommittee);
   };
 
-  const createSession = async (input: {
-    id?: unknown;
-    title?: unknown;
-    startsAt?: unknown;
-    endsAt?: unknown;
-  }) => {
-    const id = parseTermCode(input.id);
-    const title = cleanString(input.title) || (id ? `${Math.floor(id / 10)}-${id % 10} 會期` : '');
-    const startsAt = cleanString(input.startsAt) || null;
-    const endsAt = cleanString(input.endsAt) || null;
+  const createSession = async () => {
+    const maxSession = await db
+      .prepare('SELECT MAX(id) AS max_session FROM sessions')
+      .first<{ max_session: number | null }>();
+    const id = maxSession?.max_session
+      ? getNextTermCode(maxSession.max_session)
+      : getEarliestTerm();
 
-    if (!id) {
-      throw createError({ statusCode: 400, statusMessage: '會期代碼為必填欄位' });
-    }
+    const defaults = getSessionDefaults(id);
 
     const row = await db
       .prepare(
@@ -512,7 +534,7 @@ export function createProposalRepository(db: D1Database) {
          VALUES (?, ?, ?, ?)
          RETURNING id, title, starts_at, ends_at, created_at, updated_at`,
       )
-      .bind(id, title, startsAt, endsAt)
+      .bind(id, defaults.title, defaults.startsAt, defaults.endsAt)
       .first<SessionRow>();
 
     if (!row) {
@@ -521,40 +543,6 @@ export function createProposalRepository(db: D1Database) {
 
     return rowToSession(row);
   };
-
-  const updateSession = async (
-    id: number,
-    input: {
-      title?: unknown;
-      startsAt?: unknown;
-      endsAt?: unknown;
-    },
-  ) => {
-    const title = cleanString(input.title) || `${Math.floor(id / 10)}-${id % 10} 會期`;
-    const startsAt = cleanString(input.startsAt) || null;
-    const endsAt = cleanString(input.endsAt) || null;
-
-    const row = await db
-      .prepare(
-        `UPDATE sessions
-         SET title = ?,
-             starts_at = ?,
-             ends_at = ?,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?
-         RETURNING id, title, starts_at, ends_at, created_at, updated_at`,
-      )
-      .bind(title, startsAt, endsAt, id)
-      .first<SessionRow>();
-
-    if (!row) {
-      throw createError({ statusCode: 404, statusMessage: '找不到指定會期' });
-    }
-
-    return rowToSession(row);
-  };
-
-  const deleteSession = (id: number) => deleteById('sessions', id, '找不到指定會期');
 
   const getSessions = async () => {
     const { results = [] } = await db
@@ -1041,8 +1029,6 @@ export function createProposalRepository(db: D1Database) {
     deleteCommittee,
     getCommittees,
     createSession,
-    updateSession,
-    deleteSession,
     getSessions,
     createUser,
     updateUser,

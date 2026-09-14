@@ -30,43 +30,9 @@
           <h2 class="section-title">會期</h2>
         </div>
 
-        <form class="form-grid" @submit.prevent="submitSession">
-          <label class="field">
-            <span>會期代碼</span>
-            <input
-              v-model="sessionForm.id"
-              required
-              class="control"
-              placeholder="271 或 27-1"
-              :disabled="editingSessionId !== null"
-            />
-          </label>
-          <label class="field">
-            <span>名稱</span>
-            <input v-model="sessionForm.title" class="control" placeholder="27-1 會期" />
-          </label>
-          <label class="field">
-            <span>開始日期</span>
-            <input v-model="sessionForm.startsAt" type="date" class="control" />
-          </label>
-          <label class="field">
-            <span>結束日期</span>
-            <input v-model="sessionForm.endsAt" type="date" class="control" />
-          </label>
-          <div class="form-actions">
-            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
-              {{ editingSessionId === null ? '新增會期' : '儲存會期' }}
-            </button>
-            <button
-              v-if="editingSessionId !== null"
-              class="btn btn-secondary"
-              type="button"
-              @click="resetSessionForm"
-            >
-              取消
-            </button>
-          </div>
-        </form>
+        <button class="btn btn-primary" type="button" :disabled="isSubmitting" @click="addSession">
+          新增會期
+        </button>
 
         <div class="table-wrap">
           <table class="admin-table">
@@ -75,7 +41,6 @@
                 <th>代碼</th>
                 <th>名稱</th>
                 <th>期間</th>
-                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -83,23 +48,9 @@
                 <td>{{ session.id }}</td>
                 <td>{{ session.title }}</td>
                 <td>{{ formatRange(session.startsAt, session.endsAt) }}</td>
-                <td>
-                  <div class="row-actions">
-                    <button class="text-button" type="button" @click="editSession(session)">
-                      編輯
-                    </button>
-                    <button
-                      class="text-button danger"
-                      type="button"
-                      @click="deleteResource('sessions', session.id, '會期')"
-                    >
-                      刪除
-                    </button>
-                  </div>
-                </td>
               </tr>
               <tr v-if="sessions.length === 0">
-                <td colspan="4" class="empty-cell">尚無會期</td>
+                <td colspan="3" class="empty-cell">尚無會期</td>
               </tr>
             </tbody>
           </table>
@@ -370,28 +321,20 @@
 <script setup lang="ts">
   import { computed, reactive, ref } from 'vue';
   import type { Committee, Meeting, Session, User } from '~~/shared/types/bill';
-  import { formatTermLabel, parseTermCode } from '~~/shared/utils/term';
+  import { formatTermLabel } from '~~/shared/utils/term';
 
   definePageMeta({
     title: '後台資料管理',
   });
 
-  type ResourceType = 'committees' | 'sessions' | 'users' | 'meetings';
+  type ResourceType = 'committees' | 'users' | 'meetings';
 
   const notice = ref('');
   const errorMessage = ref('');
   const isSubmitting = ref(false);
-  const editingSessionId = ref<number | null>(null);
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
   const editingMeetingId = ref<number | null>(null);
-
-  const sessionForm = reactive({
-    id: '',
-    title: '',
-    startsAt: '',
-    endsAt: '',
-  });
 
   const committeeForm = reactive({
     name: '',
@@ -456,27 +399,11 @@
     await Promise.all([refreshSessions(), refreshCommittees(), refreshUsers(), refreshMeetings()]);
   }
 
-  async function submitSession() {
-    const id = editingSessionId.value ?? parseTermCode(sessionForm.id);
-    if (!id) {
-      errorMessage.value = '會期代碼格式錯誤';
-      return;
-    }
-
-    const payload = {
-      id,
-      title: sessionForm.title.trim() || formatTermLabel(id),
-      startsAt: sessionForm.startsAt,
-      endsAt: sessionForm.endsAt,
-    };
-
-    const url = editingSessionId.value === null ? '/api/sessions' : `/api/sessions/${id}`;
-    const method = editingSessionId.value === null ? 'POST' : 'PUT';
-    const result = await requestJson<Session>(url, method, payload);
+  async function addSession() {
+    const result = await requestJson<Session>('/api/sessions', 'POST', {});
     if (!result) return;
 
-    resetSessionForm();
-    notice.value = method === 'POST' ? '已新增會期' : '已更新會期';
+    notice.value = `已新增${result.title}`;
     await refreshAll();
   }
 
@@ -534,14 +461,6 @@
     await refreshAll();
   }
 
-  function editSession(session: Session) {
-    editingSessionId.value = session.id;
-    sessionForm.id = String(session.id);
-    sessionForm.title = session.title;
-    sessionForm.startsAt = toDateInput(session.startsAt);
-    sessionForm.endsAt = toDateInput(session.endsAt);
-  }
-
   function editCommittee(committee: Committee) {
     editingCommitteeId.value = committee.id;
     committeeForm.name = committee.name;
@@ -579,18 +498,9 @@
   }
 
   function clearEditingState(type: ResourceType, id: number) {
-    if (type === 'sessions' && editingSessionId.value === id) resetSessionForm();
     if (type === 'committees' && editingCommitteeId.value === id) resetCommitteeForm();
     if (type === 'users' && editingUserId.value === id) resetUserForm();
     if (type === 'meetings' && editingMeetingId.value === id) resetMeetingForm();
-  }
-
-  function resetSessionForm() {
-    editingSessionId.value = null;
-    sessionForm.id = '';
-    sessionForm.title = '';
-    sessionForm.startsAt = '';
-    sessionForm.endsAt = '';
   }
 
   function resetCommitteeForm() {
@@ -620,13 +530,6 @@
     if (!value) return '';
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toISOString();
-  }
-
-  function toDateInput(value?: string | null) {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value.slice(0, 10);
-    return date.toISOString().slice(0, 10);
   }
 
   function toDateTimeInput(value?: string | null) {
