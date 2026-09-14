@@ -19,13 +19,6 @@
       <p class="text-gray-600">提案送出後即為正式提案，截止時間依所選會議設定。</p>
     </div>
 
-    <div v-if="setupErrors.length" class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-      <h2 class="mb-2 text-sm font-bold text-amber-800">提案前需先完成設定</h2>
-      <ul class="list-disc space-y-1 pl-5 text-sm text-amber-700">
-        <li v-for="item in setupErrors" :key="item">{{ item }}</li>
-      </ul>
-    </div>
-
     <form
       class="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
       @submit.prevent="submitBill"
@@ -133,7 +126,7 @@
       <div class="flex flex-wrap gap-3">
         <button
           type="submit"
-          :disabled="isSubmitting || setupErrors.length > 0"
+          :disabled="isSubmitting"
           class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {{ isSubmitting ? '寫入中...' : '送出提案' }}
@@ -215,14 +208,6 @@
 
   const selectedCommitteeId = computed(() => Number(form.committeeId) || null);
   const selectedSession = computed(() => parseTermCode(form.session));
-
-  const setupErrors = computed(() => {
-    const errors: string[] = [];
-    if (!sessions.value.length) errors.push('尚未建立會期資料。');
-    if (!users.value.length) errors.push('尚未建立人員資料。');
-    if (!meetings.value.length) errors.push('尚未建立會議資料與提案截止時間。');
-    return errors;
-  });
 
   const eligibleUsers = computed(() => {
     if (!selectedCommitteeId.value) return users.value;
