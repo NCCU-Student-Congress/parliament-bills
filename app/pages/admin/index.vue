@@ -41,6 +41,7 @@
                 <th>代碼</th>
                 <th>名稱</th>
                 <th>期間</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -48,9 +49,19 @@
                 <td>{{ session.id }}</td>
                 <td>{{ session.title }}</td>
                 <td>{{ formatRange(session.startsAt, session.endsAt) }}</td>
+                <td>
+                  <button
+                    v-if="isFutureSession(session)"
+                    class="text-button danger"
+                    type="button"
+                    @click="deleteResource('sessions', session.id, '會期')"
+                  >
+                    刪除
+                  </button>
+                </td>
               </tr>
               <tr v-if="sessions.length === 0">
-                <td colspan="3" class="empty-cell">尚無會期</td>
+                <td colspan="4" class="empty-cell">尚無會期</td>
               </tr>
             </tbody>
           </table>
@@ -327,7 +338,7 @@
     title: '後台資料管理',
   });
 
-  type ResourceType = 'committees' | 'users' | 'meetings';
+  type ResourceType = 'sessions' | 'committees' | 'users' | 'meetings';
 
   const notice = ref('');
   const errorMessage = ref('');
@@ -569,6 +580,23 @@
     const end = formatDate(endsAt);
     if (start && end) return `${start} 至 ${end}`;
     return start || end || '未設定';
+  }
+
+  function isFutureSession(session: Session) {
+    if (!session.startsAt) return false;
+    return session.startsAt.slice(0, 10) > getTaipeiDateString();
+  }
+
+  function getTaipeiDateString() {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
   }
 
   function formatSession(session: number) {

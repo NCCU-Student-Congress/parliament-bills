@@ -184,6 +184,18 @@ function getSessionDefaults(id: number): Pick<Session, 'title' | 'startsAt' | 'e
   };
 }
 
+function getTaipeiDateString(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function rowToCommittee(row: CommitteeRow): Committee {
   return {
     id: row.id,
@@ -554,6 +566,39 @@ export function createProposalRepository(db: D1Database) {
       .all<SessionRow>();
 
     return results.map(rowToSession);
+  };
+
+  const deleteSession = async (id: number) => {
+    const session = await db
+      .prepare('SELECT id, starts_at FROM sessions WHERE id = ?')
+      .bind(id)
+      .first<{ id: number; starts_at: string | null }>();
+
+    if (!session) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定會期' });
+    }
+
+    if (!session.starts_at || session.starts_at.slice(0, 10) <= getTaipeiDateString()) {
+      throw createError({ statusCode: 400, statusMessage: '僅允許刪除未來會期' });
+    }
+
+    const references = await db
+      .prepare(
+        `SELECT
+           (SELECT COUNT(*) FROM meetings WHERE session = ?) AS meeting_count,
+           (SELECT COUNT(*) FROM proposals WHERE session = ?) AS proposal_count`,
+      )
+      .bind(id, id)
+      .first<{ meeting_count: number; proposal_count: number }>();
+
+    if ((references?.meeting_count ?? 0) > 0 || (references?.proposal_count ?? 0) > 0) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: '會期已有會議或議案資料，無法只刪除會期',
+      });
+    }
+
+    return deleteById('sessions', id, '找不到指定會期');
   };
 
   const createUser = async (input: {
@@ -1046,6 +1091,7 @@ export function createProposalRepository(db: D1Database) {
     deleteCommittee,
     getCommittees,
     createSession,
+    deleteSession,
     getSessions,
     createUser,
     updateUser,
