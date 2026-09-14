@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
-    "dev:pages": "wrangler d1 migrations apply DB --local && nuxt build && wrangler pages dev dist --d1 DB --compatibility-date=2026-02-26",
+    "dev": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state && nuxt dev",
+    "dev:pages": "pnpm run dev",
     "dev-mac": "TMPDIR=/tmp nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "preview:pages": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state && nuxt build && wrangler pages dev dist --compatibility-date=2026-02-26 --persist-to .wrangler/state",
     "postinstall": "nuxt prepare",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
