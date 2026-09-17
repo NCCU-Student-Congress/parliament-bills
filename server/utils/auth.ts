@@ -108,7 +108,7 @@ export async function readAuthSession(event: H3Event): Promise<AuthSession | nul
     const session = JSON.parse(decodeBase64Url(payload)) as AuthSession;
 
     if (session.exp <= Date.now()) return null;
-    if (!Number.isInteger(session.userId) || session.userId <= 0) return null;
+    if (!Number.isInteger(session.userId) || session.userId < 0) return null;
     if (typeof session.email !== 'string' || !session.email) return null;
     if (session.role !== 'legislator' && session.role !== 'secretariat_admin') return null;
 
@@ -143,7 +143,8 @@ export async function requireRole(event: H3Event, roles: PermissionRole[]) {
 }
 
 export function isAuthBypassEnabled(event: H3Event) {
-  if (getEnv(event, 'AUTH_BYPASS') !== 'true') return false;
+  const bypassValue = getEnv(event, 'AUTH_BYPASS') || getEnv(event, 'auth_bypass');
+  if (!['1', 'true'].includes(bypassValue.toLowerCase())) return false;
 
   const host = getRequestURL(event).hostname;
   return (

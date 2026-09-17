@@ -40,6 +40,22 @@ export default defineEventHandler(async (event) => {
     return getGenericResponse();
   }
 
+  if (isAuthBypassEnabled(event)) {
+    const authToken = await createAuthToken(event, {
+      id: 0,
+      email,
+      role: 'secretariat_admin',
+    });
+    setAuthSessionCookie(event, authToken);
+
+    return {
+      authenticated: true,
+      role: 'secretariat_admin',
+      redirect: redirectPath,
+      message: '已使用開發環境旁路登入。',
+    };
+  }
+
   const db = useD1Database(event);
   const user = await db
     .prepare(
@@ -60,18 +76,6 @@ export default defineEventHandler(async (event) => {
     email: user.email,
     role: user.permission_role,
   };
-
-  if (isAuthBypassEnabled(event)) {
-    const authToken = await createAuthToken(event, sessionUser);
-    setAuthSessionCookie(event, authToken);
-
-    return {
-      authenticated: true,
-      role: sessionUser.role,
-      redirect: redirectPath,
-      message: '已使用開發環境旁路登入。',
-    };
-  }
 
   const token = createRandomToken();
   const tokenHash = await hashToken(token);
