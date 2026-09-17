@@ -30,7 +30,8 @@ function getSessionSecret(event: H3Event) {
   if (!secret) {
     throw createError({
       statusCode: 500,
-      statusMessage: '尚未設定 AUTH_SECRET',
+      statusMessage: 'Server Misconfigured',
+      message: '尚未設定 AUTH_SECRET',
     });
   }
 
@@ -141,11 +142,19 @@ export async function requireRole(event: H3Event, roles: PermissionRole[]) {
   const session = await readAuthSession(event);
 
   if (!session) {
-    throw createError({ statusCode: 401, statusMessage: '請先登入' });
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: '請先登入',
+    });
   }
 
   if (!roles.includes(session.role)) {
-    throw createError({ statusCode: 403, statusMessage: '權限不足' });
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      message: '權限不足',
+    });
   }
 
   return session;

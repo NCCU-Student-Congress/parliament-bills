@@ -308,7 +308,7 @@
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.statusMessage || data?.message || '寫入失敗');
+        throw new Error(data?.message || data?.statusMessage || '寫入失敗');
       }
 
       savedBill.value = data as Bill;

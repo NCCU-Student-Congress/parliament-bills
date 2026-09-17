@@ -22,7 +22,11 @@ function getFromAddress(event: H3Event) {
   const name = getEnv(event, 'RESEND_FROM_NAME');
 
   if (!email) {
-    throw createError({ statusCode: 500, statusMessage: '尚未設定 RESEND_FROM_EMAIL' });
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Server Misconfigured',
+      message: '尚未設定 RESEND_FROM_EMAIL',
+    });
   }
 
   return name ? `${name} <${email}>` : email;
@@ -32,7 +36,11 @@ export async function sendLoginEmail(event: H3Event, options: SendLoginEmailOpti
   const apiKey = getEnv(event, 'RESEND_API_KEY');
 
   if (!apiKey) {
-    throw createError({ statusCode: 500, statusMessage: '尚未設定 RESEND_API_KEY' });
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Server Misconfigured',
+      message: '尚未設定 RESEND_API_KEY',
+    });
   }
 
   const safeLoginUrl = escapeHtml(options.loginUrl);
@@ -71,7 +79,8 @@ export async function sendLoginEmail(event: H3Event, options: SendLoginEmailOpti
   if (!response.ok) {
     throw createError({
       statusCode: 502,
-      statusMessage: '驗證信寄送失敗，請稍後再試',
+      statusMessage: 'Bad Gateway',
+      message: '驗證信寄送失敗，請稍後再試',
     });
   }
 }

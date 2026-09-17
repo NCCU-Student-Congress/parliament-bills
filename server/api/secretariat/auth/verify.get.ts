@@ -30,7 +30,11 @@ export default defineEventHandler(async (event) => {
   const token = getQuery(event).token;
 
   if (typeof token !== 'string' || !token) {
-    throw createError({ statusCode: 400, statusMessage: '登入連結不正確' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: '登入連結不正確',
+    });
   }
 
   const db = useD1Database(event);
@@ -60,7 +64,11 @@ export default defineEventHandler(async (event) => {
     !isFutureIsoDate(row.expires_at) ||
     !isPermissionRole(row.permission_role)
   ) {
-    throw createError({ statusCode: 401, statusMessage: '登入連結已失效，請重新申請' });
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: '登入連結已失效，請重新申請',
+    });
   }
 
   const consumeResult = await db
@@ -73,7 +81,11 @@ export default defineEventHandler(async (event) => {
     .run<D1RunResult>();
 
   if (consumeResult?.meta?.changes !== 1) {
-    throw createError({ statusCode: 401, statusMessage: '登入連結已失效，請重新申請' });
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: '登入連結已失效，請重新申請',
+    });
   }
 
   const authToken = await createAuthToken(event, {
