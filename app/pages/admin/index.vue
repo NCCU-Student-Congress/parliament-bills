@@ -475,6 +475,7 @@
     try {
       const response = await fetch(url, {
         method,
+        credentials: 'same-origin',
         headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
         body: body === undefined ? undefined : JSON.stringify(body),
       });

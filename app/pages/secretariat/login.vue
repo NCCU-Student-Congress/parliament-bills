@@ -18,6 +18,7 @@
     try {
       const response = await fetch('/api/secretariat/auth', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
         },
