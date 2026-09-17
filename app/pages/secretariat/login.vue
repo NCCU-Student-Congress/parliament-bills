@@ -61,10 +61,11 @@
         <div>
           <label for="email" class="sr-only">Email</label>
           <input
-            type="email"
+            type="text"
             id="email"
             v-model="email"
             required
+            inputmode="email"
             autocomplete="email"
             class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="name@example.com"
