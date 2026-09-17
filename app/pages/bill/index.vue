@@ -41,24 +41,6 @@
       尚未建立會期資料。
     </div>
 
-    <!-- 舊版查詢系統連結 -->
-    <div class="mt-8 text-center">
-      <NuxtLink
-        to="/bill/classical"
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
-      >
-        傳統查詢介面
-        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-          />
-        </svg>
-      </NuxtLink>
-    </div>
-
     <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
       <div class="flex items-center">
         <ExclamationTriangleIcon class="h-5 w-5 text-red-500 mr-2" />
