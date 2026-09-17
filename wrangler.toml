@@ -1,0 +1,9 @@
+name = "parliament-bills"
+compatibility_date = "2026-02-26"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "parliament-bills"
+database_id = "4cff2eda-305f-4299-8c7d-93ff6969e19a"
+migrations_dir = "migrations"

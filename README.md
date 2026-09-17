@@ -15,13 +15,10 @@
 - **基礎介面與瀏覽體驗**
   - 區塊化首頁設計，提供主要服務之快速連結。
   - 具備夜間模式 (Dark Mode) 切換功能的頭部導覽列。
-  - 底部頁腳包含單位名稱及開源儲存庫連結。
+  - 底部頁腳包含單位名稱及版權資訊。
 - **議案查詢系統** (`/bill`)
-  - 屆次議案列表：可顯示特定屆次的所有議案。
+  - 會期議案列表：可顯示特定會期的所有議案。
   - 單一議案顯示 (`/bill/:term/:number`)：提供單一議案的完整資訊、附件連結，並支援列印排版。
-- **委員會建議事項提案查詢** (`/committee-reports`)
-  - 委員提案後，即可於本頁查得提案資料。秘書處亦透過 Google Sheets 維護委員會審查結論、建議報告全文及學生會之回覆。
-  - 惟114學年度第1學期已完稿之建議報告，為避免表單後台錯誤，維持於會網查詢。
 - **秘書處文件草擬系統**
   - 提供秘書處人員草擬議程與撰寫會議紀錄之輔助介面。
 
@@ -40,7 +37,7 @@
 - **框架**：Nuxt 4
 - **樣式**：Tailwind CSS
 - **圖示庫**：Heroicons
-- **資料來源**：另於 [ntpusu/legislative-data](https://github.com/ntpusu/legislative-data) 儲存之
+- **議案資料庫**：Cloudflare D1
 - **部署環境**：Cloudflare Pages [![Powered by Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?logo=cloudflare)](https://pages.cloudflare.com/)
 
 - **套件管理**：pnpm (Node.js 環境)
@@ -48,5 +45,5 @@
 
 ## 授權與聯絡資訊
 
-- **維護單位**：國立臺北大學三峽校區學生議會， Student Congress (Sanxia)
-- **專案授權**：本開源專案依據 [MIT License](https://www.google.com/search?q=LICENSE) 條款發布。至為歡迎各學生自治組織改作。
+- **維護單位**：國立政治大學學生議會， NCCU Student Congress
+- **專案授權**：本專案採混合授權。國立政治大學學生議會新增或修改之部分保留所有權利；源自 NTPUSU/open-parliament 之部分仍依據 [MIT License](./LICENSE) 條款授權。

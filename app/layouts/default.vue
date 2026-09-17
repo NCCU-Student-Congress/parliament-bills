@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-white">
+  <div class="flex min-h-screen flex-col text-gray-950">
     <AppHeader />
 
-    <main class="flex-grow container mx-auto px-4 py-8">
+    <main class="mx-auto w-full max-w-7xl flex-grow px-4 py-8 sm:py-10">
       <slot />
     </main>
 

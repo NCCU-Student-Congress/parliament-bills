@@ -3,6 +3,7 @@
   import { ref, watch, onMounted } from 'vue';
   import { definePageMeta } from '#imports';
   import { useSecretariat } from '~/composables/useSecretariat';
+  import { formatTermLabel } from '~~/shared/utils/term';
 
   definePageMeta({
     middleware: ['auth'],
@@ -33,7 +34,9 @@
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
       <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">生成議程</h1>
       <p class="text-gray-600 mb-4 text-center">
-        當前屆期：<span class="font-semibold text-blue-600">{{ currentTerm }}</span>
+        當前屆期：<span class="font-semibold text-blue-600">{{
+          formatTermLabel(currentTerm)
+        }}</span>
       </p>
 
       <!--

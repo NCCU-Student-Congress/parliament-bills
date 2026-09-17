@@ -5,18 +5,8 @@ export default defineNuxtConfig({
   devtools: {
     enabled: process.env.NODE_ENV === 'development',
   },
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode'],
+  modules: ['@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
-  colorMode: {
-    preference: 'system',
-    fallback: 'light',
-    hid: 'nuxt-color-mode-script',
-    globalName: '__NUXT_COLOR_MODE__',
-    componentName: 'ColorScheme',
-    classPrefix: '',
-    classSuffix: '',
-    storageKey: 'nuxt-color-mode',
-  },
   runtimeConfig: {
     public: {
       baseUrl: 'https://sxcongress.ntpusu.org/',
@@ -25,10 +15,15 @@ export default defineNuxtConfig({
   ssr: true, // 確保開啟 SSR
   nitro: {
     preset: 'cloudflare-pages',
+    cloudflare: {
+      dev: {
+        persistDir: '.wrangler/state/v3',
+      },
+    },
   },
   app: {
     head: {
-      title: '北大三峽議事資訊',
+      title: '政大學生議會議案系統',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -48,12 +43,4 @@ export default defineNuxtConfig({
       ],
     },
   },
-  routeRules: {
-    '/committee-reports': { 
-      redirect: { 
-        to: 'https://ntpusu.ntpu.edu.tw/p/412-1015-245.php?Lang=zh-tw', 
-        statusCode: 301 
-      } 
-    },
-  }
 });

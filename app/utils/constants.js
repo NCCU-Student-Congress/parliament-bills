@@ -1,6 +1,6 @@
 // 網站基本設定
 export const SITE_CONFIG = {
-  name: '北大三峽議事資訊',
+  name: '政大學生議會議案系統',
   fullName: '國立臺北大學三峽校區學生議會',
   englishName: 'NTPU Student Congress (Sanxia Campus)',
   domain: 'sxcongress.ntpusu.org',
@@ -14,22 +14,22 @@ export const ORG_DATA = {
   nameZhShort: '北大三峽議會',
   nameEnFull: 'NTPU Student Congress (Sanxia Campus)',
   nameEnShort: 'NTPUSCS',
-  email: 'ntpuscs@gmail.com',
-  office: '商學大樓 B1F08 室',
-  meetingRoom: '綜合體育館 2F44 室',
+  email: 'nccuscc@gmail.com',
+  office: '四維堂',
+  officeLocationUrl: 'https://sc.video.nccu.edu.tw/p/location',
 };
 
 // 外部連結設定
 export const EXTERNAL_LINKS = {
-  mainWebsite: 'https://ntpusu.ntpu.edu.tw/',
+  mainWebsite: 'https://sc.video.nccu.edu.tw/',
 };
 
 // 主視覺顏色
 export const THEME_COLORS = {
-  primary: '#0F2D4B',
-  primaryLight: '#1A3A5C',
-  primaryDark: '#0A1F35',
-  secondary: '#4A90E2',
+  primary: '#000024',
+  primaryLight: '#1C1C4A',
+  primaryDark: '#000018',
+  secondary: '#E60012',
   success: '#10B981',
   warning: '#F59E0B',
   error: '#EF4444',
@@ -80,14 +80,16 @@ export const EMPTY_MESSAGES = {
 };
 
 // 議案編號正規表達式
-export const BILL_NUMBER_REGEX = /^(\d+)屆北大峽議字第(\d+)號$/;
+export const BILL_NUMBER_REGEX = /^((?:\d+-[12])|(?:\d{3}))(?:屆|會期)?北大峽議字第(\d+)號$/;
 
 // 解析議案編號
 export const parseBillNumber = (billNumber) => {
   const match = billNumber.match(BILL_NUMBER_REGEX);
   if (match) {
+    const term = match[1].includes('-') ? Number(match[1].replace('-', '')) : Number(match[1]);
+
     return {
-      term: parseInt(match[1]),
+      term,
       number: parseInt(match[2]),
     };
   }
@@ -96,7 +98,13 @@ export const parseBillNumber = (billNumber) => {
 
 // 格式化議案編號
 export const formatBillNumber = (term, number) => {
-  return `${term}屆北大峽議字第${number}號`;
+  const numericTerm = Number(term);
+  const formattedTerm =
+    Number.isInteger(numericTerm) && numericTerm >= 100
+      ? `${Math.floor(numericTerm / 10)}-${numericTerm % 10}`
+      : String(term);
+
+  return `${formattedTerm}會期北大峽議字第${number}號`;
 };
 
 // 時間格式化

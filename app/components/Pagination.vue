@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6 rounded-b-lg"
+    class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-b-lg"
   >
     <!-- 手機版分頁 -->
     <div class="flex flex-1 justify-between sm:hidden">
@@ -8,7 +8,7 @@
         @click="goToPrevious"
         :disabled="currentPage === 1"
         :class="[
-          'relative inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors',
+          'relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors',
           currentPage === 1 ? 'opacity-50 cursor-not-allowed' : '',
         ]"
       >
@@ -18,7 +18,7 @@
         @click="goToNext"
         :disabled="currentPage === totalPages"
         :class="[
-          'relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors',
+          'relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors',
           currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : '',
         ]"
       >
@@ -29,7 +29,7 @@
     <!-- 桌面版分頁 -->
     <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
       <div>
-        <p class="text-sm text-gray-700 dark:text-gray-300">
+        <p class="text-sm text-gray-700">
           顯示第
           <span class="font-medium">{{ startItem }}</span>
           到
@@ -46,10 +46,8 @@
             @click="goToPrevious"
             :disabled="currentPage === 1"
             :class="[
-              'relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 transition-colors',
-              currentPage === 1
-                ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
-                : 'bg-white dark:bg-gray-800',
+              'relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors',
+              currentPage === 1 ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'bg-white',
             ]"
           >
             <span class="sr-only">上一頁</span>
@@ -68,17 +66,17 @@
               v-if="page !== '...'"
               @click="goToPage(page)"
               :class="[
-                'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 transition-colors',
+                'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors',
                 page === currentPage
                   ? 'z-10 bg-primary text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
-                  : 'text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800',
+                  : 'text-gray-900 bg-white',
               ]"
             >
               {{ page }}
             </button>
             <span
               v-else
-              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 focus:outline-offset-0 bg-white dark:bg-gray-800"
+              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0 bg-white"
             >
               ...
             </span>
@@ -89,10 +87,8 @@
             @click="goToNext"
             :disabled="currentPage === totalPages"
             :class="[
-              'relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 transition-colors',
-              currentPage === totalPages
-                ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
-                : 'bg-white dark:bg-gray-800',
+              'relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors',
+              currentPage === totalPages ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'bg-white',
             ]"
           >
             <span class="sr-only">下一頁</span>
@@ -205,11 +201,11 @@
 
 <style scoped>
   .bg-primary {
-    background-color: #0f2d4b;
+    background-color: #000024;
   }
 
   .focus-visible\:outline-primary:focus-visible {
-    outline-color: #0f2d4b;
+    outline-color: #e60012;
   }
 
   .focus\:z-20:focus {
