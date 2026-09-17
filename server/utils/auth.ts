@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3';
-import { createError, getCookie, getRequestURL, setCookie } from 'h3';
+import { createError, deleteCookie, getCookie, getRequestURL, setCookie } from 'h3';
 import type { PermissionRole } from '../../shared/types/auth';
 
 const SESSION_COOKIE = 'secretariat_session';
@@ -131,6 +131,14 @@ export function setAuthSessionCookie(event: H3Event, token: string) {
     secure: shouldUseSecureCookie(event),
     maxAge: SESSION_MAX_AGE_SECONDS,
     path: '/',
+  });
+}
+
+export function clearAuthSessionCookie(event: H3Event) {
+  deleteCookie(event, SESSION_COOKIE, {
+    path: '/',
+    sameSite: 'lax',
+    secure: shouldUseSecureCookie(event),
   });
 }
 

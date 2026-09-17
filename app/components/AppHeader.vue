@@ -29,6 +29,10 @@
           >
             回到會網
           </a>
+          <button v-if="isAuthenticated" type="button" class="nav-link" @click="handleLogout">
+            登出
+          </button>
+          <NuxtLink v-else to="/secretariat/login" class="nav-link"> 登入 </NuxtLink>
         </nav>
 
         <!-- 行動版選單按鈕 -->
@@ -82,6 +86,17 @@
           >
             回到會網
           </a>
+          <button
+            v-if="isAuthenticated"
+            type="button"
+            class="mobile-nav-link"
+            @click="handleLogout"
+          >
+            登出
+          </button>
+          <NuxtLink v-else to="/secretariat/login" class="mobile-nav-link" @click="closeMobileMenu">
+            登入
+          </NuxtLink>
         </nav>
       </div>
     </div>
@@ -89,10 +104,13 @@
 </template>
 
 <script setup>
-  import { ref } from 'vue';
+  import { ref, watch } from 'vue';
   import { EXTERNAL_LINKS } from '~/utils/constants.js';
 
   const mobileMenuOpen = ref(false);
+  const isAuthenticated = ref(false);
+  const route = useRoute();
+  const router = useRouter();
 
   const toggleMobileMenu = () => {
     mobileMenuOpen.value = !mobileMenuOpen.value;
@@ -102,8 +120,32 @@
     mobileMenuOpen.value = false;
   };
 
+  const refreshSession = async () => {
+    const session = await $fetch('/api/secretariat/session').catch(() => ({
+      authenticated: false,
+    }));
+    isAuthenticated.value = Boolean(session.authenticated);
+  };
+
+  const handleLogout = async () => {
+    await $fetch('/api/secretariat/logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+    }).catch(() => null);
+
+    sessionStorage.removeItem('secretariat_authenticated');
+    isAuthenticated.value = false;
+    closeMobileMenu();
+
+    if (route.path.startsWith('/admin') || route.path.startsWith('/secretariat')) {
+      await router.push('/secretariat/login');
+    }
+  };
+
   // 點擊外部關閉選單
   onMounted(() => {
+    refreshSession();
+
     const handleClickOutside = (event) => {
       if (mobileMenuOpen.value && !event.target.closest('header')) {
         mobileMenuOpen.value = false;
@@ -116,6 +158,13 @@
       document.removeEventListener('click', handleClickOutside);
     });
   });
+
+  watch(
+    () => route.fullPath,
+    () => {
+      refreshSession();
+    },
+  );
 </script>
 
 <style scoped>
