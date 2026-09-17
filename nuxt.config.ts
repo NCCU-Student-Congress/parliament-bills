@@ -43,12 +43,4 @@ export default defineNuxtConfig({
       ],
     },
   },
-  routeRules: {
-    '/committee-reports': {
-      redirect: {
-        to: 'https://ntpusu.ntpu.edu.tw/p/412-1015-245.php?Lang=zh-tw',
-        statusCode: 301,
-      },
-    },
-  },
 });

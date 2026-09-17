@@ -11,7 +11,7 @@
           {{ SITE_CONFIG.name }}
         </h1>
         <p class="mt-5 max-w-2xl text-lg font-bold leading-relaxed text-[#5a5a70]">
-          查詢議案、檢視委員會報告，並提供秘書處草擬議事文件的日常工作入口。
+          查詢議案，並提供秘書處草擬議事文件的日常工作入口。
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
           <NuxtLink to="/bill" class="btn btn-primary">議案查詢</NuxtLink>
@@ -50,17 +50,11 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
         <NuxtLink to="/bill" class="home-module">
           <span class="home-module-kicker">議案資料</span>
           <strong>議案查詢</strong>
           <span>查詢歷屆議案資料，支援多種篩選條件和分頁瀏覽。</span>
-        </NuxtLink>
-
-        <NuxtLink to="/committee-reports" class="home-module">
-          <span class="home-module-kicker">委員會</span>
-          <strong>委員會報告</strong>
-          <span>委員會建議報告及學生會回覆。</span>
         </NuxtLink>
 
         <NuxtLink to="/secretariat" class="home-module">
