@@ -27,16 +27,6 @@
     <div class="admin-tabs" role="tablist" aria-label="後台子分頁">
       <button
         class="admin-tab"
-        :class="{ active: activeAdminTab === 'reference' }"
-        type="button"
-        role="tab"
-        :aria-selected="activeAdminTab === 'reference'"
-        @click="activeAdminTab = 'reference'"
-      >
-        基本資料
-      </button>
-      <button
-        class="admin-tab"
         :class="{ active: activeAdminTab === 'meetings' }"
         type="button"
         role="tab"
@@ -44,6 +34,16 @@
         @click="activeAdminTab = 'meetings'"
       >
         會議控制台
+      </button>
+      <button
+        class="admin-tab"
+        :class="{ active: activeAdminTab === 'reference' }"
+        type="button"
+        role="tab"
+        :aria-selected="activeAdminTab === 'reference'"
+        @click="activeAdminTab = 'reference'"
+      >
+        基本資料
       </button>
     </div>
 
@@ -406,7 +406,7 @@
   const notice = ref('');
   const errorMessage = ref('');
   const isSubmitting = ref(false);
-  const activeAdminTab = ref<AdminTab>('reference');
+  const activeAdminTab = ref<AdminTab>('meetings');
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
   const editingMeetingId = ref<number | null>(null);
