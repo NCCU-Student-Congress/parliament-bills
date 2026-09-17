@@ -17,7 +17,7 @@ Stores committee names used by meetings, proposals, and user filtering.
 
 ### `users`
 
-Stores people for proposer/cosponsor references and future permission management.
+Stores people for proposer/cosponsor references and permission management.
 
 - `id`
 - `name`
@@ -27,8 +27,8 @@ Stores people for proposer/cosponsor references and future permission management
 - `created_at`
 - `updated_at`
 
-`committee_ids` is a JSON array of committee ids. It is only used for filtering in the current
-student council use case.
+`permission_role` is one of `legislator` or `secretariat_admin`. `committee_ids` is a JSON array
+of committee ids. It is only used for filtering in the current student council use case.
 
 ### `sessions`
 

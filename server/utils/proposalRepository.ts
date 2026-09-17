@@ -9,7 +9,9 @@ import type {
   Session,
   User,
 } from '../../shared/types/bill';
-import { getCurrentTerm, parseTermCode } from '../../shared/utils/term';
+import type { PermissionRole } from '../../shared/types/auth';
+import { isPermissionRole } from '../../shared/types/auth';
+import { getCurrentTerm, getEarliestTerm, parseTermCode } from '../../shared/utils/term';
 import type { D1Database } from './d1';
 
 interface CommitteeRow {
@@ -24,7 +26,7 @@ interface UserRow {
   id: number;
   name: string;
   email: string;
-  permission_role: string;
+  permission_role: PermissionRole;
   committee_ids: string;
   created_at: string;
   updated_at: string;
@@ -41,8 +43,8 @@ interface SessionRow {
 
 interface MeetingRow {
   id: number;
-  committee_id: number;
-  committee_name?: string;
+  committee_id: number | null;
+  committee_name?: string | null;
   session: number;
   meeting_date: string;
   proposal_deadline_at: string;
@@ -53,8 +55,8 @@ interface MeetingRow {
 
 interface ProposalRow {
   id: number;
-  committee_id: number;
-  committee_name: string;
+  committee_id: number | null;
+  committee_name: string | null;
   session: number;
   proposed_at: string;
   proposer_id: number;
@@ -98,7 +100,7 @@ interface CosponsorRow {
 }
 
 interface NormalizedProposalInput {
-  committeeId: number;
+  committeeId: number | null;
   session: number;
   proposedAt: string;
   proposerId: number;
@@ -107,6 +109,20 @@ interface NormalizedProposalInput {
   description: string;
   attachments: ProposalAttachment[];
   cosponsorIds: number[];
+}
+
+interface UserInput {
+  name?: unknown;
+  email?: unknown;
+  permissionRole?: unknown;
+  committeeIds?: unknown;
+}
+
+interface NormalizedUserInput {
+  name: string;
+  email: string;
+  permissionRole: PermissionRole;
+  committeeIds: number[];
 }
 
 const PROPOSAL_COLUMNS = `
@@ -157,6 +173,45 @@ function parseJsonArray(value: string): number[] {
   }
 }
 
+function getNextTermCode(term: number): number {
+  const congress = Math.floor(term / 10);
+  const session = term % 10;
+
+  return session === 1 ? congress * 10 + 2 : (congress + 1) * 10 + 1;
+}
+
+function getSessionDefaults(id: number): Pick<Session, 'title' | 'startsAt' | 'endsAt'> {
+  const congress = Math.floor(id / 10);
+  const session = id % 10;
+  const title = `${congress}-${session} 會期`;
+
+  if (session === 1) {
+    return {
+      title,
+      startsAt: `${congress + 1999}-08-01`,
+      endsAt: `${congress + 2000}-01-31`,
+    };
+  }
+
+  return {
+    title,
+    startsAt: `${congress + 2000}-02-01`,
+    endsAt: `${congress + 2000}-07-31`,
+  };
+}
+
+function getTaipeiDateString(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function rowToCommittee(row: CommitteeRow): Committee {
   return {
     id: row.id,
@@ -194,7 +249,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
   return {
     id: row.id,
     committeeId: row.committee_id,
-    committeeName: row.committee_name,
+    committeeName: row.committee_name ?? '無（大會）',
     session: row.session,
     meetingDate: row.meeting_date,
     proposalDeadlineAt: row.proposal_deadline_at,
@@ -243,7 +298,7 @@ function rowToProposal(
   return {
     id: row.id,
     committeeId: row.committee_id,
-    committeeName: row.committee_name,
+    committeeName: row.committee_name ?? '無（大會）',
     session: row.session,
     proposedAt: row.proposed_at,
     proposerId: row.proposer_id,
@@ -380,10 +435,6 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
   const session = parseTermCode(input.session) ?? getCurrentTerm();
   const subject = cleanString(input.subject);
 
-  if (!committeeId) {
-    throw createError({ statusCode: 400, statusMessage: '委員會為必填欄位' });
-  }
-
   if (!session) {
     throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
   }
@@ -413,7 +464,49 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
   };
 }
 
+function normalizeUserInput(input: UserInput): NormalizedUserInput {
+  const name = cleanString(input.name);
+  const email = cleanString(input.email).toLowerCase();
+  const permissionRole = cleanString(input.permissionRole) || 'legislator';
+  const committeeIds = Array.isArray(input.committeeIds)
+    ? [...new Set(input.committeeIds.map(toPositiveInteger))].filter((id): id is number =>
+        Boolean(id),
+      )
+    : [];
+
+  if (!name) {
+    throw createError({ statusCode: 400, statusMessage: '姓名為必填欄位' });
+  }
+
+  if (!email) {
+    throw createError({ statusCode: 400, statusMessage: 'Email 為必填欄位' });
+  }
+
+  if (!isPermissionRole(permissionRole)) {
+    throw createError({ statusCode: 400, statusMessage: '權限角色不正確' });
+  }
+
+  return {
+    name,
+    email,
+    permissionRole,
+    committeeIds: permissionRole === 'legislator' ? committeeIds : [],
+  };
+}
+
 export function createProposalRepository(db: D1Database) {
+  const deleteById = async (table: string, id: number, notFoundMessage: string) => {
+    const result = await db.prepare(`DELETE FROM ${table} WHERE id = ?`).bind(id).run<{
+      meta?: { changes?: number };
+    }>();
+
+    if (result?.meta?.changes === 0) {
+      throw createError({ statusCode: 404, statusMessage: notFoundMessage });
+    }
+
+    return { success: true };
+  };
+
   const createCommittee = async (input: { name?: unknown; code?: unknown }) => {
     const name = cleanString(input.name);
     const code = cleanString(input.code) || null;
@@ -438,6 +531,35 @@ export function createProposalRepository(db: D1Database) {
     return rowToCommittee(row);
   };
 
+  const updateCommittee = async (id: number, input: { name?: unknown; code?: unknown }) => {
+    const name = cleanString(input.name);
+    const code = cleanString(input.code) || null;
+
+    if (!name) {
+      throw createError({ statusCode: 400, statusMessage: '委員會名稱為必填欄位' });
+    }
+
+    const row = await db
+      .prepare(
+        `UPDATE committees
+         SET name = ?,
+             code = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?
+         RETURNING id, name, code, created_at, updated_at`,
+      )
+      .bind(name, code, id)
+      .first<CommitteeRow>();
+
+    if (!row) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定委員會' });
+    }
+
+    return rowToCommittee(row);
+  };
+
+  const deleteCommittee = (id: number) => deleteById('committees', id, '找不到指定委員會');
+
   const getCommittees = async () => {
     const { results = [] } = await db
       .prepare(
@@ -450,20 +572,15 @@ export function createProposalRepository(db: D1Database) {
     return results.map(rowToCommittee);
   };
 
-  const createSession = async (input: {
-    id?: unknown;
-    title?: unknown;
-    startsAt?: unknown;
-    endsAt?: unknown;
-  }) => {
-    const id = parseTermCode(input.id);
-    const title = cleanString(input.title) || (id ? `${Math.floor(id / 10)}-${id % 10} 會期` : '');
-    const startsAt = cleanString(input.startsAt) || null;
-    const endsAt = cleanString(input.endsAt) || null;
+  const createSession = async () => {
+    const maxSession = await db
+      .prepare('SELECT MAX(id) AS max_session FROM sessions')
+      .first<{ max_session: number | null }>();
+    const id = maxSession?.max_session
+      ? getNextTermCode(maxSession.max_session)
+      : getEarliestTerm();
 
-    if (!id) {
-      throw createError({ statusCode: 400, statusMessage: '會期代碼為必填欄位' });
-    }
+    const defaults = getSessionDefaults(id);
 
     const row = await db
       .prepare(
@@ -471,7 +588,7 @@ export function createProposalRepository(db: D1Database) {
          VALUES (?, ?, ?, ?)
          RETURNING id, title, starts_at, ends_at, created_at, updated_at`,
       )
-      .bind(id, title, startsAt, endsAt)
+      .bind(id, defaults.title, defaults.startsAt, defaults.endsAt)
       .first<SessionRow>();
 
     if (!row) {
@@ -493,28 +610,41 @@ export function createProposalRepository(db: D1Database) {
     return results.map(rowToSession);
   };
 
-  const createUser = async (input: {
-    name?: unknown;
-    email?: unknown;
-    permissionRole?: unknown;
-    committeeIds?: unknown;
-  }) => {
-    const name = cleanString(input.name);
-    const email = cleanString(input.email).toLowerCase();
-    const permissionRole = cleanString(input.permissionRole) || 'viewer';
-    const committeeIds = Array.isArray(input.committeeIds)
-      ? [...new Set(input.committeeIds.map(toPositiveInteger))].filter((id): id is number =>
-          Boolean(id),
-        )
-      : [];
+  const deleteSession = async (id: number) => {
+    const session = await db
+      .prepare('SELECT id, starts_at FROM sessions WHERE id = ?')
+      .bind(id)
+      .first<{ id: number; starts_at: string | null }>();
 
-    if (!name) {
-      throw createError({ statusCode: 400, statusMessage: '姓名為必填欄位' });
+    if (!session) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定會期' });
     }
 
-    if (!email) {
-      throw createError({ statusCode: 400, statusMessage: 'Email 為必填欄位' });
+    if (!session.starts_at || session.starts_at.slice(0, 10) <= getTaipeiDateString()) {
+      throw createError({ statusCode: 400, statusMessage: '僅允許刪除未來會期' });
     }
+
+    const references = await db
+      .prepare(
+        `SELECT
+           (SELECT COUNT(*) FROM meetings WHERE session = ?) AS meeting_count,
+           (SELECT COUNT(*) FROM proposals WHERE session = ?) AS proposal_count`,
+      )
+      .bind(id, id)
+      .first<{ meeting_count: number; proposal_count: number }>();
+
+    if ((references?.meeting_count ?? 0) > 0 || (references?.proposal_count ?? 0) > 0) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: '會期已有會議或議案資料，無法只刪除會期',
+      });
+    }
+
+    return deleteById('sessions', id, '找不到指定會期');
+  };
+
+  const createUser = async (input: UserInput) => {
+    const user = normalizeUserInput(input);
 
     const row = await db
       .prepare(
@@ -522,7 +652,7 @@ export function createProposalRepository(db: D1Database) {
          VALUES (?, ?, ?, ?)
          RETURNING id, name, email, permission_role, committee_ids, created_at, updated_at`,
       )
-      .bind(name, email, permissionRole, JSON.stringify(committeeIds))
+      .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds))
       .first<UserRow>();
 
     if (!row) {
@@ -531,6 +661,94 @@ export function createProposalRepository(db: D1Database) {
 
     return rowToUser(row);
   };
+
+  const createUsers = async (inputs: UserInput[]) => {
+    if (!Array.isArray(inputs) || inputs.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: '至少需要一筆人員資料' });
+    }
+
+    const normalizedUsers = inputs.map(normalizeUserInput);
+    const inputEmailSet = new Set<string>();
+    const duplicateInputEmails = new Set<string>();
+
+    for (const user of normalizedUsers) {
+      if (inputEmailSet.has(user.email)) {
+        duplicateInputEmails.add(user.email);
+      }
+      inputEmailSet.add(user.email);
+    }
+
+    if (duplicateInputEmails.size > 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `同批名單有重複 Email：${[...duplicateInputEmails].join('、')}`,
+      });
+    }
+
+    const placeholders = normalizedUsers.map(() => '?').join(', ');
+    const { results: existingUsers = [] } = await db
+      .prepare(`SELECT email FROM users WHERE email IN (${placeholders})`)
+      .bind(...normalizedUsers.map((user) => user.email))
+      .all<{ email: string }>();
+
+    if (existingUsers.length > 0) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: `以下 Email 已存在：${existingUsers.map((user) => user.email).join('、')}`,
+      });
+    }
+
+    await db.batch(
+      normalizedUsers.map((user) =>
+        db
+          .prepare(
+            `INSERT INTO users (name, email, permission_role, committee_ids)
+             VALUES (?, ?, ?, ?)`,
+          )
+          .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds)),
+      ),
+    );
+
+    const { results: rows = [] } = await db
+      .prepare(
+        `SELECT id, name, email, permission_role, committee_ids, created_at, updated_at
+         FROM users
+         WHERE email IN (${placeholders})`,
+      )
+      .bind(...normalizedUsers.map((user) => user.email))
+      .all<UserRow>();
+    const usersByEmail = new Map(rows.map((row) => [row.email, rowToUser(row)]));
+
+    return normalizedUsers
+      .map((user) => usersByEmail.get(user.email))
+      .filter((user): user is User => Boolean(user));
+  };
+
+  const updateUser = async (id: number, input: UserInput) => {
+    const user = normalizeUserInput(input);
+
+    const row = await db
+      .prepare(
+        `UPDATE users
+         SET name = ?,
+             email = ?,
+             permission_role = ?,
+             committee_ids = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?
+         RETURNING id, name, email, permission_role, committee_ids, created_at, updated_at`,
+      )
+      .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds), id)
+      .first<UserRow>();
+
+    if (!row) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定人員' });
+    }
+
+    return rowToUser(row);
+  };
+
+  const deleteUser = (id: number) => deleteById('users', id, '找不到指定人員');
 
   const getUsers = async () => {
     const { results = [] } = await db
@@ -557,10 +775,6 @@ export function createProposalRepository(db: D1Database) {
     const proposalDeadlineAt = normalizeDateTime(input.proposalDeadlineAt, '');
     const title = cleanString(input.title);
 
-    if (!committeeId) {
-      throw createError({ statusCode: 400, statusMessage: '委員會為必填欄位' });
-    }
-
     if (!session) {
       throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
     }
@@ -575,6 +789,17 @@ export function createProposalRepository(db: D1Database) {
 
     if (!title) {
       throw createError({ statusCode: 400, statusMessage: '會議名稱為必填欄位' });
+    }
+
+    if (committeeId) {
+      const existingCommittee = await db
+        .prepare('SELECT id FROM committees WHERE id = ?')
+        .bind(committeeId)
+        .first<{ id: number }>();
+
+      if (!existingCommittee) {
+        throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
+      }
     }
 
     const existingSession = await db
@@ -612,11 +837,98 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 500, statusMessage: '會議寫入失敗' });
     }
 
-    const [meeting] = (await getMeetings({ committeeId, session })).filter(
+    const [meeting] = (await getMeetings({ session })).filter(
       (candidate) => candidate.id === row.id,
     );
     return meeting ?? rowToMeeting(row);
   };
+
+  const updateMeeting = async (
+    id: number,
+    input: {
+      committeeId?: unknown;
+      session?: unknown;
+      meetingDate?: unknown;
+      proposalDeadlineAt?: unknown;
+      title?: unknown;
+    },
+  ) => {
+    const committeeId = toPositiveInteger(input.committeeId);
+    const session = parseTermCode(input.session);
+    const meetingDate = normalizeDateTime(input.meetingDate, '');
+    const proposalDeadlineAt = normalizeDateTime(input.proposalDeadlineAt, '');
+    const title = cleanString(input.title);
+
+    if (!session) {
+      throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
+    }
+
+    if (!meetingDate) {
+      throw createError({ statusCode: 400, statusMessage: '會議日期為必填欄位' });
+    }
+
+    if (!proposalDeadlineAt) {
+      throw createError({ statusCode: 400, statusMessage: '提案截止時間為必填欄位' });
+    }
+
+    if (!title) {
+      throw createError({ statusCode: 400, statusMessage: '會議名稱為必填欄位' });
+    }
+
+    if (committeeId) {
+      const existingCommittee = await db
+        .prepare('SELECT id FROM committees WHERE id = ?')
+        .bind(committeeId)
+        .first<{ id: number }>();
+
+      if (!existingCommittee) {
+        throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
+      }
+    }
+
+    const existingSession = await db
+      .prepare('SELECT id FROM sessions WHERE id = ?')
+      .bind(session)
+      .first<{ id: number }>();
+
+    if (!existingSession) {
+      throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
+    }
+
+    const row = await db
+      .prepare(
+        `UPDATE meetings
+         SET committee_id = ?,
+             session = ?,
+             meeting_date = ?,
+             proposal_deadline_at = ?,
+             title = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?
+         RETURNING
+           id,
+           committee_id,
+           session,
+           meeting_date,
+           proposal_deadline_at,
+           title,
+           created_at,
+           updated_at`,
+      )
+      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title, id)
+      .first<MeetingRow>();
+
+    if (!row) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定會議' });
+    }
+
+    const [meeting] = (await getMeetings({ session })).filter(
+      (candidate) => candidate.id === row.id,
+    );
+    return meeting ?? rowToMeeting(row);
+  };
+
+  const deleteMeeting = (id: number) => deleteById('meetings', id, '找不到指定會議');
 
   const getMeetings = async (filters: { committeeId?: number; session?: number } = {}) => {
     const where: string[] = [];
@@ -644,7 +956,7 @@ export function createProposalRepository(db: D1Database) {
          meetings.created_at,
          meetings.updated_at
        FROM meetings
-       INNER JOIN committees ON committees.id = meetings.committee_id
+       LEFT JOIN committees ON committees.id = meetings.committee_id
        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
        ORDER BY meetings.meeting_date ASC, meetings.id ASC`,
     );
@@ -659,7 +971,7 @@ export function createProposalRepository(db: D1Database) {
     const statement = db.prepare(
       `SELECT ${PROPOSAL_COLUMNS}
        FROM proposals
-       INNER JOIN committees ON committees.id = proposals.committee_id
+       LEFT JOIN committees ON committees.id = proposals.committee_id
        INNER JOIN users AS proposers ON proposers.id = proposals.proposer_id
        INNER JOIN meetings ON meetings.id = proposals.meeting_id
        ${whereClause}
@@ -721,7 +1033,7 @@ export function createProposalRepository(db: D1Database) {
       .bind(proposal.meetingId)
       .first<{
         id: number;
-        committee_id: number;
+        committee_id: number | null;
         session: number;
         proposal_deadline_at: string;
       }>();
@@ -737,6 +1049,30 @@ export function createProposalRepository(db: D1Database) {
 
     if (!existingSession) {
       throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
+    }
+
+    if (proposal.committeeId) {
+      const existingCommittee = await db
+        .prepare('SELECT id FROM committees WHERE id = ?')
+        .bind(proposal.committeeId)
+        .first<{ id: number }>();
+
+      if (!existingCommittee) {
+        throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
+      }
+    }
+
+    const proposer = await db
+      .prepare('SELECT id, permission_role FROM users WHERE id = ?')
+      .bind(proposal.proposerId)
+      .first<{ id: number; permission_role: string }>();
+
+    if (!proposer) {
+      throw createError({ statusCode: 400, statusMessage: '找不到指定提案人' });
+    }
+
+    if (proposer.permission_role !== 'legislator') {
+      throw createError({ statusCode: 400, statusMessage: '提案人必須是議員' });
     }
 
     if (meeting.committee_id !== proposal.committeeId || meeting.session !== proposal.session) {
@@ -833,12 +1169,20 @@ export function createProposalRepository(db: D1Database) {
 
   return {
     createCommittee,
+    updateCommittee,
+    deleteCommittee,
     getCommittees,
     createSession,
+    deleteSession,
     getSessions,
     createUser,
+    createUsers,
+    updateUser,
+    deleteUser,
     getUsers,
     createMeeting,
+    updateMeeting,
+    deleteMeeting,
     getMeetings,
     getAllBills,
     getLatestTermBills,

@@ -35,6 +35,7 @@ It creates:
 
 - A proposal has no draft status. Once created, it is a submitted proposal.
 - Meetings and proposals reference `sessions.id`; the id is the existing numeric term code such as `271`.
+- `POST /api/sessions` does not accept manual fields. It starts at `252` and appends the next session.
 - Proposal deadlines belong to meetings: `meetings.proposal_deadline_at`.
 - Proposals do not store a deadline snapshot.
 - User committee membership is stored as a JSON array in `users.committee_ids`.
@@ -47,12 +48,22 @@ Reference data:
 
 - `GET /api/committees`
 - `POST /api/committees`
+- `PUT /api/committees/:id`
+- `DELETE /api/committees/:id`
 - `GET /api/users`
 - `POST /api/users`
+- `POST /api/users/bulk`
+- `PUT /api/users/:id`
+- `DELETE /api/users/:id`
 - `GET /api/sessions`
 - `POST /api/sessions`
 - `GET /api/meetings`
 - `POST /api/meetings`
+- `PUT /api/meetings/:id`
+- `DELETE /api/meetings/:id`
+
+Reference data write routes, `GET /api/users`, and the reference data admin UI require a
+secretariat admin session.
 
 Proposal reads:
 
@@ -65,6 +76,9 @@ Proposal reads:
 Proposal writes:
 
 - `POST /api/bills`
+
+Proposal writes require a secretariat admin session. The selected proposer must be a user with
+`permissionRole: "legislator"`.
 
 `POST /api/bills` accepts:
 
@@ -82,8 +96,14 @@ Proposal writes:
 }
 ```
 
-The temporary unprotected write UI is:
+The protected write UI is:
 
 ```text
 /bill/new
+```
+
+The protected reference data admin is:
+
+```text
+/admin
 ```

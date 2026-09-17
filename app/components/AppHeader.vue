@@ -19,6 +19,7 @@
         <nav class="hidden items-center gap-1 md:flex">
           <NuxtLink to="/bill" class="nav-link"> 議案查詢 </NuxtLink>
           <NuxtLink to="/bill/new" class="nav-link nav-link-accent"> 新增議案 </NuxtLink>
+          <NuxtLink to="/admin" class="nav-link"> 後台 </NuxtLink>
           <NuxtLink to="/committee-reports" class="nav-link"> 委員會報告 </NuxtLink>
           <NuxtLink to="/secretariat" class="nav-link"> 草擬系統 </NuxtLink>
           <a
@@ -68,6 +69,8 @@
           >
             新增議案
           </NuxtLink>
+
+          <NuxtLink to="/admin" class="mobile-nav-link" @click="closeMobileMenu"> 後台 </NuxtLink>
 
           <NuxtLink to="/committee-reports" class="mobile-nav-link" @click="closeMobileMenu">
             委員會報告

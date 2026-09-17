@@ -1,7 +1,8 @@
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event);
+  await requireRole(event, ['secretariat_admin']);
+
   const billService = useBillService(event);
-  const session = await billService.createSession(body);
+  const session = await billService.createSession();
 
   setResponseStatus(event, 201);
   return session;

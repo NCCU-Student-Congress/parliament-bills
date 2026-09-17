@@ -19,13 +19,6 @@
       <p class="text-gray-600">提案送出後即為正式提案，截止時間依所選會議設定。</p>
     </div>
 
-    <div v-if="setupErrors.length" class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-      <h2 class="mb-2 text-sm font-bold text-amber-800">提案前需先完成設定</h2>
-      <ul class="list-disc space-y-1 pl-5 text-sm text-amber-700">
-        <li v-for="item in setupErrors" :key="item">{{ item }}</li>
-      </ul>
-    </div>
-
     <form
       class="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
       @submit.prevent="submitBill"
@@ -33,8 +26,8 @@
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label class="block">
           <span class="mb-1 block text-sm font-medium text-gray-700">委員會</span>
-          <select v-model="form.committeeId" required class="form-input">
-            <option value="">請選擇委員會</option>
+          <select v-model="form.committeeId" class="form-input">
+            <option value="">無（大會）</option>
             <option
               v-for="committee in committees"
               :key="committee.id"
@@ -78,7 +71,8 @@
         <select v-model="form.meetingId" required class="form-input">
           <option value="">請選擇會議</option>
           <option v-for="meeting in eligibleMeetings" :key="meeting.id" :value="String(meeting.id)">
-            {{ meeting.title }}，截止 {{ formatDateTime(meeting.proposalDeadlineAt) }}
+            {{ meeting.title }}，截止
+            {{ formatDateTime(meeting.proposalDeadlineAt) }}
           </option>
         </select>
       </label>
@@ -132,7 +126,7 @@
       <div class="flex flex-wrap gap-3">
         <button
           type="submit"
-          :disabled="isSubmitting || setupErrors.length > 0"
+          :disabled="isSubmitting"
           class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {{ isSubmitting ? '寫入中...' : '送出提案' }}
@@ -162,6 +156,7 @@
 
   definePageMeta({
     title: '新增議案',
+    middleware: ['auth'],
   });
 
   interface BillForm {
@@ -215,18 +210,11 @@
   const selectedCommitteeId = computed(() => Number(form.committeeId) || null);
   const selectedSession = computed(() => parseTermCode(form.session));
 
-  const setupErrors = computed(() => {
-    const errors: string[] = [];
-    if (!committees.value.length) errors.push('尚未建立委員會資料。');
-    if (!sessions.value.length) errors.push('尚未建立會期資料。');
-    if (!users.value.length) errors.push('尚未建立人員資料。');
-    if (!meetings.value.length) errors.push('尚未建立會議資料與提案截止時間。');
-    return errors;
-  });
-
   const eligibleUsers = computed(() => {
-    if (!selectedCommitteeId.value) return users.value;
-    return users.value.filter(
+    const legislators = users.value.filter((user) => user.permissionRole === 'legislator');
+
+    if (!selectedCommitteeId.value) return legislators;
+    return legislators.filter(
       (user) =>
         user.committeeIds.length === 0 || user.committeeIds.includes(selectedCommitteeId.value!),
     );
@@ -236,8 +224,7 @@
     const deadlineBase = new Date(form.proposedAt).getTime();
 
     return meetings.value.filter((meeting) => {
-      if (selectedCommitteeId.value && meeting.committeeId !== selectedCommitteeId.value)
-        return false;
+      if (meeting.committeeId !== selectedCommitteeId.value) return false;
       if (selectedSession.value && meeting.session !== selectedSession.value) return false;
 
       const deadline = new Date(meeting.proposalDeadlineAt).getTime();
@@ -291,7 +278,7 @@
     }
 
     return {
-      committeeId: Number(form.committeeId),
+      committeeId: selectedCommitteeId.value,
       session,
       proposedAt: new Date(form.proposedAt).toISOString(),
       proposerId: Number(form.proposerId),
