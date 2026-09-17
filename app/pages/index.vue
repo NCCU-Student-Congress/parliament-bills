@@ -50,7 +50,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         <NuxtLink to="/bill" class="home-module">
           <span class="home-module-kicker">議案資料</span>
           <strong>議案查詢</strong>
