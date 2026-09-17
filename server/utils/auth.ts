@@ -79,6 +79,15 @@ function signaturesMatch(actual: string, expected: string) {
   return diff === 0;
 }
 
+function isLocalHost(hostname: string) {
+  return ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(hostname);
+}
+
+function shouldUseSecureCookie(event: H3Event) {
+  const url = getRequestURL(event);
+  return url.protocol === 'https:' && !isLocalHost(url.hostname);
+}
+
 export async function createAuthToken(
   event: H3Event,
   user: { id: number; email: string; role: PermissionRole },
@@ -122,7 +131,7 @@ export function setAuthSessionCookie(event: H3Event, token: string) {
   setCookie(event, SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: getEnv(event, 'NODE_ENV') === 'production',
+    secure: shouldUseSecureCookie(event),
     maxAge: SESSION_MAX_AGE_SECONDS,
     path: '/',
   });
@@ -147,12 +156,7 @@ export function isAuthBypassEnabled(event: H3Event) {
   if (!['1', 'true'].includes(bypassValue.toLowerCase())) return false;
 
   const host = getRequestURL(event).hostname;
-  return (
-    getEnv(event, 'NODE_ENV') === 'development' ||
-    host === 'localhost' ||
-    host === '127.0.0.1' ||
-    host === '0.0.0.0'
-  );
+  return getEnv(event, 'NODE_ENV') === 'development' || isLocalHost(host);
 }
 
 export function getSafeRedirectPath(value: unknown) {
