@@ -490,7 +490,7 @@ function normalizeUserInput(input: UserInput): NormalizedUserInput {
     name,
     email,
     permissionRole,
-    committeeIds,
+    committeeIds: permissionRole === 'legislator' ? committeeIds : [],
   };
 }
 

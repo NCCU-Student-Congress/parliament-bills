@@ -178,16 +178,22 @@
             </select>
           </label>
           <label class="field md:col-span-2">
-            <span>所屬委員會</span>
-            <select v-model="userForm.committeeIds" multiple class="control min-h-32">
-              <option
-                v-for="committee in committees"
-                :key="committee.id"
-                :value="String(committee.id)"
-              >
+            <span>所屬委員會（可複選）</span>
+            <div
+              class="checkbox-list"
+              :class="{ disabled: userForm.permissionRole === 'secretariat_admin' }"
+            >
+              <label v-for="committee in committees" :key="committee.id" class="checkbox-option">
+                <input
+                  v-model="userForm.committeeIds"
+                  type="checkbox"
+                  :value="String(committee.id)"
+                  :disabled="userForm.permissionRole === 'secretariat_admin'"
+                />
                 {{ committee.name }}
-              </option>
-            </select>
+              </label>
+              <span v-if="committees.length === 0" class="checkbox-empty">尚無委員會</span>
+            </div>
           </label>
           <div class="form-actions">
             <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
@@ -223,16 +229,22 @@
             </select>
           </label>
           <label class="field">
-            <span>所屬委員會</span>
-            <select v-model="bulkUserForm.committeeIds" multiple class="control min-h-32">
-              <option
-                v-for="committee in committees"
-                :key="committee.id"
-                :value="String(committee.id)"
-              >
+            <span>所屬委員會（可複選）</span>
+            <div
+              class="checkbox-list"
+              :class="{ disabled: bulkUserForm.permissionRole === 'secretariat_admin' }"
+            >
+              <label v-for="committee in committees" :key="committee.id" class="checkbox-option">
+                <input
+                  v-model="bulkUserForm.committeeIds"
+                  type="checkbox"
+                  :value="String(committee.id)"
+                  :disabled="bulkUserForm.permissionRole === 'secretariat_admin'"
+                />
                 {{ committee.name }}
-              </option>
-            </select>
+              </label>
+              <span v-if="committees.length === 0" class="checkbox-empty">尚無委員會</span>
+            </div>
           </label>
           <div class="form-actions md:col-span-2">
             <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
@@ -396,7 +408,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, reactive, ref } from 'vue';
+  import { computed, reactive, ref, watch } from 'vue';
   import type { Committee, Meeting, Session, User } from '~~/shared/types/bill';
   import { formatTermLabel } from '~~/shared/utils/term';
 
@@ -516,7 +528,8 @@
       name: userForm.name.trim(),
       email: userForm.email.trim(),
       permissionRole: userForm.permissionRole,
-      committeeIds: userForm.committeeIds.map(Number),
+      committeeIds:
+        userForm.permissionRole === 'legislator' ? userForm.committeeIds.map(Number) : [],
     };
     const url = editingUserId.value === null ? '/api/users' : `/api/users/${editingUserId.value}`;
     const method = editingUserId.value === null ? 'POST' : 'PUT';
@@ -532,7 +545,8 @@
     const payload = {
       entries: bulkUserForm.entries.trim(),
       permissionRole: bulkUserForm.permissionRole,
-      committeeIds: bulkUserForm.committeeIds.map(Number),
+      committeeIds:
+        bulkUserForm.permissionRole === 'legislator' ? bulkUserForm.committeeIds.map(Number) : [],
     };
     const result = await requestJson<{ users: User[] }>('/api/users/bulk', 'POST', payload);
     if (!result) return;
@@ -632,6 +646,24 @@
     meetingForm.proposalDeadlineAt = '';
   }
 
+  watch(
+    () => userForm.permissionRole,
+    (permissionRole) => {
+      if (permissionRole === 'secretariat_admin') {
+        userForm.committeeIds = [];
+      }
+    },
+  );
+
+  watch(
+    () => bulkUserForm.permissionRole,
+    (permissionRole) => {
+      if (permissionRole === 'secretariat_admin') {
+        bulkUserForm.committeeIds = [];
+      }
+    },
+  );
+
   function toIsoString(value: string) {
     if (!value) return '';
     const date = new Date(value);
@@ -704,7 +736,7 @@
   }
 
   function getCommitteeNames(ids: number[]) {
-    if (!ids.length) return '全部 / 未指定';
+    if (!ids.length) return '無';
     return ids.map(getCommitteeName).join('、');
   }
 </script>
@@ -807,6 +839,47 @@
   .control:focus {
     border-color: #e60012;
     outline: 3px solid rgba(230, 0, 18, 0.18);
+  }
+
+  .checkbox-list {
+    display: grid;
+    max-height: 12rem;
+    gap: 0.45rem;
+    overflow-y: auto;
+    border: 1px solid #dcdce2;
+    border-radius: 8px;
+    background: #fff;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .checkbox-list.disabled {
+    background: #f5f5f7;
+    color: #5a5a70;
+  }
+
+  .checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #12122b;
+    font-size: 0.9rem;
+    font-weight: 750;
+  }
+
+  .checkbox-option input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #e60012;
+  }
+
+  .checkbox-option:has(input:disabled) {
+    color: #8a8a9a;
+  }
+
+  .checkbox-empty {
+    color: #5a5a70;
+    font-size: 0.875rem;
+    font-weight: 750;
   }
 
   .form-actions {
