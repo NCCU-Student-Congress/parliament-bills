@@ -63,7 +63,8 @@ Reference data:
 - `DELETE /api/meetings/:id`
 
 Reference data write routes, `GET /api/users`, and the reference data admin UI require a
-secretariat admin session.
+passwordless secretariat admin session. Login emails are sent through Resend to addresses in the
+`users` table.
 
 Proposal reads:
 

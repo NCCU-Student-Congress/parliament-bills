@@ -4,7 +4,7 @@
   import { useSecretariat } from '~/composables/useSecretariat';
   import { formatTermLabel } from '~~/shared/utils/term';
 
-  // 應用密碼驗證中介軟體
+  // 應用登入驗證中介軟體
   import { definePageMeta } from '#imports';
   definePageMeta({
     middleware: ['auth' as any],

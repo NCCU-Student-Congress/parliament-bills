@@ -30,6 +30,19 @@ Stores people for proposer/cosponsor references and permission management.
 `permission_role` is one of `legislator` or `secretariat_admin`. `committee_ids` is a JSON array
 of committee ids. It is only used for filtering in the current student council use case.
 
+### `auth_login_tokens`
+
+Stores hashed, single-use passwordless login tokens for Resend magic links.
+
+- `id`
+- `user_id`
+- `email`
+- `token_hash`
+- `redirect_path`
+- `expires_at`
+- `consumed_at`
+- `created_at`
+
 ### `sessions`
 
 Stores managed legislative sessions. The primary key is the existing numeric session code, such as

@@ -3,39 +3,44 @@
   import { ref } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
 
-  const password = ref('');
+  const email = ref('');
   const errorMessage = ref('');
+  const successMessage = ref('');
   const isLoading = ref(false);
   const router = useRouter();
   const route = useRoute();
 
   const handleLogin = async () => {
     errorMessage.value = '';
+    successMessage.value = '';
     isLoading.value = true;
 
     try {
-      // 向伺服器端 API 發送密碼進行驗證
       const response = await fetch('/api/secretariat/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ password: password.value }),
+        body: JSON.stringify({
+          email: email.value,
+          redirect: route.query.redirect?.toString() || '/secretariat',
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.authenticated) {
-        // 驗證成功，設定 sessionStorage 標記
         sessionStorage.setItem('secretariat_authenticated', 'true');
-
-        // 導向使用者原本想訪問的頁面，或預設導向秘書處首頁
-        const redirectPath = route.query.redirect?.toString() || '/secretariat';
-        router.push(redirectPath);
-      } else {
-        // 驗證失敗
-        errorMessage.value = data.message || '密碼錯誤，請重試。';
+        router.push(data.redirect || route.query.redirect?.toString() || '/secretariat');
+        return;
       }
+
+      if (response.ok && data.sent) {
+        successMessage.value = data.message || '登入連結已寄出，請檢查你的信箱。';
+        return;
+      }
+
+      errorMessage.value = data.message || '登入請求失敗，請稍後再試。';
     } catch (error) {
       console.error('登入請求失敗:', error);
       errorMessage.value = '網路錯誤或伺服器無回應，請稍後再試。';
@@ -49,18 +54,19 @@
   <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 font-inter">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md text-center">
       <h1 class="text-3xl font-bold text-gray-800 mb-6">系統登入</h1>
-      <p class="text-gray-600 mb-8">請輸入秘書處授權碼以繼續：</p>
+      <p class="text-gray-600 mb-8">請輸入已登錄的人員信箱，我們會寄出登入連結。</p>
 
       <form @submit.prevent="handleLogin" class="space-y-6">
         <div>
-          <label for="password" class="sr-only">授權碼</label>
+          <label for="email" class="sr-only">Email</label>
           <input
-            type="password"
-            id="password"
-            v-model="password"
+            type="email"
+            id="email"
+            v-model="email"
             required
+            autocomplete="email"
             class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="請輸入授權碼(密碼)"
+            placeholder="name@example.com"
             :disabled="isLoading"
           />
         </div>
@@ -91,11 +97,12 @@
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            登入中...
+            寄送中...
           </span>
-          <span v-else>登入</span>
+          <span v-else>寄送登入連結</span>
         </button>
 
+        <p v-if="successMessage" class="text-green-600 text-sm mt-4">{{ successMessage }}</p>
         <p v-if="errorMessage" class="text-red-500 text-sm mt-4">{{ errorMessage }}</p>
       </form>
 
