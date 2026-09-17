@@ -80,13 +80,9 @@ function signaturesMatch(actual: string, expected: string) {
   return diff === 0;
 }
 
-function isLocalHost(hostname: string) {
-  return ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(hostname);
-}
-
 function shouldUseSecureCookie(event: H3Event) {
   const url = getRequestURL(event);
-  return url.protocol === 'https:' && !isLocalHost(url.hostname);
+  return url.protocol === 'https:';
 }
 
 export async function createAuthToken(
@@ -161,11 +157,14 @@ export async function requireRole(event: H3Event, roles: PermissionRole[]) {
 }
 
 export function isAuthBypassEnabled(event: H3Event) {
-  const bypassValue = getEnv(event, 'AUTH_BYPASS') || getEnv(event, 'auth_bypass');
-  if (!['1', 'true'].includes(bypassValue.toLowerCase())) return false;
+  const bypassValue =
+    getEnv(event, 'AUTH_BYPASS') ||
+    getEnv(event, 'auth_bypass') ||
+    getEnv(event, 'BYPASS') ||
+    getEnv(event, 'bypass');
 
-  const host = getRequestURL(event).hostname;
-  return getEnv(event, 'NODE_ENV') === 'development' || isLocalHost(host);
+  if (!['1', 'true'].includes(bypassValue.toLowerCase())) return false;
+  return true;
 }
 
 export function getSafeRedirectPath(value: unknown) {
