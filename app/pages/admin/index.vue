@@ -241,7 +241,12 @@
             <button class="btn btn-secondary" type="button" @click="resetBulkUserForm">清空</button>
           </div>
         </form>
+      </section>
 
+      <section class="admin-section">
+        <div class="section-head">
+          <h2 class="section-title">成員名單</h2>
+        </div>
         <div class="table-wrap">
           <table class="admin-table">
             <thead>
