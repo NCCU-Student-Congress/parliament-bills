@@ -111,6 +111,20 @@ interface NormalizedProposalInput {
   cosponsorIds: number[];
 }
 
+interface UserInput {
+  name?: unknown;
+  email?: unknown;
+  permissionRole?: unknown;
+  committeeIds?: unknown;
+}
+
+interface NormalizedUserInput {
+  name: string;
+  email: string;
+  permissionRole: PermissionRole;
+  committeeIds: number[];
+}
+
 const PROPOSAL_COLUMNS = `
   proposals.id,
   proposals.committee_id,
@@ -450,6 +464,36 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
   };
 }
 
+function normalizeUserInput(input: UserInput): NormalizedUserInput {
+  const name = cleanString(input.name);
+  const email = cleanString(input.email).toLowerCase();
+  const permissionRole = cleanString(input.permissionRole) || 'legislator';
+  const committeeIds = Array.isArray(input.committeeIds)
+    ? [...new Set(input.committeeIds.map(toPositiveInteger))].filter((id): id is number =>
+        Boolean(id),
+      )
+    : [];
+
+  if (!name) {
+    throw createError({ statusCode: 400, statusMessage: '姓名為必填欄位' });
+  }
+
+  if (!email) {
+    throw createError({ statusCode: 400, statusMessage: 'Email 為必填欄位' });
+  }
+
+  if (!isPermissionRole(permissionRole)) {
+    throw createError({ statusCode: 400, statusMessage: '權限角色不正確' });
+  }
+
+  return {
+    name,
+    email,
+    permissionRole,
+    committeeIds,
+  };
+}
+
 export function createProposalRepository(db: D1Database) {
   const deleteById = async (table: string, id: number, notFoundMessage: string) => {
     const result = await db.prepare(`DELETE FROM ${table} WHERE id = ?`).bind(id).run<{
@@ -599,32 +643,8 @@ export function createProposalRepository(db: D1Database) {
     return deleteById('sessions', id, '找不到指定會期');
   };
 
-  const createUser = async (input: {
-    name?: unknown;
-    email?: unknown;
-    permissionRole?: unknown;
-    committeeIds?: unknown;
-  }) => {
-    const name = cleanString(input.name);
-    const email = cleanString(input.email).toLowerCase();
-    const permissionRole = cleanString(input.permissionRole) || 'legislator';
-    const committeeIds = Array.isArray(input.committeeIds)
-      ? [...new Set(input.committeeIds.map(toPositiveInteger))].filter((id): id is number =>
-          Boolean(id),
-        )
-      : [];
-
-    if (!name) {
-      throw createError({ statusCode: 400, statusMessage: '姓名為必填欄位' });
-    }
-
-    if (!email) {
-      throw createError({ statusCode: 400, statusMessage: 'Email 為必填欄位' });
-    }
-
-    if (!isPermissionRole(permissionRole)) {
-      throw createError({ statusCode: 400, statusMessage: '權限角色不正確' });
-    }
+  const createUser = async (input: UserInput) => {
+    const user = normalizeUserInput(input);
 
     const row = await db
       .prepare(
@@ -632,7 +652,7 @@ export function createProposalRepository(db: D1Database) {
          VALUES (?, ?, ?, ?)
          RETURNING id, name, email, permission_role, committee_ids, created_at, updated_at`,
       )
-      .bind(name, email, permissionRole, JSON.stringify(committeeIds))
+      .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds))
       .first<UserRow>();
 
     if (!row) {
@@ -642,35 +662,70 @@ export function createProposalRepository(db: D1Database) {
     return rowToUser(row);
   };
 
-  const updateUser = async (
-    id: number,
-    input: {
-      name?: unknown;
-      email?: unknown;
-      permissionRole?: unknown;
-      committeeIds?: unknown;
-    },
-  ) => {
-    const name = cleanString(input.name);
-    const email = cleanString(input.email).toLowerCase();
-    const permissionRole = cleanString(input.permissionRole) || 'legislator';
-    const committeeIds = Array.isArray(input.committeeIds)
-      ? [...new Set(input.committeeIds.map(toPositiveInteger))].filter(
-          (committeeId): committeeId is number => Boolean(committeeId),
-        )
-      : [];
-
-    if (!name) {
-      throw createError({ statusCode: 400, statusMessage: '姓名為必填欄位' });
+  const createUsers = async (inputs: UserInput[]) => {
+    if (!Array.isArray(inputs) || inputs.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: '至少需要一筆人員資料' });
     }
 
-    if (!email) {
-      throw createError({ statusCode: 400, statusMessage: 'Email 為必填欄位' });
+    const normalizedUsers = inputs.map(normalizeUserInput);
+    const inputEmailSet = new Set<string>();
+    const duplicateInputEmails = new Set<string>();
+
+    for (const user of normalizedUsers) {
+      if (inputEmailSet.has(user.email)) {
+        duplicateInputEmails.add(user.email);
+      }
+      inputEmailSet.add(user.email);
     }
 
-    if (!isPermissionRole(permissionRole)) {
-      throw createError({ statusCode: 400, statusMessage: '權限角色不正確' });
+    if (duplicateInputEmails.size > 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `同批名單有重複 Email：${[...duplicateInputEmails].join('、')}`,
+      });
     }
+
+    const placeholders = normalizedUsers.map(() => '?').join(', ');
+    const { results: existingUsers = [] } = await db
+      .prepare(`SELECT email FROM users WHERE email IN (${placeholders})`)
+      .bind(...normalizedUsers.map((user) => user.email))
+      .all<{ email: string }>();
+
+    if (existingUsers.length > 0) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: `以下 Email 已存在：${existingUsers.map((user) => user.email).join('、')}`,
+      });
+    }
+
+    await db.batch(
+      normalizedUsers.map((user) =>
+        db
+          .prepare(
+            `INSERT INTO users (name, email, permission_role, committee_ids)
+             VALUES (?, ?, ?, ?)`,
+          )
+          .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds)),
+      ),
+    );
+
+    const { results: rows = [] } = await db
+      .prepare(
+        `SELECT id, name, email, permission_role, committee_ids, created_at, updated_at
+         FROM users
+         WHERE email IN (${placeholders})`,
+      )
+      .bind(...normalizedUsers.map((user) => user.email))
+      .all<UserRow>();
+    const usersByEmail = new Map(rows.map((row) => [row.email, rowToUser(row)]));
+
+    return normalizedUsers
+      .map((user) => usersByEmail.get(user.email))
+      .filter((user): user is User => Boolean(user));
+  };
+
+  const updateUser = async (id: number, input: UserInput) => {
+    const user = normalizeUserInput(input);
 
     const row = await db
       .prepare(
@@ -683,7 +738,7 @@ export function createProposalRepository(db: D1Database) {
          WHERE id = ?
          RETURNING id, name, email, permission_role, committee_ids, created_at, updated_at`,
       )
-      .bind(name, email, permissionRole, JSON.stringify(committeeIds), id)
+      .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds), id)
       .first<UserRow>();
 
     if (!row) {
@@ -1121,6 +1176,7 @@ export function createProposalRepository(db: D1Database) {
     deleteSession,
     getSessions,
     createUser,
+    createUsers,
     updateUser,
     deleteUser,
     getUsers,

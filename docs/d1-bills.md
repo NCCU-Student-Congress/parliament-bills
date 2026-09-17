@@ -52,6 +52,7 @@ Reference data:
 - `DELETE /api/committees/:id`
 - `GET /api/users`
 - `POST /api/users`
+- `POST /api/users/bulk`
 - `PUT /api/users/:id`
 - `DELETE /api/users/:id`
 - `GET /api/sessions`

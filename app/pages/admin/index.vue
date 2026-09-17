@@ -181,6 +181,44 @@
           </div>
         </form>
 
+        <form class="form-grid bulk-user-form" @submit.prevent="submitBulkUsers">
+          <label class="field md:col-span-2">
+            <span>批次名單</span>
+            <textarea
+              v-model="bulkUserForm.entries"
+              required
+              rows="4"
+              class="control"
+              placeholder="姓名<email>,姓名<email>"
+            ></textarea>
+          </label>
+          <label class="field">
+            <span>權限角色</span>
+            <select v-model="bulkUserForm.permissionRole" class="control">
+              <option value="legislator">議員</option>
+              <option value="secretariat_admin">秘書處 Admin</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>所屬委員會</span>
+            <select v-model="bulkUserForm.committeeIds" multiple class="control min-h-32">
+              <option
+                v-for="committee in committees"
+                :key="committee.id"
+                :value="String(committee.id)"
+              >
+                {{ committee.name }}
+              </option>
+            </select>
+          </label>
+          <div class="form-actions md:col-span-2">
+            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+              大量新增人員
+            </button>
+            <button class="btn btn-secondary" type="button" @click="resetBulkUserForm">清空</button>
+          </div>
+        </form>
+
         <div class="table-wrap">
           <table class="admin-table">
             <thead>
@@ -358,6 +396,12 @@
     committeeIds: [] as string[],
   });
 
+  const bulkUserForm = reactive({
+    entries: '',
+    permissionRole: 'legislator',
+    committeeIds: [] as string[],
+  });
+
   const meetingForm = reactive({
     committeeId: '',
     session: '',
@@ -452,6 +496,20 @@
     await refreshAll();
   }
 
+  async function submitBulkUsers() {
+    const payload = {
+      entries: bulkUserForm.entries.trim(),
+      permissionRole: bulkUserForm.permissionRole,
+      committeeIds: bulkUserForm.committeeIds.map(Number),
+    };
+    const result = await requestJson<{ users: User[] }>('/api/users/bulk', 'POST', payload);
+    if (!result) return;
+
+    resetBulkUserForm();
+    notice.value = `已新增 ${result.users.length} 位人員`;
+    await refreshAll();
+  }
+
   async function submitMeeting() {
     const payload = {
       committeeId: meetingForm.committeeId ? Number(meetingForm.committeeId) : null,
@@ -525,6 +583,12 @@
     userForm.email = '';
     userForm.permissionRole = 'legislator';
     userForm.committeeIds = [];
+  }
+
+  function resetBulkUserForm() {
+    bulkUserForm.entries = '';
+    bulkUserForm.permissionRole = 'legislator';
+    bulkUserForm.committeeIds = [];
   }
 
   function resetMeetingForm() {
@@ -685,6 +749,12 @@
     align-self: end;
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+
+  .bulk-user-form {
+    margin-top: 1.25rem;
+    border-top: 1px solid #ececf0;
+    padding-top: 1.25rem;
   }
 
   .table-wrap {
