@@ -61,6 +61,9 @@ Reference data:
 - `PUT /api/meetings/:id`
 - `DELETE /api/meetings/:id`
 
+Reference data write routes, `GET /api/users`, and the reference data admin UI require a
+secretariat admin session.
+
 Proposal reads:
 
 - `GET /api/bills`
@@ -72,6 +75,9 @@ Proposal reads:
 Proposal writes:
 
 - `POST /api/bills`
+
+Proposal writes require a secretariat admin session. The selected proposer must be a user with
+`permissionRole: "legislator"`.
 
 `POST /api/bills` accepts:
 
@@ -89,13 +95,13 @@ Proposal writes:
 }
 ```
 
-The temporary unprotected write UI is:
+The protected write UI is:
 
 ```text
 /bill/new
 ```
 
-The temporary unprotected reference data admin is:
+The protected reference data admin is:
 
 ```text
 /admin

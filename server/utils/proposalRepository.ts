@@ -9,6 +9,8 @@ import type {
   Session,
   User,
 } from '../../shared/types/bill';
+import type { PermissionRole } from '../../shared/types/auth';
+import { isPermissionRole } from '../../shared/types/auth';
 import { getCurrentTerm, getEarliestTerm, parseTermCode } from '../../shared/utils/term';
 import type { D1Database } from './d1';
 
@@ -24,7 +26,7 @@ interface UserRow {
   id: number;
   name: string;
   email: string;
-  permission_role: string;
+  permission_role: PermissionRole;
   committee_ids: string;
   created_at: string;
   updated_at: string;
@@ -605,7 +607,7 @@ export function createProposalRepository(db: D1Database) {
   }) => {
     const name = cleanString(input.name);
     const email = cleanString(input.email).toLowerCase();
-    const permissionRole = cleanString(input.permissionRole) || 'viewer';
+    const permissionRole = cleanString(input.permissionRole) || 'legislator';
     const committeeIds = Array.isArray(input.committeeIds)
       ? [...new Set(input.committeeIds.map(toPositiveInteger))].filter((id): id is number =>
           Boolean(id),
@@ -618,6 +620,10 @@ export function createProposalRepository(db: D1Database) {
 
     if (!email) {
       throw createError({ statusCode: 400, statusMessage: 'Email 為必填欄位' });
+    }
+
+    if (!isPermissionRole(permissionRole)) {
+      throw createError({ statusCode: 400, statusMessage: '權限角色不正確' });
     }
 
     const row = await db
@@ -647,7 +653,7 @@ export function createProposalRepository(db: D1Database) {
   ) => {
     const name = cleanString(input.name);
     const email = cleanString(input.email).toLowerCase();
-    const permissionRole = cleanString(input.permissionRole) || 'viewer';
+    const permissionRole = cleanString(input.permissionRole) || 'legislator';
     const committeeIds = Array.isArray(input.committeeIds)
       ? [...new Set(input.committeeIds.map(toPositiveInteger))].filter(
           (committeeId): committeeId is number => Boolean(committeeId),
@@ -660,6 +666,10 @@ export function createProposalRepository(db: D1Database) {
 
     if (!email) {
       throw createError({ statusCode: 400, statusMessage: 'Email 為必填欄位' });
+    }
+
+    if (!isPermissionRole(permissionRole)) {
+      throw createError({ statusCode: 400, statusMessage: '權限角色不正確' });
     }
 
     const row = await db
@@ -995,6 +1005,19 @@ export function createProposalRepository(db: D1Database) {
       if (!existingCommittee) {
         throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
       }
+    }
+
+    const proposer = await db
+      .prepare('SELECT id, permission_role FROM users WHERE id = ?')
+      .bind(proposal.proposerId)
+      .first<{ id: number; permission_role: string }>();
+
+    if (!proposer) {
+      throw createError({ statusCode: 400, statusMessage: '找不到指定提案人' });
+    }
+
+    if (proposer.permission_role !== 'legislator') {
+      throw createError({ statusCode: 400, statusMessage: '提案人必須是議員' });
     }
 
     if (meeting.committee_id !== proposal.committeeId || meeting.session !== proposal.session) {

@@ -150,10 +150,8 @@
           <label class="field">
             <span>權限角色</span>
             <select v-model="userForm.permissionRole" class="control">
-              <option value="viewer">viewer</option>
-              <option value="editor">editor</option>
-              <option value="manager">manager</option>
-              <option value="admin">admin</option>
+              <option value="legislator">議員</option>
+              <option value="secretariat_admin">秘書處 Admin</option>
             </select>
           </label>
           <label class="field md:col-span-2">
@@ -336,6 +334,7 @@
 
   definePageMeta({
     title: '後台資料管理',
+    middleware: ['auth'],
   });
 
   type ResourceType = 'sessions' | 'committees' | 'users' | 'meetings';
@@ -355,7 +354,7 @@
   const userForm = reactive({
     name: '',
     email: '',
-    permissionRole: 'viewer',
+    permissionRole: 'legislator',
     committeeIds: [] as string[],
   });
 
@@ -524,7 +523,7 @@
     editingUserId.value = null;
     userForm.name = '';
     userForm.email = '';
-    userForm.permissionRole = 'viewer';
+    userForm.permissionRole = 'legislator';
     userForm.committeeIds = [];
   }
 

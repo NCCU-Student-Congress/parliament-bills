@@ -1,3 +1,5 @@
+import type { PermissionRole } from './auth';
+
 export type AttachmentKind = 'file' | 'link';
 
 export interface Committee {
@@ -12,7 +14,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  permissionRole: string;
+  permissionRole: PermissionRole;
   committeeIds: number[];
   createdAt?: string;
   updatedAt?: string;

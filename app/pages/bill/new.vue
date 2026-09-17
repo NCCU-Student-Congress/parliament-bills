@@ -156,6 +156,7 @@
 
   definePageMeta({
     title: '新增議案',
+    middleware: ['auth'],
   });
 
   interface BillForm {
@@ -210,8 +211,10 @@
   const selectedSession = computed(() => parseTermCode(form.session));
 
   const eligibleUsers = computed(() => {
-    if (!selectedCommitteeId.value) return users.value;
-    return users.value.filter(
+    const legislators = users.value.filter((user) => user.permissionRole === 'legislator');
+
+    if (!selectedCommitteeId.value) return legislators;
+    return legislators.filter(
       (user) =>
         user.committeeIds.length === 0 || user.committeeIds.includes(selectedCommitteeId.value!),
     );

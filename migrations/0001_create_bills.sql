@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
-  permission_role TEXT NOT NULL DEFAULT 'viewer',
+  permission_role TEXT NOT NULL DEFAULT 'legislator'
+    CHECK (permission_role IN ('legislator', 'secretariat_admin')),
   committee_ids TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(committee_ids)),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
