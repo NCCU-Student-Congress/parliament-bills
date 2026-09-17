@@ -24,7 +24,30 @@
       {{ errorMessage }}
     </div>
 
-    <div class="grid gap-6 xl:grid-cols-2">
+    <div class="admin-tabs" role="tablist" aria-label="後台子分頁">
+      <button
+        class="admin-tab"
+        :class="{ active: activeAdminTab === 'reference' }"
+        type="button"
+        role="tab"
+        :aria-selected="activeAdminTab === 'reference'"
+        @click="activeAdminTab = 'reference'"
+      >
+        基本資料
+      </button>
+      <button
+        class="admin-tab"
+        :class="{ active: activeAdminTab === 'meetings' }"
+        type="button"
+        role="tab"
+        :aria-selected="activeAdminTab === 'meetings'"
+        @click="activeAdminTab = 'meetings'"
+      >
+        會議控制台
+      </button>
+    </div>
+
+    <div v-if="activeAdminTab === 'reference'" class="grid gap-6 xl:grid-cols-2">
       <section class="admin-section">
         <div class="section-head">
           <h2 class="section-title">會期</h2>
@@ -256,10 +279,12 @@
           </table>
         </div>
       </section>
+    </div>
 
+    <div v-else class="meeting-console">
       <section class="admin-section">
         <div class="section-head">
-          <h2 class="section-title">會議</h2>
+          <h2 class="section-title">會議控制台</h2>
         </div>
 
         <form class="form-grid" @submit.prevent="submitMeeting">
@@ -376,10 +401,12 @@
   });
 
   type ResourceType = 'sessions' | 'committees' | 'users' | 'meetings';
+  type AdminTab = 'reference' | 'meetings';
 
   const notice = ref('');
   const errorMessage = ref('');
   const isSubmitting = ref(false);
+  const activeAdminTab = ref<AdminTab>('reference');
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
   const editingMeetingId = ref<number | null>(null);
@@ -678,6 +705,39 @@
 </script>
 
 <style scoped>
+  .admin-tabs {
+    display: inline-flex;
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid #dcdce2;
+    border-radius: 8px;
+    background: #f5f5f7;
+    padding: 0.25rem;
+  }
+
+  .admin-tab {
+    min-width: 8rem;
+    border-radius: 6px;
+    padding: 0.55rem 0.9rem;
+    color: #5a5a70;
+    font-size: 0.9rem;
+    font-weight: 900;
+    transition:
+      background-color 0.16s ease,
+      color 0.16s ease,
+      box-shadow 0.16s ease;
+  }
+
+  .admin-tab.active {
+    background: #fff;
+    color: #12122b;
+    box-shadow: 0 6px 18px rgba(0, 0, 36, 0.08);
+  }
+
+  .meeting-console {
+    max-width: 980px;
+  }
+
   .admin-section {
     border: 1px solid #dcdce2;
     border-radius: 8px;
