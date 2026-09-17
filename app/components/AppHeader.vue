@@ -29,10 +29,10 @@
           >
             回到會網
           </a>
-          <button v-if="isAuthenticated" type="button" class="nav-link" @click="handleLogout">
+          <button v-if="isAuthenticated" type="button" class="auth-link" @click="handleLogout">
             登出
           </button>
-          <NuxtLink v-else to="/secretariat/login" class="nav-link"> 登入 </NuxtLink>
+          <NuxtLink v-else to="/secretariat/login" class="auth-link"> 登入 </NuxtLink>
         </nav>
 
         <!-- 行動版選單按鈕 -->
@@ -89,12 +89,17 @@
           <button
             v-if="isAuthenticated"
             type="button"
-            class="mobile-nav-link"
+            class="mobile-nav-link mobile-auth-link"
             @click="handleLogout"
           >
             登出
           </button>
-          <NuxtLink v-else to="/secretariat/login" class="mobile-nav-link" @click="closeMobileMenu">
+          <NuxtLink
+            v-else
+            to="/secretariat/login"
+            class="mobile-nav-link mobile-auth-link"
+            @click="closeMobileMenu"
+          >
             登入
           </NuxtLink>
         </nav>
@@ -203,6 +208,31 @@
     color: #fff;
   }
 
+  .auth-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.9rem;
+    border: 2px solid #000024;
+    border-radius: 8px;
+    background: #fff;
+    color: #000024;
+    font-size: 0.875rem;
+    font-weight: 900;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .auth-link:hover,
+  .auth-link.router-link-active {
+    background: #000024;
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
   .mobile-nav-link {
     display: flex;
     align-items: center;
@@ -219,5 +249,11 @@
   .mobile-nav-link-accent {
     border-color: #e60012;
     color: #e60012;
+  }
+
+  .mobile-auth-link {
+    border: 2px solid #000024;
+    border-radius: 8px;
+    color: #000024;
   }
 </style>
