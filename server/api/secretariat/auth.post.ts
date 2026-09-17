@@ -1,25 +1,97 @@
-// server/api/secretariat/auth.post.ts
-import { defineEventHandler, readBody, setResponseStatus } from 'h3';
-import { createAuthToken, getSecretariatPassword, setAuthSessionCookie } from '../../utils/auth';
+import { defineEventHandler, getRequestURL, readBody } from 'h3';
+import { isPermissionRole } from '../../../shared/types/auth';
+import {
+  createAuthToken,
+  createRandomToken,
+  getIsoDateAfterSeconds,
+  getSafeRedirectPath,
+  hashToken,
+  isAuthBypassEnabled,
+  setAuthSessionCookie,
+} from '../../utils/auth';
+import { useD1Database } from '../../utils/d1';
+import { sendLoginEmail } from '../../utils/resend';
+
+const LOGIN_TOKEN_TTL_SECONDS = 60 * 10;
+
+interface UserRow {
+  id: number;
+  email: string;
+  permission_role: string;
+}
+
+function normalizeEmail(value: unknown) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function getGenericResponse() {
+  return {
+    sent: true,
+    message: '如果此信箱具備登入權限，我們已寄出登入連結。',
+  };
+}
 
 export default defineEventHandler(async (event) => {
-  // 從請求體中讀取客戶端提交的密碼
-  const { password } = await readBody(event);
+  const body = await readBody(event);
+  const email = normalizeEmail(body?.email);
+  const redirectPath = getSafeRedirectPath(body?.redirect);
 
-  // 從環境變數中獲取正確的密碼
-  const correctPassword = getSecretariatPassword(event);
-
-  // 進行密碼比對
-  if (password === correctPassword) {
-    const token = await createAuthToken(event, 'secretariat_admin');
-    setAuthSessionCookie(event, token);
-
-    // 密碼正確，回傳成功狀態
-    return { authenticated: true, role: 'secretariat_admin', message: '驗證成功！' };
+  if (!email) {
+    return getGenericResponse();
   }
 
-  // 密碼錯誤，回傳失敗狀態
-  // 為了安全，不應該明確指出是密碼錯誤，可以回傳通用錯誤訊息
-  setResponseStatus(event, 401);
-  return { authenticated: false, message: '驗證失敗，請檢查密碼。' };
+  const db = useD1Database(event);
+  const user = await db
+    .prepare(
+      `SELECT id, email, permission_role
+       FROM users
+       WHERE lower(email) = ?
+       LIMIT 1`,
+    )
+    .bind(email)
+    .first<UserRow>();
+
+  if (!user || !isPermissionRole(user.permission_role)) {
+    return getGenericResponse();
+  }
+
+  const sessionUser = {
+    id: user.id,
+    email: user.email,
+    role: user.permission_role,
+  };
+
+  if (isAuthBypassEnabled(event)) {
+    const authToken = await createAuthToken(event, sessionUser);
+    setAuthSessionCookie(event, authToken);
+
+    return {
+      authenticated: true,
+      role: sessionUser.role,
+      redirect: redirectPath,
+      message: '已使用開發環境旁路登入。',
+    };
+  }
+
+  const token = createRandomToken();
+  const tokenHash = await hashToken(token);
+  const expiresAt = getIsoDateAfterSeconds(LOGIN_TOKEN_TTL_SECONDS);
+
+  await db
+    .prepare(
+      `INSERT INTO auth_login_tokens (user_id, email, token_hash, redirect_path, expires_at)
+       VALUES (?, ?, ?, ?, ?)`,
+    )
+    .bind(user.id, user.email, tokenHash, redirectPath, expiresAt)
+    .run();
+
+  const origin = getRequestURL(event).origin;
+  const loginUrl = `${origin}/api/secretariat/auth/verify?token=${encodeURIComponent(token)}`;
+  await sendLoginEmail(event, {
+    to: user.email,
+    loginUrl,
+    expiresInMinutes: LOGIN_TOKEN_TTL_SECONDS / 60,
+  });
+
+  return getGenericResponse();
 });

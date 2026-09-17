@@ -1,12 +1,14 @@
 import type { H3Event } from 'h3';
-import { createError, getCookie, setCookie } from 'h3';
+import { createError, getCookie, getRequestURL, setCookie } from 'h3';
 import type { PermissionRole } from '../../shared/types/auth';
 
 const SESSION_COOKIE = 'secretariat_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 const encoder = new TextEncoder();
 
-interface AuthSession {
+export interface AuthSession {
+  userId: number;
+  email: string;
   role: PermissionRole;
   exp: number;
 }
@@ -15,7 +17,7 @@ interface CloudflareEventContext {
   env?: Record<string, unknown>;
 }
 
-function getEnv(event: H3Event, key: string) {
+export function getEnv(event: H3Event, key: string) {
   const context = event.context as { cloudflare?: CloudflareEventContext };
   const cloudflareValue = context.cloudflare?.env?.[key];
   if (typeof cloudflareValue === 'string' && cloudflareValue) return cloudflareValue;
@@ -23,12 +25,12 @@ function getEnv(event: H3Event, key: string) {
 }
 
 function getSessionSecret(event: H3Event) {
-  const secret = getEnv(event, 'AUTH_SECRET') || getEnv(event, 'SEC_PASSWORD');
+  const secret = getEnv(event, 'AUTH_SECRET');
 
   if (!secret) {
     throw createError({
       statusCode: 500,
-      statusMessage: '尚未設定 AUTH_SECRET 或 SEC_PASSWORD',
+      statusMessage: '尚未設定 AUTH_SECRET',
     });
   }
 
@@ -77,9 +79,14 @@ function signaturesMatch(actual: string, expected: string) {
   return diff === 0;
 }
 
-export async function createAuthToken(event: H3Event, role: PermissionRole) {
+export async function createAuthToken(
+  event: H3Event,
+  user: { id: number; email: string; role: PermissionRole },
+) {
   const session: AuthSession = {
-    role,
+    userId: user.id,
+    email: user.email,
+    role: user.role,
     exp: Date.now() + SESSION_MAX_AGE_SECONDS * 1000,
   };
   const payload = encodeBase64Url(JSON.stringify(session));
@@ -101,6 +108,8 @@ export async function readAuthSession(event: H3Event): Promise<AuthSession | nul
     const session = JSON.parse(decodeBase64Url(payload)) as AuthSession;
 
     if (session.exp <= Date.now()) return null;
+    if (!Number.isInteger(session.userId) || session.userId <= 0) return null;
+    if (typeof session.email !== 'string' || !session.email) return null;
     if (session.role !== 'legislator' && session.role !== 'secretariat_admin') return null;
 
     return session;
@@ -133,12 +142,45 @@ export async function requireRole(event: H3Event, roles: PermissionRole[]) {
   return session;
 }
 
-export function getSecretariatPassword(event: H3Event) {
-  const password = getEnv(event, 'SEC_PASSWORD');
+export function isAuthBypassEnabled(event: H3Event) {
+  if (getEnv(event, 'AUTH_BYPASS') !== 'true') return false;
 
-  if (!password) {
-    throw createError({ statusCode: 500, statusMessage: '尚未設定 SEC_PASSWORD' });
+  const host = getRequestURL(event).hostname;
+  return (
+    getEnv(event, 'NODE_ENV') === 'development' ||
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '0.0.0.0'
+  );
+}
+
+export function getSafeRedirectPath(value: unknown) {
+  if (typeof value !== 'string') return '/secretariat';
+  if (!value.startsWith('/') || value.startsWith('//')) return '/secretariat';
+  if (value.startsWith('/api/')) return '/secretariat';
+  return value;
+}
+
+export function createRandomToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return encodeBase64Url(bytes.buffer);
+}
+
+export async function hashToken(value: string) {
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(value));
+  return encodeBase64Url(digest);
+}
+
+export function getIsoDateAfterSeconds(seconds: number) {
+  return new Date(Date.now() + seconds * 1000).toISOString();
+}
+
+export function isFutureIsoDate(value: string) {
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return false;
   }
 
-  return password;
+  return timestamp > Date.now();
 }
