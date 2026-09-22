@@ -42,6 +42,39 @@ It creates:
 - Attachments are separate records. Link attachments store the URL directly; file attachments can store an R2 key plus metadata.
 - Confirmed cosponsors are `proposal_cosponsors.status = 'confirmed'`.
 
+## Local Auth Login
+
+Secretariat routes use passwordless magic-link login. For local development, enable the auth bypass
+so you can log in without Resend:
+
+```dotenv
+AUTH_SECRET=replace-with-a-long-local-secret
+AUTH_BYPASS=true
+AUTH_BYPASS_ADMIN_EMAIL=test@test.test
+```
+
+After starting the local Nuxt server, open:
+
+```text
+/secretariat/login
+```
+
+Enter this value in the email field:
+
+```text
+admin
+```
+
+When `AUTH_BYPASS=true`, the server creates or updates a local `secretariat_admin` user for
+`AUTH_BYPASS_ADMIN_EMAIL` and prints a one-time login link to the server terminal:
+
+```text
+[auth] Bypass admin login link: http://localhost:3000/api/secretariat/auth/verify?token=...
+```
+
+Open that link in the browser to set the local `secretariat_session` cookie and continue to the
+requested secretariat or admin page. Keep `AUTH_BYPASS=false` outside local development.
+
 ## API
 
 Reference data:
