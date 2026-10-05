@@ -1,0 +1,50 @@
+name: CI
+
+# 最低限度檢查：依賴可依 lockfile 安裝、格式、建置、migration 能在空的本機資料庫依序跑完。
+# 不連 Cloudflare、不需要任何 secrets；綠燈不代表正式站正常（見 AGENTS.md）。
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: 格式、建置、本機 migration
+    runs-on: ubuntu-latest
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: 讀取儲存庫
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: 準備 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: 啟用 pnpm（版本依 package.json 的 packageManager）
+        run: corepack enable && pnpm --version
+
+      - name: 安裝依賴（不得改動 lockfile）
+        run: pnpm install --frozen-lockfile
+
+      - name: 檢查格式
+        run: pnpm format:check
+
+      - name: 建置
+        run: pnpm build
+
+      - name: 在空的本機 D1 依序套用 migration
+        # 只寫入 runner 的暫存資料夾，不連 Cloudflare
+        run: pnpm exec wrangler d1 migrations apply DB --local --persist-to "$RUNNER_TEMP/d1"
