@@ -83,12 +83,13 @@ AI 可以做：改程式與文件、新增 migration 檔、在本機或 CI 用 `
   備份檔含個資，**不得放進本 repo、Issue 或 PR**。
 - Cloudflare D1 時間點還原（Time Travel）的可用天數與指令，依當時 Cloudflare 文件；本專案尚未實測（未驗證）。
 
-## 尚未確認的事實（推論，未驗證）
+## 部署連動（2026-10-05 部分實測）
 
-- 合併到 `main` 是否會自動部署到正式站（Cloudflare Pages 與 GitHub 的連動設定）。確認前，**一律當作「合併＝上線」處理**。
-- PR 是否會自動產生 Preview 部署，以及 Preview 是否連到正式 D1。確認前，不要假設 Preview 使用的是測試資料。
+- **已實測**：Cloudflare Pages 已連到本 repo。PR 的每個 commit 會自動產生 Preview 部署（PR 的 checks 會出現「Cloudflare Pages」與 Preview 網址）；`main` 的 commit 也有「Cloudflare Pages」部署紀錄。
+- **推論**：合併到 `main` 就會部署到正式站。在有人到 Cloudflare 確認之前，**一律當作「合併＝上線」處理**。
+- **未驗證**：Preview 部署綁定的是哪一個 D1（可能是正式資料庫）。確認前，不要在 Preview 網址做任何會寫入資料的操作，也不要假設 Preview 使用的是測試資料。
 
-這兩項確認後，由確認的人開 PR 更新本節（附確認方式與日期）。
+上面的推論與未驗證項目確認後，由確認的人開 PR 更新本節（附確認方式與日期）。
 
 ## 本 repo 的獨立複查
 
