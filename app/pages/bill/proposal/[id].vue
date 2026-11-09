@@ -77,7 +77,9 @@
                   {{ getField(field.key) || '無' }}
                 </div>
                 <div v-else>
-                  {{ getField(field.key) || '無' }}
+                  {{
+                    getField(field.key) || (field.key === 'meetingTitle' ? '尚未排入會議' : '無')
+                  }}
                 </div>
               </td>
             </tr>
@@ -169,7 +171,7 @@
     ],
   }));
 
-  function formatDateTime(value: string) {
+  function formatDateTime(value?: string | null) {
     if (!value) return '';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;

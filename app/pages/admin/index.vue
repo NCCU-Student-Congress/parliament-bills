@@ -37,6 +37,16 @@
       </button>
       <button
         class="admin-tab"
+        :class="{ active: activeAdminTab === 'scheduling' }"
+        type="button"
+        role="tab"
+        :aria-selected="activeAdminTab === 'scheduling'"
+        @click="activeAdminTab = 'scheduling'"
+      >
+        議案排案
+      </button>
+      <button
+        class="admin-tab"
         :class="{ active: activeAdminTab === 'reference' }"
         type="button"
         role="tab"
@@ -298,7 +308,7 @@
       </section>
     </div>
 
-    <div v-else class="meeting-console">
+    <div v-else-if="activeAdminTab === 'meetings'" class="meeting-console">
       <section class="admin-section">
         <div class="section-head">
           <h2 class="section-title">會議控制台</h2>
@@ -404,12 +414,70 @@
         </div>
       </section>
     </div>
+    <div v-else class="meeting-console">
+      <section class="admin-section">
+        <div class="section-head">
+          <h2 class="section-title">議案排入會議</h2>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>議案</th>
+                <th>會期／委員會</th>
+                <th>目前會議</th>
+                <th>排入會議</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="bill in sortedBills" :key="bill.id">
+                <td>
+                  <NuxtLink :to="`/bill/proposal/${bill.id}`" class="text-button">
+                    {{ bill.subject }}
+                  </NuxtLink>
+                </td>
+                <td>{{ formatSession(bill.session) }}／{{ bill.committeeName }}</td>
+                <td>{{ bill.meetingTitle || '尚未排入會議' }}</td>
+                <td>
+                  <select v-model="billMeetingSelection[bill.id]" class="control">
+                    <option value="">尚未排入會議</option>
+                    <option
+                      v-for="meeting in matchingMeetings(bill)"
+                      :key="meeting.id"
+                      :value="String(meeting.id)"
+                    >
+                      {{ meeting.title }}（{{ formatDateTime(meeting.meetingDate) }}）
+                    </option>
+                  </select>
+                </td>
+                <td>
+                  <button
+                    class="text-button"
+                    type="button"
+                    :disabled="
+                      isSubmitting || billMeetingSelection[bill.id] === String(bill.meetingId ?? '')
+                    "
+                    @click="scheduleBill(bill)"
+                  >
+                    儲存
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="bills.length === 0">
+                <td colspan="5" class="empty-cell">尚無議案</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
   import { computed, reactive, ref, watch } from 'vue';
-  import type { Committee, Meeting, Session, User } from '~~/shared/types/bill';
+  import type { Bill, Committee, Meeting, Session, User } from '~~/shared/types/bill';
   import { formatTermLabel } from '~~/shared/utils/term';
 
   definePageMeta({
@@ -418,15 +486,18 @@
   });
 
   type ResourceType = 'sessions' | 'committees' | 'users' | 'meetings';
-  type AdminTab = 'reference' | 'meetings';
+  type AdminTab = 'reference' | 'meetings' | 'scheduling';
 
   const notice = ref('');
   const errorMessage = ref('');
   const isSubmitting = ref(false);
-  const activeAdminTab = ref<AdminTab>('meetings');
+  const activeAdminTab = ref<AdminTab>(
+    useRoute().query.tab === 'scheduling' ? 'scheduling' : 'meetings',
+  );
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
   const editingMeetingId = ref<number | null>(null);
+  const billMeetingSelection = reactive<Record<number, string>>({});
 
   const committeeForm = reactive({
     name: '',
@@ -461,11 +532,41 @@
   const { data: usersData, refresh: refreshUsers } = await useFetch<User[]>('/api/users');
   const { data: meetingsData, refresh: refreshMeetings } =
     await useFetch<Meeting[]>('/api/meetings');
+  const { data: billsData, refresh: refreshBills } = await useFetch<Bill[]>('/api/bills?type=all');
 
   const sessions = computed(() => sessionsData.value ?? []);
   const committees = computed(() => committeesData.value ?? []);
   const users = computed(() => usersData.value ?? []);
   const meetings = computed(() => meetingsData.value ?? []);
+  const bills = computed(() => billsData.value ?? []);
+  const sortedBills = computed(() =>
+    [...bills.value].sort((a, b) => Number(Boolean(a.meetingId)) - Number(Boolean(b.meetingId))),
+  );
+
+  watch(
+    bills,
+    (items) => {
+      for (const bill of items) billMeetingSelection[bill.id] = String(bill.meetingId ?? '');
+    },
+    { immediate: true },
+  );
+
+  function matchingMeetings(bill: Bill) {
+    return meetings.value.filter(
+      (meeting) => meeting.session === bill.session && meeting.committeeId === bill.committeeId,
+    );
+  }
+
+  async function scheduleBill(bill: Bill) {
+    const meetingId = billMeetingSelection[bill.id];
+    const result = await requestJson<Bill>(`/api/proposals/${bill.id}/meeting`, 'PUT', {
+      meetingId: meetingId ? Number(meetingId) : null,
+    });
+    if (!result) return;
+
+    notice.value = meetingId ? '已排入會議' : '已取消議案排程';
+    await refreshBills();
+  }
 
   async function requestJson<T>(url: string, method: string, body?: unknown): Promise<T | null> {
     errorMessage.value = '';

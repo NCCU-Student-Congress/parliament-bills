@@ -57,7 +57,7 @@ Stores managed legislative sessions. The primary key is the existing numeric ses
 
 ### `meetings`
 
-Stores meetings that proposals can be submitted to.
+Stores meetings that the secretariat can assign proposals to.
 
 - `id`
 - `committee_id`
@@ -80,7 +80,7 @@ Stores submitted proposals. There is no draft state.
 - `session`
 - `proposed_at`
 - `proposer_id`
-- `meeting_id`
+- `meeting_id` (nullable until the secretariat assigns a meeting)
 - `subject`
 - `description`
 - `created_at`

@@ -11,7 +11,7 @@
         <span
           class="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-black text-white"
         >
-          {{ bill.meetingTitle }}
+          {{ bill.meetingTitle || '尚未排入會議' }}
         </span>
         <span class="inline-flex items-center text-xs font-bold text-[#5a5a70]">
           {{ formatDateTime(bill.proposedAt) }}

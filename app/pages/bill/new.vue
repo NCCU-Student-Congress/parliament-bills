@@ -16,7 +16,7 @@
 
     <div class="mb-8">
       <h1 class="mb-2 text-3xl font-bold text-gray-900">新增議案</h1>
-      <p class="text-gray-600">提案送出後即為正式提案，截止時間依所選會議設定。</p>
+      <p class="text-gray-600">提案送出後即為正式提案，由秘書處安排議案所屬會議。</p>
     </div>
 
     <form
@@ -65,17 +65,6 @@
           </select>
         </label>
       </div>
-
-      <label class="block">
-        <span class="mb-1 block text-sm font-medium text-gray-700">排入會議</span>
-        <select v-model="form.meetingId" required class="form-input">
-          <option value="">請選擇會議</option>
-          <option v-for="meeting in eligibleMeetings" :key="meeting.id" :value="String(meeting.id)">
-            {{ meeting.title }}，截止
-            {{ formatDateTime(meeting.proposalDeadlineAt) }}
-          </option>
-        </select>
-      </label>
 
       <label class="block">
         <span class="mb-1 block text-sm font-medium text-gray-700">連署人</span>
@@ -145,14 +134,7 @@
 <script setup lang="ts">
   import { computed, reactive, ref, watch } from 'vue';
   import { parseTermCode, getCurrentTerm } from '~~/shared/utils/term';
-  import type {
-    Bill,
-    Committee,
-    Meeting,
-    ProposalInput,
-    Session,
-    User,
-  } from '~~/shared/types/bill';
+  import type { Bill, Committee, ProposalInput, Session, User } from '~~/shared/types/bill';
 
   definePageMeta({
     title: '新增議案',
@@ -164,7 +146,6 @@
     session: string;
     proposedAt: string;
     proposerId: string;
-    meetingId: string;
     cosponsorIds: string[];
     subject: string;
     description: string;
@@ -180,7 +161,6 @@
     session: String(getCurrentTerm()),
     proposedAt: localNow,
     proposerId: '',
-    meetingId: '',
     cosponsorIds: [],
     subject: '',
     description: '',
@@ -194,12 +174,10 @@
   const { data: committeesData } = await useFetch<Committee[]>('/api/committees');
   const { data: sessionsData } = await useFetch<Session[]>('/api/sessions');
   const { data: usersData } = await useFetch<User[]>('/api/users');
-  const { data: meetingsData } = await useFetch<Meeting[]>('/api/meetings');
 
   const committees = computed(() => committeesData.value ?? []);
   const sessions = computed(() => sessionsData.value ?? []);
   const users = computed(() => usersData.value ?? []);
-  const meetings = computed(() => meetingsData.value ?? []);
 
   if (sessions.value.some((session) => session.id === getCurrentTerm())) {
     form.session = String(getCurrentTerm());
@@ -208,8 +186,6 @@
   }
 
   const selectedCommitteeId = computed(() => Number(form.committeeId) || null);
-  const selectedSession = computed(() => parseTermCode(form.session));
-
   const eligibleUsers = computed(() => {
     const legislators = users.value.filter((user) => user.permissionRole === 'legislator');
 
@@ -218,18 +194,6 @@
       (user) =>
         user.committeeIds.length === 0 || user.committeeIds.includes(selectedCommitteeId.value!),
     );
-  });
-
-  const eligibleMeetings = computed(() => {
-    const deadlineBase = new Date(form.proposedAt).getTime();
-
-    return meetings.value.filter((meeting) => {
-      if (meeting.committeeId !== selectedCommitteeId.value) return false;
-      if (selectedSession.value && meeting.session !== selectedSession.value) return false;
-
-      const deadline = new Date(meeting.proposalDeadlineAt).getTime();
-      return Number.isNaN(deadline) || Number.isNaN(deadlineBase) || deadlineBase <= deadline;
-    });
   });
 
   const cosponsorOptions = computed(() =>
@@ -242,33 +206,11 @@
   });
 
   watch(
-    () => [form.committeeId, form.session, form.proposedAt],
-    () => {
-      if (!eligibleMeetings.value.some((meeting) => String(meeting.id) === form.meetingId)) {
-        form.meetingId = '';
-      }
-    },
-  );
-
-  watch(
     () => form.proposerId,
     () => {
       form.cosponsorIds = form.cosponsorIds.filter((id) => id !== form.proposerId);
     },
   );
-
-  function formatDateTime(value: string) {
-    if (!value) return '未設定';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
 
   function buildPayload(): ProposalInput {
     const session = parseTermCode(form.session);
@@ -282,7 +224,6 @@
       session,
       proposedAt: new Date(form.proposedAt).toISOString(),
       proposerId: Number(form.proposerId),
-      meetingId: Number(form.meetingId),
       subject: form.subject.trim(),
       description: form.description.trim(),
       attachments: attachmentsInput.value

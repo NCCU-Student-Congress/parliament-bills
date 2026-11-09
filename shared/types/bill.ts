@@ -77,10 +77,10 @@ export interface Proposal {
   proposerId: number;
   proposerName: string;
   proposerEmail: string;
-  meetingId: number;
-  meetingTitle: string;
-  meetingDate: string;
-  proposalDeadlineAt: string;
+  meetingId: number | null;
+  meetingTitle: string | null;
+  meetingDate: string | null;
+  proposalDeadlineAt: string | null;
   subject: string;
   description: string;
   attachments: ProposalAttachment[];
@@ -94,7 +94,6 @@ export interface ProposalInput {
   session: number;
   proposedAt?: string;
   proposerId: number;
-  meetingId: number;
   subject: string;
   description?: string;
   attachments?: Array<string | Partial<ProposalAttachment>>;

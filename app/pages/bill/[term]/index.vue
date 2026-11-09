@@ -186,7 +186,7 @@
 
         if (
           filters.value.meeting &&
-          !bill.meetingTitle.toLowerCase().includes(filters.value.meeting.toLowerCase())
+          !(bill.meetingTitle || '').toLowerCase().includes(filters.value.meeting.toLowerCase())
         ) {
           return false;
         }

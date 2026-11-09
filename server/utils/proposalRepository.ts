@@ -62,10 +62,10 @@ interface ProposalRow {
   proposer_id: number;
   proposer_name: string;
   proposer_email: string;
-  meeting_id: number;
-  meeting_title: string;
-  meeting_date: string;
-  proposal_deadline_at: string;
+  meeting_id: number | null;
+  meeting_title: string | null;
+  meeting_date: string | null;
+  proposal_deadline_at: string | null;
   subject: string;
   description: string;
   created_at: string;
@@ -104,7 +104,6 @@ interface NormalizedProposalInput {
   session: number;
   proposedAt: string;
   proposerId: number;
-  meetingId: number;
   subject: string;
   description: string;
   attachments: ProposalAttachment[];
@@ -431,7 +430,6 @@ async function rowsToProposals(db: D1Database, rows: ProposalRow[]): Promise<Pro
 function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
   const committeeId = toPositiveInteger(input.committeeId);
   const proposerId = toPositiveInteger(input.proposerId);
-  const meetingId = toPositiveInteger(input.meetingId);
   const session = parseTermCode(input.session) ?? getCurrentTerm();
   const subject = cleanString(input.subject);
 
@@ -443,10 +441,6 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
     throw createError({ statusCode: 400, statusMessage: '提案人為必填欄位' });
   }
 
-  if (!meetingId) {
-    throw createError({ statusCode: 400, statusMessage: '會議為必填欄位' });
-  }
-
   if (!subject) {
     throw createError({ statusCode: 400, statusMessage: '案由為必填欄位' });
   }
@@ -456,7 +450,6 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
     session,
     proposedAt: normalizeDateTime(input.proposedAt),
     proposerId,
-    meetingId,
     subject,
     description: cleanString(input.description),
     attachments: normalizeAttachments(input.attachments),
@@ -895,6 +888,19 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
     }
 
+    const conflictingProposal = await db
+      .prepare(
+        `SELECT id FROM proposals
+         WHERE meeting_id = ? AND (session != ? OR committee_id IS NOT ?)
+         LIMIT 1`,
+      )
+      .bind(id, session, committeeId)
+      .first<{ id: number }>();
+
+    if (conflictingProposal) {
+      throw createError({ statusCode: 409, statusMessage: '會議已有不符合新會期或委員會的議案' });
+    }
+
     const row = await db
       .prepare(
         `UPDATE meetings
@@ -973,7 +979,7 @@ export function createProposalRepository(db: D1Database) {
        FROM proposals
        LEFT JOIN committees ON committees.id = proposals.committee_id
        INNER JOIN users AS proposers ON proposers.id = proposals.proposer_id
-       INNER JOIN meetings ON meetings.id = proposals.meeting_id
+       LEFT JOIN meetings ON meetings.id = proposals.meeting_id
        ${whereClause}
        ORDER BY proposals.proposed_at DESC, proposals.id DESC`,
     );
@@ -1024,24 +1030,6 @@ export function createProposalRepository(db: D1Database) {
   const saveBill = async (input: ProposalInput) => {
     const proposal = normalizeProposalInput(input);
 
-    const meeting = await db
-      .prepare(
-        `SELECT id, committee_id, session, proposal_deadline_at
-         FROM meetings
-         WHERE id = ?`,
-      )
-      .bind(proposal.meetingId)
-      .first<{
-        id: number;
-        committee_id: number | null;
-        session: number;
-        proposal_deadline_at: string;
-      }>();
-
-    if (!meeting) {
-      throw createError({ statusCode: 400, statusMessage: '找不到指定會議' });
-    }
-
     const existingSession = await db
       .prepare('SELECT id FROM sessions WHERE id = ?')
       .bind(proposal.session)
@@ -1075,16 +1063,6 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 400, statusMessage: '提案人必須是議員' });
     }
 
-    if (meeting.committee_id !== proposal.committeeId || meeting.session !== proposal.session) {
-      throw createError({ statusCode: 400, statusMessage: '會議與委員會或會期不相符' });
-    }
-
-    const deadline = new Date(meeting.proposal_deadline_at).getTime();
-    const proposedAt = new Date(proposal.proposedAt).getTime();
-    if (!Number.isNaN(deadline) && !Number.isNaN(proposedAt) && proposedAt > deadline) {
-      throw createError({ statusCode: 400, statusMessage: '提案時間已超過該會議截止時間' });
-    }
-
     const inserted = await db
       .prepare(
         `INSERT INTO proposals (
@@ -1092,10 +1070,9 @@ export function createProposalRepository(db: D1Database) {
            session,
            proposed_at,
            proposer_id,
-           meeting_id,
            subject,
            description
-         ) VALUES (?, ?, ?, ?, ?, ?, ?)
+         ) VALUES (?, ?, ?, ?, ?, ?)
          RETURNING id`,
       )
       .bind(
@@ -1103,7 +1080,6 @@ export function createProposalRepository(db: D1Database) {
         proposal.session,
         proposal.proposedAt,
         proposal.proposerId,
-        proposal.meetingId,
         proposal.subject,
         proposal.description,
       )
@@ -1167,6 +1143,43 @@ export function createProposalRepository(db: D1Database) {
     return saved;
   };
 
+  const scheduleBill = async (id: number, meetingId: unknown) => {
+    const proposal = await db
+      .prepare('SELECT id, committee_id, session FROM proposals WHERE id = ?')
+      .bind(id)
+      .first<{ id: number; committee_id: number | null; session: number }>();
+
+    if (!proposal) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
+    }
+
+    const targetMeetingId = meetingId === null ? null : toPositiveInteger(meetingId);
+    if (meetingId !== null && !targetMeetingId) {
+      throw createError({ statusCode: 400, statusMessage: '無效的會議索引' });
+    }
+
+    if (targetMeetingId) {
+      const meeting = await db
+        .prepare('SELECT committee_id, session FROM meetings WHERE id = ?')
+        .bind(targetMeetingId)
+        .first<{ committee_id: number | null; session: number }>();
+
+      if (!meeting) {
+        throw createError({ statusCode: 400, statusMessage: '找不到指定會議' });
+      }
+      if (meeting.committee_id !== proposal.committee_id || meeting.session !== proposal.session) {
+        throw createError({ statusCode: 400, statusMessage: '會議與委員會或會期不相符' });
+      }
+    }
+
+    await db
+      .prepare('UPDATE proposals SET meeting_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(targetMeetingId, id)
+      .run();
+
+    return getBillById(id);
+  };
+
   return {
     createCommittee,
     updateCommittee,
@@ -1191,5 +1204,6 @@ export function createProposalRepository(db: D1Database) {
     getBillById,
     getBillByTermAndId,
     saveBill,
+    scheduleBill,
   };
 }

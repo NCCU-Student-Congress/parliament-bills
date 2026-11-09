@@ -15,10 +15,11 @@ Configure the same binding in Cloudflare Pages and `wrangler.toml`.
 
 ## Migration
 
-Schema lives in:
+Schema and subsequent changes live in:
 
 ```text
 migrations/0001_create_bills.sql
+migrations/0004_allow_unscheduled_proposals.sql
 ```
 
 It creates:
@@ -33,7 +34,8 @@ It creates:
 
 ## Main Rules
 
-- A proposal has no draft status. Once created, it is a submitted proposal.
+- A proposal has no draft status. Once created, it is a submitted proposal without a meeting.
+- The secretariat assigns or clears its meeting later in the admin's `議案排案` tab. The meeting must match the proposal's session and committee.
 - Meetings and proposals reference `sessions.id`; the id is the existing numeric term code such as `271`.
 - `POST /api/sessions` does not accept manual fields. It starts at `252` and appends the next session.
 - Proposal deadlines belong to meetings: `meetings.proposal_deadline_at`.
@@ -110,6 +112,7 @@ Proposal reads:
 Proposal writes:
 
 - `POST /api/bills`
+- `PUT /api/proposals/:id/meeting`
 
 Proposal writes require a secretariat admin session. The selected proposer must be a user with
 `permissionRole: "legislator"`.
@@ -122,13 +125,14 @@ Proposal writes require a secretariat admin session. The selected proposer must 
   session: number;
   proposedAt?: string;
   proposerId: number;
-  meetingId: number;
   subject: string;
   description?: string;
   attachments?: Array<string | ProposalAttachment>;
   cosponsorIds?: number[];
 }
 ```
+
+`PUT /api/proposals/:id/meeting` accepts `{ meetingId: number | null }`. Use `null` to clear an assignment.
 
 The protected write UI is:
 
