@@ -46,6 +46,20 @@
 - **套件管理**：pnpm (Node.js 環境)
 - **版本控制**：Git / GitHub
 
+## 本機執行
+
+請先安裝 Node.js 與 pnpm（專案的 `packageManager` 設定為 `pnpm@11.9.0`）。在專案根目錄執行：
+
+```sh
+pnpm install --frozen-lockfile
+cp .env.example .env
+pnpm dev
+```
+
+啟動後開啟 <http://localhost:3000>。`pnpm dev` 會先將 `migrations/` 套用至 `.wrangler/state` 中的本機 Cloudflare D1 資料庫，再啟動 Nuxt；新建的本機資料庫沒有議案資料。
+
+若要登入秘書處或後台，請先在 `.env` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
+
 ## 授權與聯絡資訊
 
 - **維護單位**：國立政治大學學生議會， NCCU Student Congress
