@@ -29,6 +29,10 @@
           >
             回到會網
           </a>
+          <button v-if="isAuthenticated" type="button" class="auth-link" @click="handleLogout">
+            登出
+          </button>
+          <NuxtLink v-else to="/secretariat/login" class="auth-link"> 登入 </NuxtLink>
         </nav>
 
         <!-- 行動版選單按鈕 -->
@@ -82,6 +86,22 @@
           >
             回到會網
           </a>
+          <button
+            v-if="isAuthenticated"
+            type="button"
+            class="mobile-nav-link mobile-auth-link"
+            @click="handleLogout"
+          >
+            登出
+          </button>
+          <NuxtLink
+            v-else
+            to="/secretariat/login"
+            class="mobile-nav-link mobile-auth-link"
+            @click="closeMobileMenu"
+          >
+            登入
+          </NuxtLink>
         </nav>
       </div>
     </div>
@@ -89,10 +109,13 @@
 </template>
 
 <script setup>
-  import { ref } from 'vue';
+  import { ref, watch } from 'vue';
   import { EXTERNAL_LINKS } from '~/utils/constants.js';
 
   const mobileMenuOpen = ref(false);
+  const isAuthenticated = ref(false);
+  const route = useRoute();
+  const router = useRouter();
 
   const toggleMobileMenu = () => {
     mobileMenuOpen.value = !mobileMenuOpen.value;
@@ -102,8 +125,32 @@
     mobileMenuOpen.value = false;
   };
 
+  const refreshSession = async () => {
+    const session = await $fetch('/api/secretariat/session').catch(() => ({
+      authenticated: false,
+    }));
+    isAuthenticated.value = Boolean(session.authenticated);
+  };
+
+  const handleLogout = async () => {
+    await $fetch('/api/secretariat/logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+    }).catch(() => null);
+
+    sessionStorage.removeItem('secretariat_authenticated');
+    isAuthenticated.value = false;
+    closeMobileMenu();
+
+    if (route.path.startsWith('/admin') || route.path.startsWith('/secretariat')) {
+      await router.push('/secretariat/login');
+    }
+  };
+
   // 點擊外部關閉選單
   onMounted(() => {
+    refreshSession();
+
     const handleClickOutside = (event) => {
       if (mobileMenuOpen.value && !event.target.closest('header')) {
         mobileMenuOpen.value = false;
@@ -116,6 +163,13 @@
       document.removeEventListener('click', handleClickOutside);
     });
   });
+
+  watch(
+    () => route.fullPath,
+    () => {
+      refreshSession();
+    },
+  );
 </script>
 
 <style scoped>
@@ -154,6 +208,31 @@
     color: #fff;
   }
 
+  .auth-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.9rem;
+    border: 2px solid #000024;
+    border-radius: 8px;
+    background: #fff;
+    color: #000024;
+    font-size: 0.875rem;
+    font-weight: 900;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .auth-link:hover,
+  .auth-link.router-link-active {
+    background: #000024;
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
   .mobile-nav-link {
     display: flex;
     align-items: center;
@@ -170,5 +249,11 @@
   .mobile-nav-link-accent {
     border-color: #e60012;
     color: #e60012;
+  }
+
+  .mobile-auth-link {
+    border: 2px solid #000024;
+    border-radius: 8px;
+    color: #000024;
   }
 </style>

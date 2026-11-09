@@ -15,12 +15,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (process.client) {
-    const isAuthenticated = sessionStorage.getItem('secretariat_authenticated') === 'true';
-
-    if (isAuthenticated) {
-      return;
-    }
-
     const session = await $fetch<{ authenticated: boolean }>('/api/secretariat/session').catch(
       () => ({ authenticated: false }),
     );
@@ -30,6 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return;
     }
 
+    sessionStorage.removeItem('secretariat_authenticated');
     return navigateTo({ path: '/secretariat/login', query: { redirect: to.fullPath } });
   }
 });
