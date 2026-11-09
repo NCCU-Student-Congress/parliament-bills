@@ -7,5 +7,10 @@ export default defineEventHandler(async (event) => {
     return { authenticated: false };
   }
 
-  return { authenticated: true, role: session.role };
+  return {
+    authenticated: true,
+    userId: session.userId,
+    email: session.email,
+    role: session.role,
+  };
 });

@@ -475,13 +475,14 @@
     try {
       const response = await fetch(url, {
         method,
+        credentials: 'same-origin',
         headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.statusMessage || data?.message || '操作失敗');
+        throw new Error(data?.message || data?.statusMessage || '操作失敗');
       }
 
       return data as T;

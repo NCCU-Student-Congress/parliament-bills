@@ -1,6 +1,6 @@
 <!-- pages/secretariat/index.vue -->
 <script setup lang="ts">
-  // 應用密碼驗證中介軟體
+  // 應用登入驗證中介軟體
   import { definePageMeta } from '#imports';
   definePageMeta({
     middleware: ['auth'],
