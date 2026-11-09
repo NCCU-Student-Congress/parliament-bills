@@ -1,0 +1,1 @@
+不要部署到cloudflare的prod，github已經綁定好了。但可以使用wrangler的local相關指令來測試。
