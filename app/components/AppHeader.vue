@@ -18,6 +18,7 @@
         <!-- 桌面版導覽選單 -->
         <nav class="hidden items-center gap-1 md:flex">
           <NuxtLink to="/bill" class="nav-link"> 議案查詢 </NuxtLink>
+          <NuxtLink to="/cosign" class="nav-link"> 連署 </NuxtLink>
           <NuxtLink to="/bill/new" class="nav-link nav-link-accent"> 新增議案 </NuxtLink>
           <NuxtLink v-if="isSecretariat" to="/admin" class="nav-link"> 後台 </NuxtLink>
           <NuxtLink to="/secretariat" class="nav-link"> 草擬系統 </NuxtLink>
@@ -64,6 +65,8 @@
           <NuxtLink to="/bill" class="mobile-nav-link" @click="closeMobileMenu">
             議案查詢
           </NuxtLink>
+
+          <NuxtLink to="/cosign" class="mobile-nav-link" @click="closeMobileMenu"> 連署 </NuxtLink>
 
           <NuxtLink
             to="/bill/new"

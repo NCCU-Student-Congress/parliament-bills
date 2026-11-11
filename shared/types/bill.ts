@@ -97,7 +97,6 @@ export interface ProposalInput {
   subject: string;
   description?: string;
   attachments?: Array<string | Partial<ProposalAttachment>>;
-  cosponsorIds?: number[];
 }
 
 export type Bill = Proposal;

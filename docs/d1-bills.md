@@ -43,6 +43,8 @@ It creates:
 - User committee membership is stored as a JSON array in `users.committee_ids`.
 - Attachments are separate records. Link attachments store the URL directly; file attachments can store an R2 key plus metadata.
 - Confirmed cosponsors are `proposal_cosponsors.status = 'confirmed'`.
+- Legislators can cosign any other proposer's unscheduled proposal, regardless of committee or
+  session. Assigning a meeting closes cosigning; clearing it reopens cosigning.
 
 ## Local Auth Login
 
@@ -112,11 +114,13 @@ Proposal reads:
 - `GET /api/bills?limit=10`
 - `GET /api/bills?type=all`
 - `GET /api/proposals/:id`
+- `GET /api/proposals/signable` (public, unscheduled proposals from every session)
 
 Proposal writes:
 
 - `POST /api/bills`
 - `PUT /api/proposals/:id/meeting`
+- `POST /api/proposals/:id/cosponsors` (logged-in legislators only; signs as the caller)
 
 Creating a proposal requires a logged-in legislator or secretariat account. The server always
 records the logged-in user as proposer; a client-supplied `proposerId` cannot change it.
@@ -132,13 +136,13 @@ Meeting assignments require a secretariat account.
   subject: string;
   description?: string;
   attachments?: Array<string | ProposalAttachment>;
-  cosponsorIds?: number[];
 }
 ```
 
 The proposal form sends `proposedAt` as a date selected by the user and displays proposal dates without a time of day. Existing timestamp values remain readable.
-It loads the current proposer and eligible cosponsors from the protected
-`GET /api/proposals/form-data` endpoint.
+It loads the current proposer from the protected `GET /api/proposals/form-data` endpoint.
+`POST /api/bills` rejects `cosponsorIds`; each legislator must cosign from `/cosign` themselves.
+Cosigning is idempotent, and the UI shows `已連署` after signing. There is no self-service withdrawal.
 
 `PUT /api/proposals/:id/meeting` accepts `{ meetingId: number | null }`. Use `null` to clear an assignment.
 

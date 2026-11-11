@@ -12,13 +12,5 @@ export default defineEventHandler(async (event) => {
       name: proposer.name,
       permissionRole: proposer.permissionRole,
     },
-    cosponsors: users
-      .filter((user) => user.permissionRole === 'legislator' && user.id !== proposer.id)
-      .map((user) => ({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        committeeIds: user.committeeIds,
-      })),
   };
 });

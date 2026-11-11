@@ -107,7 +107,6 @@ interface NormalizedProposalInput {
   subject: string;
   description: string;
   attachments: ProposalAttachment[];
-  cosponsorIds: number[];
 }
 
 interface UserInput {
@@ -342,14 +341,6 @@ function normalizeAttachments(value: ProposalInput['attachments']): ProposalAtta
     .filter((item): item is ProposalAttachment => Boolean(item));
 }
 
-function normalizeCosponsorIds(value: unknown, proposerId: number): number[] {
-  if (!Array.isArray(value)) return [];
-
-  return [...new Set(value.map(toPositiveInteger))]
-    .filter((id): id is number => Boolean(id))
-    .filter((id) => id !== proposerId);
-}
-
 async function getAttachmentsByProposalId(
   db: D1Database,
   proposalIds: number[],
@@ -453,7 +444,6 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
     subject,
     description: cleanString(input.description),
     attachments: normalizeAttachments(input.attachments),
-    cosponsorIds: normalizeCosponsorIds(input.cosponsorIds, proposerId),
   };
 }
 
@@ -990,6 +980,7 @@ export function createProposalRepository(db: D1Database) {
   };
 
   const getAllBills = () => getProposals();
+  const getSignableBills = () => getProposals('WHERE proposals.meeting_id IS NULL');
 
   const getLatestTermBills = async () => {
     const row = await db
@@ -1117,23 +1108,6 @@ export function createProposalRepository(db: D1Database) {
       );
     }
 
-    if (proposal.cosponsorIds.length) {
-      await db.batch(
-        proposal.cosponsorIds.map((userId) =>
-          db
-            .prepare(
-              `INSERT INTO proposal_cosponsors (
-                 proposal_id,
-                 user_id,
-                 status,
-                 confirmed_at
-               ) VALUES (?, ?, 'confirmed', CURRENT_TIMESTAMP)`,
-            )
-            .bind(inserted.id, userId),
-        ),
-      );
-    }
-
     const saved = await getBillById(inserted.id);
 
     if (!saved) {
@@ -1141,6 +1115,60 @@ export function createProposalRepository(db: D1Database) {
     }
 
     return saved;
+  };
+
+  const cosignBill = async (id: number, userId: number) => {
+    // The proposal and user checks are part of the write so scheduling cannot race past them.
+    await db
+      .prepare(
+        `INSERT INTO proposal_cosponsors (proposal_id, user_id, status, confirmed_at)
+         SELECT proposals.id, users.id, 'confirmed', CURRENT_TIMESTAMP
+         FROM proposals
+         INNER JOIN users ON users.id = ?
+         WHERE proposals.id = ?
+           AND proposals.meeting_id IS NULL
+           AND proposals.proposer_id <> users.id
+           AND users.permission_role = 'legislator'
+         ON CONFLICT(proposal_id, user_id) DO UPDATE SET
+           status = 'confirmed',
+           confirmed_at = CURRENT_TIMESTAMP,
+           declined_at = NULL,
+           token_hash = NULL,
+           token_expires_at = NULL,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE proposal_cosponsors.status <> 'confirmed'
+           AND EXISTS (
+             SELECT 1 FROM proposals
+             WHERE proposals.id = excluded.proposal_id
+               AND proposals.meeting_id IS NULL
+               AND proposals.proposer_id <> excluded.user_id
+           )`,
+      )
+      .bind(userId, id)
+      .run();
+
+    const bill = await getBillById(id);
+    if (!bill) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
+    }
+
+    if (
+      bill.cosponsors.some(
+        (cosponsor) => cosponsor.userId === userId && cosponsor.status === 'confirmed',
+      )
+    ) {
+      return bill;
+    }
+
+    if (bill.meetingId !== null) {
+      throw createError({ statusCode: 409, statusMessage: '議案已排入會議，無法連署' });
+    }
+
+    if (bill.proposerId === userId) {
+      throw createError({ statusCode: 403, statusMessage: '不能連署自己的議案' });
+    }
+
+    throw createError({ statusCode: 403, statusMessage: '沒有連署權限，請重新登入' });
   };
 
   const scheduleBill = async (id: number, meetingId: unknown) => {
@@ -1198,12 +1226,14 @@ export function createProposalRepository(db: D1Database) {
     deleteMeeting,
     getMeetings,
     getAllBills,
+    getSignableBills,
     getLatestTermBills,
     getPastTermBills,
     getBillsByTerm,
     getBillById,
     getBillByTermAndId,
     saveBill,
+    cosignBill,
     scheduleBill,
   };
 }

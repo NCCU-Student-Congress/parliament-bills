@@ -62,15 +62,6 @@
       </div>
 
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-gray-700">連署人</span>
-        <select v-model="form.cosponsorIds" multiple class="form-input min-h-36">
-          <option v-for="user in cosponsorOptions" :key="user.id" :value="String(user.id)">
-            {{ user.name }}（{{ user.email }}）
-          </option>
-        </select>
-      </label>
-
-      <label class="block">
         <span class="mb-1 block text-sm font-medium text-gray-700">案由</span>
         <textarea v-model="form.subject" rows="3" required class="form-textarea"></textarea>
       </label>
@@ -133,7 +124,6 @@
 
   interface ProposalFormData {
     proposer: Pick<User, 'name' | 'permissionRole'>;
-    cosponsors: Array<Pick<User, 'id' | 'name' | 'email' | 'committeeIds'>>;
   }
 
   definePageMeta({
@@ -145,7 +135,6 @@
     committeeId: string;
     session: string;
     proposedAt: string;
-    cosponsorIds: string[];
     subject: string;
     description: string;
   }
@@ -161,7 +150,6 @@
     committeeId: '',
     session: String(getCurrentTerm()),
     proposedAt: localToday,
-    cosponsorIds: [],
     subject: '',
     description: '',
   });
@@ -193,16 +181,6 @@
   }
 
   const selectedCommitteeId = computed(() => Number(form.committeeId) || null);
-  const cosponsorOptions = computed(() => {
-    const legislators = formData.value?.cosponsors ?? [];
-
-    if (!selectedCommitteeId.value) return legislators;
-    return legislators.filter(
-      (user) =>
-        user.committeeIds.length === 0 || user.committeeIds.includes(selectedCommitteeId.value!),
-    );
-  });
-
   const billLink = computed(() => {
     if (!savedBill.value) return '/bill';
     return `/bill/proposal/${savedBill.value.id}`;
@@ -225,7 +203,6 @@
         .split('\n')
         .map((item) => item.trim())
         .filter(Boolean),
-      cosponsorIds: form.cosponsorIds.map(Number).filter((id) => Number.isInteger(id) && id > 0),
     };
   }
 
