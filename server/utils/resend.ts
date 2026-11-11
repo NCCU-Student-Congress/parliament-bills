@@ -71,6 +71,16 @@ export async function sendLoginEmail(event: H3Event, options: SendLoginEmailOpti
   });
 
   if (!response.ok) {
+    const resendError = (await response.json().catch(() => null)) as {
+      name?: unknown;
+      message?: unknown;
+    } | null;
+    console.error('[resend] 登入信寄送失敗', {
+      status: response.status,
+      code: typeof resendError?.name === 'string' ? resendError.name : 'unknown',
+      message: typeof resendError?.message === 'string' ? resendError.message : response.statusText,
+    });
+
     throw createError({
       statusCode: 502,
       statusMessage: 'Bad Gateway',
