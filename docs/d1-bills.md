@@ -40,6 +40,7 @@ It creates:
 - Meetings and proposals reference `sessions.id`; the id is the existing numeric term code such as `271`.
 - `POST /api/sessions` does not accept manual fields. It starts at `252` and appends the next session.
 - Proposal deadlines belong to meetings: `meetings.proposal_deadline_at`.
+- A meeting's proposal deadline must be no later than its meeting time; equal times are allowed.
 - Proposals do not store a deadline snapshot.
 - User committee membership is stored as a JSON array in `users.committee_ids`.
 - Attachments are separate link records with a display name and URL. Legacy links without a name

@@ -356,8 +356,12 @@
               v-model="meetingForm.proposalDeadlineAt"
               required
               type="datetime-local"
+              :max="meetingForm.meetingDate || undefined"
               class="control"
             />
+            <span v-if="deadlineAfterMeeting" class="text-sm text-red-700">
+              提案截止時間不可晚於會議時間
+            </span>
           </label>
           <div class="form-actions">
             <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
@@ -524,6 +528,14 @@
     meetingDate: '',
     proposalDeadlineAt: '',
   });
+  const deadlineAfterMeeting = computed(() => {
+    if (!meetingForm.meetingDate || !meetingForm.proposalDeadlineAt) return false;
+    const meetingTime = new Date(meetingForm.meetingDate).getTime();
+    const deadlineTime = new Date(meetingForm.proposalDeadlineAt).getTime();
+    return (
+      Number.isFinite(meetingTime) && Number.isFinite(deadlineTime) && deadlineTime > meetingTime
+    );
+  });
 
   const { data: sessionsData, refresh: refreshSessions } =
     await useFetch<Session[]>('/api/sessions');
@@ -659,6 +671,12 @@
   }
 
   async function submitMeeting() {
+    if (deadlineAfterMeeting.value) {
+      errorMessage.value = '提案截止時間不可晚於會議時間';
+      notice.value = '';
+      return;
+    }
+
     const payload = {
       committeeId: meetingForm.committeeId ? Number(meetingForm.committeeId) : null,
       session: Number(meetingForm.session),

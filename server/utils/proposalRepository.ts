@@ -157,6 +157,19 @@ function normalizeDateTime(value: unknown, fallback = new Date().toISOString()):
   return Number.isNaN(parsed.getTime()) ? raw : parsed.toISOString();
 }
 
+function validateMeetingTimes(meetingDate: string, proposalDeadlineAt: string): void {
+  const meetingTime = Date.parse(meetingDate);
+  const deadlineTime = Date.parse(proposalDeadlineAt);
+
+  if (!Number.isFinite(meetingTime) || !Number.isFinite(deadlineTime)) {
+    throw createError({ statusCode: 400, statusMessage: '會議時間或提案截止時間格式不正確' });
+  }
+
+  if (deadlineTime > meetingTime) {
+    throw createError({ statusCode: 400, statusMessage: '提案截止時間不可晚於會議時間' });
+  }
+}
+
 function normalizeProposalDate(value: unknown): string {
   const date = cleanString(value);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -778,6 +791,8 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 400, statusMessage: '提案截止時間為必填欄位' });
     }
 
+    validateMeetingTimes(meetingDate, proposalDeadlineAt);
+
     if (!title) {
       throw createError({ statusCode: 400, statusMessage: '會議名稱為必填欄位' });
     }
@@ -861,6 +876,8 @@ export function createProposalRepository(db: D1Database) {
     if (!proposalDeadlineAt) {
       throw createError({ statusCode: 400, statusMessage: '提案截止時間為必填欄位' });
     }
+
+    validateMeetingTimes(meetingDate, proposalDeadlineAt);
 
     if (!title) {
       throw createError({ statusCode: 400, statusMessage: '會議名稱為必填欄位' });
