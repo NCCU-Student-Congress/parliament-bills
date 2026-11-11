@@ -61,14 +61,6 @@
       <div v-if="!pending && !error && filteredBills.length > 0" class="space-y-6">
         <div class="text-sm text-gray-600">共找到 {{ filteredBills.length }} 筆議案</div>
 
-        <!-- 上方分頁選單 -->
-        <Pagination
-          v-model:current-page="currentPage"
-          :total-pages="frontendTotalPages"
-          :total-items="filteredBills.length"
-          :items-per-page="itemsPerPage"
-        />
-
         <div class="grid gap-4">
           <BillCard v-for="bill in paginatedBills" :key="bill.id" :bill="bill" />
         </div>
