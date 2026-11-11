@@ -62,7 +62,10 @@
               >
                 {{ field.label }}
               </td>
-              <td class="block px-6 py-4 text-sm text-gray-700 sm:table-cell">
+              <td
+                class="block px-6 text-sm text-gray-700 sm:table-cell"
+                :class="editingField === field.editable ? 'py-2' : 'py-4'"
+              >
                 <div v-if="editingField === field.editable" class="space-y-3">
                   <select
                     v-if="field.editable === 'session'"
@@ -104,8 +107,8 @@
                     v-else-if="field.editable === 'subject' || field.editable === 'description'"
                     v-model="draftValue"
                     :aria-label="field.label"
-                    :rows="field.editable === 'description' ? 6 : 3"
-                    class="edit-control"
+                    rows="1"
+                    class="edit-control resize-y"
                   ></textarea>
                   <template v-else-if="field.editable === 'attachments'">
                     <div
