@@ -308,7 +308,7 @@
       </section>
     </div>
 
-    <div v-else-if="activeAdminTab === 'meetings'" class="meeting-console">
+    <div v-else-if="activeAdminTab === 'meetings'" class="w-full">
       <section class="admin-section">
         <div class="section-head">
           <h2 class="section-title">會議控制台</h2>
