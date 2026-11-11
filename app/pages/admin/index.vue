@@ -184,7 +184,7 @@
             <span>權限角色</span>
             <select v-model="userForm.permissionRole" class="control">
               <option value="legislator">議員</option>
-              <option value="secretariat_admin">秘書處 Admin</option>
+              <option value="secretariat_admin">秘書處</option>
             </select>
           </label>
           <label class="field md:col-span-2">
@@ -235,7 +235,7 @@
             <span>權限角色</span>
             <select v-model="bulkUserForm.permissionRole" class="control">
               <option value="legislator">議員</option>
-              <option value="secretariat_admin">秘書處 Admin</option>
+              <option value="secretariat_admin">秘書處</option>
             </select>
           </label>
           <label class="field">
@@ -284,7 +284,7 @@
               <tr v-for="user in users" :key="user.id">
                 <td>{{ user.name }}</td>
                 <td>{{ user.email }}</td>
-                <td>{{ user.permissionRole }}</td>
+                <td>{{ user.permissionRole === 'secretariat_admin' ? '秘書處' : '議員' }}</td>
                 <td>{{ getCommitteeNames(user.committeeIds) }}</td>
                 <td>
                   <div class="row-actions">
