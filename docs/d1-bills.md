@@ -132,6 +132,8 @@ Proposal writes require a secretariat admin session. The selected proposer must 
 }
 ```
 
+The proposal form sends `proposedAt` as a date selected by the user and displays proposal dates without a time of day. Existing timestamp values remain readable.
+
 `PUT /api/proposals/:id/meeting` accepts `{ meetingId: number | null }`. Use `null` to clear an assignment.
 
 The protected write UI is:

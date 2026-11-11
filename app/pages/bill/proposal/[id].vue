@@ -146,7 +146,7 @@
   const displayFields = computed(() => [
     { label: '會期', key: 'sessionLabel' },
     { label: '委員會', key: 'committeeName' },
-    { label: '提案時間', key: 'proposedAtLabel' },
+    { label: '提案日期', key: 'proposedAtLabel' },
     { label: '提案人', key: 'proposerName' },
     { label: '連署人', key: 'cosponsors' },
     { label: '排入會議', key: 'meetingTitle' },
@@ -184,10 +184,21 @@
     });
   }
 
+  function formatDate(value: string) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  }
+
   function getField(fieldName: string) {
     if (!bill.value) return undefined;
     if (fieldName === 'sessionLabel') return formatTermLabel(bill.value.session);
-    if (fieldName === 'proposedAtLabel') return formatDateTime(bill.value.proposedAt);
+    if (fieldName === 'proposedAtLabel') return formatDate(bill.value.proposedAt);
     if (fieldName === 'meetingDateLabel') return formatDateTime(bill.value.meetingDate);
     if (fieldName === 'proposalDeadlineLabel') return formatDateTime(bill.value.proposalDeadlineAt);
     return (bill.value as unknown as Record<string, unknown>)[fieldName];

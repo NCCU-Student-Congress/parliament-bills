@@ -220,7 +220,7 @@
         const dateA = normalizeDate(a.proposedAt);
         const dateB = normalizeDate(b.proposedAt);
         if (!dateA || !dateB) return 0;
-        return new Date(dateB).getTime() - new Date(dateA).getTime();
+        return dateB.localeCompare(dateA);
       });
   });
 
@@ -252,24 +252,26 @@
 
   const normalizeDate = (date) => {
     if (!date) return '';
-    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) return date;
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
 
     // 處理含中文的日期格式: "2025/7/1 下午 11:07:25"
     if (typeof date === 'string') {
-      const match = date.match(
-        /(\d{4})\/(\d{1,2})\/(\d{1,2})\s*(上午|下午)\s*(\d{1,2}):(\d{2}):(\d{2})/,
-      );
+      const match = date.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
       if (match) {
-        const [, year, month, day, ampm, hour, min, sec] = match;
-        let h = parseInt(hour, 10);
-        if (ampm === '下午' && h < 12) h += 12;
-        if (ampm === '上午' && h === 12) h = 0;
-        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(h).padStart(2, '0')}:${min}:${sec}`;
+        const [, year, month, day] = match;
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       }
     }
 
     const d = new Date(date);
-    return isNaN(d.getTime()) ? '' : d.toISOString();
+    return isNaN(d.getTime())
+      ? ''
+      : d.toLocaleDateString('en-CA', {
+          timeZone: 'Asia/Taipei',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
   };
 
   // 監聽前端頁碼變化，僅用於控制 paginatedBills，不觸發 API 請求

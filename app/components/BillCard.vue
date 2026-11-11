@@ -14,7 +14,7 @@
           {{ bill.meetingTitle || '尚未排入會議' }}
         </span>
         <span class="inline-flex items-center text-xs font-bold text-[#5a5a70]">
-          {{ formatDateTime(bill.proposedAt) }}
+          {{ formatDate(bill.proposedAt) }}
         </span>
       </div>
       <div class="text-sm font-semibold leading-relaxed text-[#12122b]">
@@ -47,15 +47,14 @@
       .filter(Boolean),
   );
 
-  const formatDateTime = (value) => {
+  const formatDate = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString('zh-TW', {
+    return date.toLocaleDateString('zh-TW', {
+      timeZone: 'Asia/Taipei',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 </script>

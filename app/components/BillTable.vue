@@ -11,7 +11,7 @@
             <th class="px-6 py-3 text-left text-xs font-black text-[#12122b]">編號</th>
             <th class="px-6 py-3 text-left text-xs font-black text-[#12122b]">提案類型</th>
             <th class="px-6 py-3 text-left text-xs font-black text-[#12122b]">提案機關/議員</th>
-            <th class="px-6 py-3 text-left text-xs font-black text-[#12122b]">提案時間</th>
+            <th class="px-6 py-3 text-left text-xs font-black text-[#12122b]">提案日期</th>
             <th class="px-6 py-3 text-left text-xs font-black text-[#12122b]">操作</th>
           </tr>
         </thead>

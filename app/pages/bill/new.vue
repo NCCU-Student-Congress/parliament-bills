@@ -51,8 +51,8 @@
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-gray-700">提案時間</span>
-          <input v-model="form.proposedAt" required type="datetime-local" class="form-input" />
+          <span class="mb-1 block text-sm font-medium text-gray-700">提案日期</span>
+          <input v-model="form.proposedAt" required type="date" class="form-input" />
         </label>
 
         <label class="block">
@@ -151,15 +151,17 @@
     description: string;
   }
 
-  const now = new Date();
-  const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
+  const localToday = new Date().toLocaleDateString('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 
   const form = reactive<BillForm>({
     committeeId: '',
     session: String(getCurrentTerm()),
-    proposedAt: localNow,
+    proposedAt: localToday,
     proposerId: '',
     cosponsorIds: [],
     subject: '',
@@ -222,7 +224,7 @@
     return {
       committeeId: selectedCommitteeId.value,
       session,
-      proposedAt: new Date(form.proposedAt).toISOString(),
+      proposedAt: form.proposedAt,
       proposerId: Number(form.proposerId),
       subject: form.subject.trim(),
       description: form.description.trim(),

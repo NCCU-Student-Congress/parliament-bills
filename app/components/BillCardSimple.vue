@@ -9,7 +9,7 @@
       </p>
       <div class="text-sm font-semibold leading-relaxed text-[#12122b]">
         <p><strong>提案人：</strong>{{ bill.proposerName }}</p>
-        <p><strong>提案時間：</strong>{{ formatDateTime(bill.proposedAt) }}</p>
+        <p><strong>提案日期：</strong>{{ formatDate(bill.proposedAt) }}</p>
       </div>
     </div>
   </NuxtLink>
@@ -23,15 +23,14 @@
     },
   });
 
-  const formatDateTime = (value) => {
+  const formatDate = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString('zh-TW', {
+    return date.toLocaleDateString('zh-TW', {
+      timeZone: 'Asia/Taipei',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 </script>
