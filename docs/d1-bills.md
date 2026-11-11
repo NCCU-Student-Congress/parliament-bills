@@ -101,6 +101,10 @@ Reference data write routes, `GET /api/users`, and the reference data admin UI r
 passwordless secretariat admin session. Login emails are sent through Resend to addresses in the
 `users` table.
 
+All system email uses the sender `政大學生議會議案系統 <bill@notify.nccusc.org>` and the
+`RESEND_API_KEY` setting. The old `RESEND_FROM_EMAIL` and `RESEND_FROM_NAME` settings are no longer
+used.
+
 Proposal reads:
 
 - `GET /api/bills`

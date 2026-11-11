@@ -8,6 +8,8 @@ interface SendLoginEmailOptions {
   expiresInMinutes: number;
 }
 
+const FROM_ADDRESS = '政大學生議會議案系統 <bill@notify.nccusc.org>';
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
@@ -15,21 +17,6 @@ function escapeHtml(value: string) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function getFromAddress(event: H3Event) {
-  const email = getEnv(event, 'RESEND_FROM_EMAIL');
-  const name = getEnv(event, 'RESEND_FROM_NAME');
-
-  if (!email) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Server Misconfigured',
-      message: '尚未設定 RESEND_FROM_EMAIL',
-    });
-  }
-
-  return name ? `${name} <${email}>` : email;
 }
 
 export async function sendLoginEmail(event: H3Event, options: SendLoginEmailOptions) {
@@ -68,7 +55,7 @@ export async function sendLoginEmail(event: H3Event, options: SendLoginEmailOpti
       'User-Agent': 'parliament-bills/1.0',
     },
     body: JSON.stringify({
-      from: getFromAddress(event),
+      from: FROM_ADDRESS,
       to: [options.to],
       subject,
       html,
