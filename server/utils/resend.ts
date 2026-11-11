@@ -8,7 +8,14 @@ interface SendLoginEmailOptions {
   expiresInMinutes: number;
 }
 
-const FROM_ADDRESS = '政大學生議會議案系統 <bill@notify.nccusc.org>';
+const DEFAULT_FROM_EMAIL = 'bill@notify.nccusc.org';
+const DEFAULT_FROM_NAME = '政大學生議會議案系統';
+
+function getFromAddress(event: H3Event) {
+  const email = getEnv(event, 'RESEND_FROM_EMAIL') || DEFAULT_FROM_EMAIL;
+  const name = getEnv(event, 'RESEND_FROM_NAME') || DEFAULT_FROM_NAME;
+  return `${name} <${email}>`;
+}
 
 function escapeHtml(value: string) {
   return value
@@ -55,7 +62,7 @@ export async function sendLoginEmail(event: H3Event, options: SendLoginEmailOpti
       'User-Agent': 'parliament-bills/1.0',
     },
     body: JSON.stringify({
-      from: FROM_ADDRESS,
+      from: getFromAddress(event),
       to: [options.to],
       subject,
       html,
