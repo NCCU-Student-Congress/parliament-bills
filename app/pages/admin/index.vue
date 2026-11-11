@@ -385,6 +385,7 @@
                 <th>會議</th>
                 <th>委員會</th>
                 <th>會期</th>
+                <th>日期</th>
                 <th>截止</th>
                 <th>操作</th>
               </tr>
@@ -394,6 +395,7 @@
                 <td>{{ meeting.title }}</td>
                 <td>{{ meeting.committeeName || getCommitteeName(meeting.committeeId) }}</td>
                 <td>{{ formatSession(meeting.session) }}</td>
+                <td>{{ formatDate(meeting.meetingDate) }}</td>
                 <td>{{ formatDateTime(meeting.proposalDeadlineAt) }}</td>
                 <td>
                   <div class="row-actions">
@@ -411,7 +413,7 @@
                 </td>
               </tr>
               <tr v-if="meetings.length === 0">
-                <td colspan="5" class="empty-cell">尚無會議</td>
+                <td colspan="6" class="empty-cell">尚無會議</td>
               </tr>
             </tbody>
           </table>
