@@ -57,12 +57,7 @@
 
         <label class="block">
           <span class="mb-1 block text-sm font-medium text-gray-700">提案人</span>
-          <select v-model="form.proposerId" required class="form-input">
-            <option value="">請選擇提案人</option>
-            <option v-for="user in eligibleUsers" :key="user.id" :value="String(user.id)">
-              {{ user.name }}（{{ user.email }}）
-            </option>
-          </select>
+          <div class="form-input">{{ proposerLabel }}</div>
         </label>
       </div>
 
@@ -96,10 +91,10 @@
       </label>
 
       <div
-        v-if="errorMessage"
+        v-if="errorMessage || formDataError"
         class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
       >
-        {{ errorMessage }}
+        {{ errorMessage || '無法載入登入者資料，請重新登入。' }}
       </div>
 
       <div
@@ -115,7 +110,7 @@
       <div class="flex flex-wrap gap-3">
         <button
           type="submit"
-          :disabled="isSubmitting"
+          :disabled="isSubmitting || !proposer"
           class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {{ isSubmitting ? '寫入中...' : '送出提案' }}
@@ -132,9 +127,14 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, reactive, ref, watch } from 'vue';
+  import { computed, reactive, ref } from 'vue';
   import { parseTermCode, getCurrentTerm } from '~~/shared/utils/term';
   import type { Bill, Committee, ProposalInput, Session, User } from '~~/shared/types/bill';
+
+  interface ProposalFormData {
+    proposer: Pick<User, 'name' | 'permissionRole'>;
+    cosponsors: Array<Pick<User, 'id' | 'name' | 'email' | 'committeeIds'>>;
+  }
 
   definePageMeta({
     title: '新增議案',
@@ -145,7 +145,6 @@
     committeeId: string;
     session: string;
     proposedAt: string;
-    proposerId: string;
     cosponsorIds: string[];
     subject: string;
     description: string;
@@ -162,7 +161,6 @@
     committeeId: '',
     session: String(getCurrentTerm()),
     proposedAt: localToday,
-    proposerId: '',
     cosponsorIds: [],
     subject: '',
     description: '',
@@ -175,11 +173,18 @@
 
   const { data: committeesData } = await useFetch<Committee[]>('/api/committees');
   const { data: sessionsData } = await useFetch<Session[]>('/api/sessions');
-  const { data: usersData } = await useFetch<User[]>('/api/users');
+  const { data: formData, error: formDataError } = await useFetch<ProposalFormData>(
+    '/api/proposals/form-data',
+  );
 
   const committees = computed(() => committeesData.value ?? []);
   const sessions = computed(() => sessionsData.value ?? []);
-  const users = computed(() => usersData.value ?? []);
+  const proposer = computed(() => formData.value?.proposer);
+  const proposerLabel = computed(() => {
+    if (!proposer.value) return '載入中...';
+    const role = proposer.value.permissionRole === 'secretariat_admin' ? '秘書處' : '議員';
+    return `${proposer.value.name}（${role}）`;
+  });
 
   if (sessions.value.some((session) => session.id === getCurrentTerm())) {
     form.session = String(getCurrentTerm());
@@ -188,8 +193,8 @@
   }
 
   const selectedCommitteeId = computed(() => Number(form.committeeId) || null);
-  const eligibleUsers = computed(() => {
-    const legislators = users.value.filter((user) => user.permissionRole === 'legislator');
+  const cosponsorOptions = computed(() => {
+    const legislators = formData.value?.cosponsors ?? [];
 
     if (!selectedCommitteeId.value) return legislators;
     return legislators.filter(
@@ -198,23 +203,12 @@
     );
   });
 
-  const cosponsorOptions = computed(() =>
-    eligibleUsers.value.filter((user) => String(user.id) !== form.proposerId),
-  );
-
   const billLink = computed(() => {
     if (!savedBill.value) return '/bill';
     return `/bill/proposal/${savedBill.value.id}`;
   });
 
-  watch(
-    () => form.proposerId,
-    () => {
-      form.cosponsorIds = form.cosponsorIds.filter((id) => id !== form.proposerId);
-    },
-  );
-
-  function buildPayload(): ProposalInput {
+  function buildPayload(): Omit<ProposalInput, 'proposerId'> {
     const session = parseTermCode(form.session);
 
     if (!session) {
@@ -225,7 +219,6 @@
       committeeId: selectedCommitteeId.value,
       session,
       proposedAt: form.proposedAt,
-      proposerId: Number(form.proposerId),
       subject: form.subject.trim(),
       description: form.description.trim(),
       attachments: attachmentsInput.value

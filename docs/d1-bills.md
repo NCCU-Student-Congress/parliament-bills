@@ -118,8 +118,9 @@ Proposal writes:
 - `POST /api/bills`
 - `PUT /api/proposals/:id/meeting`
 
-Proposal writes require a secretariat admin session. The selected proposer must be a user with
-`permissionRole: "legislator"`.
+Creating a proposal requires a logged-in legislator or secretariat account. The server always
+records the logged-in user as proposer; a client-supplied `proposerId` cannot change it.
+Meeting assignments require a secretariat account.
 
 `POST /api/bills` accepts:
 
@@ -128,7 +129,6 @@ Proposal writes require a secretariat admin session. The selected proposer must 
   committeeId: number;
   session: number;
   proposedAt?: string;
-  proposerId: number;
   subject: string;
   description?: string;
   attachments?: Array<string | ProposalAttachment>;
@@ -137,6 +137,8 @@ Proposal writes require a secretariat admin session. The selected proposer must 
 ```
 
 The proposal form sends `proposedAt` as a date selected by the user and displays proposal dates without a time of day. Existing timestamp values remain readable.
+It loads the current proposer and eligible cosponsors from the protected
+`GET /api/proposals/form-data` endpoint.
 
 `PUT /api/proposals/:id/meeting` accepts `{ meetingId: number | null }`. Use `null` to clear an assignment.
 

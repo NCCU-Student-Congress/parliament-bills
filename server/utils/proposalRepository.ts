@@ -1059,8 +1059,8 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 400, statusMessage: '找不到指定提案人' });
     }
 
-    if (proposer.permission_role !== 'legislator') {
-      throw createError({ statusCode: 400, statusMessage: '提案人必須是議員' });
+    if (!isPermissionRole(proposer.permission_role)) {
+      throw createError({ statusCode: 400, statusMessage: '提案人身份不正確' });
     }
 
     const inserted = await db
