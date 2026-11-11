@@ -418,7 +418,7 @@
         </div>
       </section>
     </div>
-    <div v-else class="meeting-console">
+    <div v-else class="w-full">
       <section class="admin-section">
         <div class="section-head">
           <h2 class="section-title">議案排入會議</h2>
@@ -889,10 +889,6 @@
     background: #fff;
     color: #12122b;
     box-shadow: 0 6px 18px rgba(0, 0, 36, 0.08);
-  }
-
-  .meeting-console {
-    max-width: 980px;
   }
 
   .admin-section {
