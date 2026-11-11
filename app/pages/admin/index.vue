@@ -343,22 +343,50 @@
           </label>
           <label class="field">
             <span>會議時間</span>
-            <input
-              v-model="meetingForm.meetingDate"
-              required
-              type="datetime-local"
-              class="control"
-            />
+            <div class="datetime-fields">
+              <input
+                v-model="meetingForm.meetingDate"
+                required
+                type="date"
+                aria-label="會議日期"
+                class="control"
+              />
+              <input
+                v-model="meetingForm.meetingTime"
+                required
+                type="text"
+                maxlength="5"
+                pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]"
+                placeholder="HH:mm"
+                title="請以 24 小時制輸入時間，例如 14:30"
+                aria-label="會議時間（24 小時制）"
+                class="control"
+              />
+            </div>
           </label>
           <label class="field">
             <span>提案截止</span>
-            <input
-              v-model="meetingForm.proposalDeadlineAt"
-              required
-              type="datetime-local"
-              :max="meetingForm.meetingDate || undefined"
-              class="control"
-            />
+            <div class="datetime-fields">
+              <input
+                v-model="meetingForm.proposalDeadlineDate"
+                required
+                type="date"
+                :max="meetingForm.meetingDate || undefined"
+                aria-label="提案截止日期"
+                class="control"
+              />
+              <input
+                v-model="meetingForm.proposalDeadlineTime"
+                required
+                type="text"
+                maxlength="5"
+                pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]"
+                placeholder="HH:mm"
+                title="請以 24 小時制輸入時間，例如 14:30"
+                aria-label="提案截止時間（24 小時制）"
+                class="control"
+              />
+            </div>
             <span v-if="deadlineAfterMeeting" class="text-sm text-red-700">
               提案截止時間不可晚於會議時間
             </span>
@@ -528,12 +556,23 @@
     session: '',
     title: '',
     meetingDate: '',
-    proposalDeadlineAt: '',
+    meetingTime: '',
+    proposalDeadlineDate: '',
+    proposalDeadlineTime: '',
   });
   const deadlineAfterMeeting = computed(() => {
-    if (!meetingForm.meetingDate || !meetingForm.proposalDeadlineAt) return false;
-    const meetingTime = new Date(meetingForm.meetingDate).getTime();
-    const deadlineTime = new Date(meetingForm.proposalDeadlineAt).getTime();
+    if (
+      !meetingForm.meetingDate ||
+      !meetingForm.meetingTime ||
+      !meetingForm.proposalDeadlineDate ||
+      !meetingForm.proposalDeadlineTime
+    ) {
+      return false;
+    }
+    const meetingTime = new Date(`${meetingForm.meetingDate}T${meetingForm.meetingTime}`).getTime();
+    const deadlineTime = new Date(
+      `${meetingForm.proposalDeadlineDate}T${meetingForm.proposalDeadlineTime}`,
+    ).getTime();
     return (
       Number.isFinite(meetingTime) && Number.isFinite(deadlineTime) && deadlineTime > meetingTime
     );
@@ -683,8 +722,11 @@
       committeeId: meetingForm.committeeId ? Number(meetingForm.committeeId) : null,
       session: Number(meetingForm.session),
       title: meetingForm.title.trim(),
-      meetingDate: toIsoString(meetingForm.meetingDate),
-      proposalDeadlineAt: toIsoString(meetingForm.proposalDeadlineAt),
+      meetingDate: toIsoString(meetingForm.meetingDate, meetingForm.meetingTime),
+      proposalDeadlineAt: toIsoString(
+        meetingForm.proposalDeadlineDate,
+        meetingForm.proposalDeadlineTime,
+      ),
     };
     const url =
       editingMeetingId.value === null ? '/api/meetings' : `/api/meetings/${editingMeetingId.value}`;
@@ -716,8 +758,12 @@
     meetingForm.committeeId = meeting.committeeId ? String(meeting.committeeId) : '';
     meetingForm.session = String(meeting.session);
     meetingForm.title = meeting.title;
-    meetingForm.meetingDate = toDateTimeInput(meeting.meetingDate);
-    meetingForm.proposalDeadlineAt = toDateTimeInput(meeting.proposalDeadlineAt);
+    const meetingDateTime = toDateTimeInput(meeting.meetingDate);
+    const deadlineDateTime = toDateTimeInput(meeting.proposalDeadlineAt);
+    meetingForm.meetingDate = meetingDateTime.slice(0, 10);
+    meetingForm.meetingTime = meetingDateTime.slice(11, 16);
+    meetingForm.proposalDeadlineDate = deadlineDateTime.slice(0, 10);
+    meetingForm.proposalDeadlineTime = deadlineDateTime.slice(11, 16);
   }
 
   async function deleteResource(type: ResourceType, id: number, label: string) {
@@ -765,7 +811,9 @@
     meetingForm.session = '';
     meetingForm.title = '';
     meetingForm.meetingDate = '';
-    meetingForm.proposalDeadlineAt = '';
+    meetingForm.meetingTime = '';
+    meetingForm.proposalDeadlineDate = '';
+    meetingForm.proposalDeadlineTime = '';
   }
 
   watch(
@@ -786,8 +834,9 @@
     },
   );
 
-  function toIsoString(value: string) {
-    if (!value) return '';
+  function toIsoString(datePart: string, timePart: string) {
+    if (!datePart || !timePart) return '';
+    const value = `${datePart}T${timePart}`;
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toISOString();
   }
@@ -821,6 +870,7 @@
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
+      hourCycle: 'h23',
     });
   }
 
@@ -936,6 +986,16 @@
     color: #12122b;
     font-size: 0.875rem;
     font-weight: 800;
+  }
+
+  .datetime-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+    gap: 0.5rem;
+  }
+
+  .datetime-fields .control {
+    min-width: 0;
   }
 
   .control {
