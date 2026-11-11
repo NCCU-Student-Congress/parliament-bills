@@ -29,6 +29,14 @@
       <span class="ml-2 text-gray-600">載入中...</span>
     </div>
 
+    <div
+      v-if="actionError"
+      class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 print:hidden"
+      role="alert"
+    >
+      {{ actionError }}
+    </div>
+
     <div v-if="!pending && !error && bill" class="space-y-6">
       <div
         class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none"
@@ -55,7 +63,92 @@
                 {{ field.label }}
               </td>
               <td class="block px-6 py-4 text-sm text-gray-700 sm:table-cell">
-                <div v-if="field.key === 'attachments'" class="space-y-2">
+                <div v-if="editingField === field.editable" class="space-y-3">
+                  <select
+                    v-if="field.editable === 'session'"
+                    v-model="draftValue"
+                    :aria-label="field.label"
+                    class="edit-control"
+                  >
+                    <option
+                      v-for="session in sessions"
+                      :key="session.id"
+                      :value="String(session.id)"
+                    >
+                      {{ session.title || formatTermLabel(session.id) }}
+                    </option>
+                  </select>
+                  <select
+                    v-else-if="field.editable === 'committeeId'"
+                    v-model="draftValue"
+                    :aria-label="field.label"
+                    class="edit-control"
+                  >
+                    <option value="">無（大會）</option>
+                    <option
+                      v-for="committee in committees"
+                      :key="committee.id"
+                      :value="String(committee.id)"
+                    >
+                      {{ committee.name }}
+                    </option>
+                  </select>
+                  <input
+                    v-else-if="field.editable === 'proposedAt'"
+                    v-model="draftValue"
+                    :aria-label="field.label"
+                    type="date"
+                    class="edit-control"
+                  />
+                  <textarea
+                    v-else-if="field.editable === 'subject' || field.editable === 'description'"
+                    v-model="draftValue"
+                    :aria-label="field.label"
+                    :rows="field.editable === 'description' ? 6 : 3"
+                    class="edit-control"
+                  ></textarea>
+                  <template v-else-if="field.editable === 'attachments'">
+                    <div
+                      v-for="(attachment, index) in attachmentDraft"
+                      :key="attachment.id"
+                      class="grid gap-2 rounded-lg border border-gray-200 p-3 sm:grid-cols-[1fr_2fr_auto] sm:items-end"
+                    >
+                      <label class="block">
+                        <span class="mb-1 block text-xs font-medium"
+                          >附件 {{ index + 1 }} 名稱</span
+                        >
+                        <input v-model="attachment.name" type="text" class="edit-control" />
+                      </label>
+                      <label class="block">
+                        <span class="mb-1 block text-xs font-medium"
+                          >附件 {{ index + 1 }} 網址</span
+                        >
+                        <input
+                          v-model="attachment.url"
+                          type="text"
+                          inputmode="url"
+                          class="edit-control"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        class="rounded-lg border border-gray-300 px-2 py-2 hover:bg-gray-50"
+                        :aria-label="`移除附件 ${index + 1}`"
+                        @click="removeAttachment(attachment.id)"
+                      >
+                        移除
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      class="rounded-lg border border-primary px-3 py-2 font-semibold text-primary hover:bg-primary hover:text-white"
+                      @click="addAttachment"
+                    >
+                      ＋ 新增附件
+                    </button>
+                  </template>
+                </div>
+                <div v-else-if="field.key === 'attachments'" class="space-y-2">
                   <template v-if="bill.attachments.length">
                     <a
                       v-for="(attachment, index) in bill.attachments"
@@ -82,6 +175,54 @@
                   }}
                 </div>
               </td>
+              <td
+                v-if="isSecretariat"
+                class="block px-3 py-3 text-right sm:table-cell sm:w-24 print:hidden"
+              >
+                <div v-if="field.editable" class="flex justify-end gap-1">
+                  <template v-if="editingField === field.editable">
+                    <button
+                      type="button"
+                      class="rounded-lg p-2 text-green-700 hover:bg-green-50 disabled:opacity-50"
+                      :disabled="isSaving"
+                      :aria-label="`儲存${field.label}`"
+                      @click="saveField"
+                    >
+                      <CheckIcon class="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                      :disabled="isSaving"
+                      :aria-label="`取消編輯${field.label}`"
+                      @click="cancelEditing"
+                    >
+                      <XMarkIcon class="h-5 w-5" />
+                    </button>
+                  </template>
+                  <button
+                    v-else
+                    type="button"
+                    class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    :disabled="
+                      isSaving ||
+                      editingField !== null ||
+                      (bill.meetingId !== null &&
+                        (field.editable === 'session' || field.editable === 'committeeId'))
+                    "
+                    :aria-label="`編輯${field.label}`"
+                    :title="
+                      bill.meetingId !== null &&
+                      (field.editable === 'session' || field.editable === 'committeeId')
+                        ? '請先到議案排案取消排入會議'
+                        : undefined
+                    "
+                    @click="startEditing(field.editable)"
+                  >
+                    <PencilIcon class="h-5 w-5" />
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -95,16 +236,27 @@
           返回議案清單
         </NuxtLink>
         <button
+          type="button"
           class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-600"
           @click="copyUrl"
         >
           複製連結
         </button>
         <button
+          type="button"
           class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
           @click="printPage"
         >
           列印
+        </button>
+        <button
+          v-if="isSecretariat"
+          type="button"
+          :disabled="isDeleting"
+          class="ml-auto inline-flex items-center rounded-lg bg-red-700 px-4 py-2 text-white transition-colors hover:bg-red-800 disabled:opacity-50"
+          @click="deleteBill"
+        >
+          {{ isDeleting ? '刪除中...' : '刪除議案' }}
         </button>
       </div>
     </div>
@@ -121,8 +273,27 @@
 <script setup lang="ts">
   import { computed, ref } from 'vue';
   import { createError, useFetch, useHead, useRoute } from '#app';
-  import type { Bill } from '~~/shared/types/bill';
+  import { CheckIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+  import type {
+    Bill,
+    Committee,
+    ProposalAttachmentInput,
+    ProposalEditableField,
+    Session,
+  } from '~~/shared/types/bill';
   import { formatTermLabel } from '~~/shared/utils/term';
+  import { normalizeAttachmentUrl } from '~~/shared/utils/attachment';
+
+  interface DisplayField {
+    label: string;
+    key: string;
+    editable?: ProposalEditableField;
+    multiline?: boolean;
+  }
+
+  interface AttachmentDraft extends ProposalAttachmentInput {
+    id: number;
+  }
 
   const route = useRoute();
   const id = computed(() => parseInt(route.params.id as string, 10));
@@ -135,6 +306,25 @@
   }
 
   const { data: bill, pending, error } = await useFetch<Bill>(`/api/proposals/${id.value}`);
+  const { data: authSession, refresh: refreshSession } = await useFetch<{ role?: string }>(
+    '/api/secretariat/session',
+  );
+  const { data: sessionsData } = await useFetch<Session[]>('/api/sessions');
+  const { data: committeesData } = await useFetch<Committee[]>('/api/committees');
+  const isSecretariat = computed(() => authSession.value?.role === 'secretariat_admin');
+  const sessions = computed(() => sessionsData.value ?? []);
+  const committees = computed(() => committeesData.value ?? []);
+  const editingField = ref<ProposalEditableField | null>(null);
+  const draftValue = ref('');
+  const attachmentDraft = ref<AttachmentDraft[]>([]);
+  const isSaving = ref(false);
+  const isDeleting = ref(false);
+  const actionError = ref('');
+  let nextAttachmentId = 1;
+
+  onMounted(() => {
+    refreshSession();
+  });
 
   const confirmedCosponsors = computed(() =>
     (bill.value?.cosponsors ?? [])
@@ -143,19 +333,19 @@
       .filter(Boolean),
   );
 
-  const displayFields = computed(() => [
-    { label: '會期', key: 'sessionLabel' },
-    { label: '委員會', key: 'committeeName' },
-    { label: '提案日期', key: 'proposedAtLabel' },
+  const displayFields: DisplayField[] = [
+    { label: '會期', key: 'sessionLabel', editable: 'session' },
+    { label: '委員會', key: 'committeeName', editable: 'committeeId' },
+    { label: '提案日期', key: 'proposedAtLabel', editable: 'proposedAt' },
     { label: '提案人', key: 'proposerName' },
     { label: '連署人', key: 'cosponsors' },
     { label: '排入會議', key: 'meetingTitle' },
     { label: '會議日期', key: 'meetingDateLabel' },
     { label: '提案截止', key: 'proposalDeadlineLabel' },
-    { label: '案由', key: 'subject', multiline: true },
-    { label: '說明', key: 'description', multiline: true },
-    { label: '附件', key: 'attachments' },
-  ]);
+    { label: '案由', key: 'subject', editable: 'subject', multiline: true },
+    { label: '說明', key: 'description', editable: 'description', multiline: true },
+    { label: '附件', key: 'attachments', editable: 'attachments' },
+  ];
 
   useHead(() => ({
     title: bill.value?.subject ?? '議案詳情',
@@ -205,7 +395,123 @@
   }
 
   function normalizeUrl(value: string) {
-    return value.startsWith('http') ? value : `https://${value}`;
+    return normalizeAttachmentUrl(value) ?? '#';
+  }
+
+  function startEditing(field: ProposalEditableField | undefined) {
+    if (!bill.value || !field || !isSecretariat.value || editingField.value !== null) return;
+    if (bill.value.meetingId !== null && (field === 'session' || field === 'committeeId')) return;
+
+    actionError.value = '';
+    editingField.value = field;
+    switch (field) {
+      case 'session':
+        draftValue.value = String(bill.value.session);
+        break;
+      case 'committeeId':
+        draftValue.value = bill.value.committeeId === null ? '' : String(bill.value.committeeId);
+        break;
+      case 'proposedAt':
+        draftValue.value = bill.value.proposedAt.slice(0, 10);
+        break;
+      case 'subject':
+      case 'description':
+        draftValue.value = bill.value[field];
+        break;
+      case 'attachments':
+        attachmentDraft.value = bill.value.attachments.map((attachment, index) => ({
+          id: index + 1,
+          name: attachment.name || `附件 ${index + 1}`,
+          url: attachment.url,
+        }));
+        nextAttachmentId = attachmentDraft.value.length + 1;
+        break;
+    }
+  }
+
+  function cancelEditing() {
+    editingField.value = null;
+    draftValue.value = '';
+    attachmentDraft.value = [];
+    actionError.value = '';
+  }
+
+  function addAttachment() {
+    attachmentDraft.value.push({ id: nextAttachmentId++, name: '', url: '' });
+  }
+
+  function removeAttachment(id: number) {
+    attachmentDraft.value = attachmentDraft.value.filter((attachment) => attachment.id !== id);
+  }
+
+  function attachmentValue(): ProposalAttachmentInput[] {
+    const attachments: ProposalAttachmentInput[] = [];
+    for (const [index, attachment] of attachmentDraft.value.entries()) {
+      const name = attachment.name.trim();
+      const rawUrl = attachment.url.trim();
+      if (!name && !rawUrl) continue;
+
+      const url = normalizeAttachmentUrl(rawUrl);
+      if (!name || !url) {
+        throw new Error(`附件 ${index + 1} 需要名稱與有效網址`);
+      }
+      attachments.push({ name, url });
+    }
+    return attachments;
+  }
+
+  async function saveField() {
+    if (!bill.value || !editingField.value || !isSecretariat.value) return;
+
+    actionError.value = '';
+    isSaving.value = true;
+
+    try {
+      const field = editingField.value;
+      let value: unknown = draftValue.value;
+      if (field === 'attachments') value = attachmentValue();
+      if (field === 'session') value = Number(draftValue.value);
+      if (field === 'committeeId') {
+        value = draftValue.value === '' ? null : Number(draftValue.value);
+      }
+
+      const updated = await $fetch<Bill>(`/api/proposals/${bill.value.id}`, {
+        method: 'PUT',
+        credentials: 'same-origin',
+        body: { field, value },
+      });
+      bill.value = updated;
+      cancelEditing();
+    } catch (error) {
+      const response = error as { data?: { message?: string; statusMessage?: string } };
+      actionError.value =
+        response.data?.message ||
+        response.data?.statusMessage ||
+        (error instanceof Error ? error.message : '儲存失敗，請稍後再試。');
+    } finally {
+      isSaving.value = false;
+    }
+  }
+
+  async function deleteBill() {
+    if (!bill.value || !isSecretariat.value) return;
+    const target = bill.value;
+    if (!window.confirm(`確定永久刪除「${target.subject}」嗎？此操作無法復原。`)) return;
+
+    actionError.value = '';
+    isDeleting.value = true;
+    try {
+      await $fetch(`/api/proposals/${target.id}`, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      });
+      window.location.assign(`/bill/${target.session}`);
+    } catch (error) {
+      const response = error as { data?: { message?: string; statusMessage?: string } };
+      actionError.value =
+        response.data?.message || response.data?.statusMessage || '刪除失敗，請稍後再試。';
+      isDeleting.value = false;
+    }
   }
 
   const showCopySuccess = ref(false);
@@ -234,5 +540,9 @@
 <style scoped>
   .container {
     max-width: 960px;
+  }
+
+  .edit-control {
+    @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
   }
 </style>

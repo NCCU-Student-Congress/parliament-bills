@@ -157,6 +157,20 @@ function normalizeDateTime(value: unknown, fallback = new Date().toISOString()):
   return Number.isNaN(parsed.getTime()) ? raw : parsed.toISOString();
 }
 
+function normalizeProposalDate(value: unknown): string {
+  const date = cleanString(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw createError({ statusCode: 400, statusMessage: '提案日期格式不正確' });
+  }
+
+  const parsed = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+    throw createError({ statusCode: 400, statusMessage: '提案日期不正確' });
+  }
+
+  return date;
+}
+
 function parseJsonArray(value: string): number[] {
   try {
     const parsed = JSON.parse(value);
@@ -309,7 +323,7 @@ function rowToProposal(
   };
 }
 
-function normalizeAttachments(value: ProposalInput['attachments']): ProposalAttachmentInput[] {
+function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
     throw createError({ statusCode: 400, statusMessage: '附件格式不正確' });
@@ -1096,6 +1110,139 @@ export function createProposalRepository(db: D1Database) {
     return saved;
   };
 
+  const updateBill = async (id: number, field: string, value: unknown) => {
+    const current = await db
+      .prepare('SELECT session, committee_id, meeting_id FROM proposals WHERE id = ?')
+      .bind(id)
+      .first<{ session: number; committee_id: number | null; meeting_id: number | null }>();
+
+    if (!current) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
+    }
+
+    if (field === 'attachments') {
+      const attachments = normalizeAttachments(value);
+      await db.batch([
+        db.prepare('UPDATE proposals SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(id),
+        db.prepare('DELETE FROM proposal_attachments WHERE proposal_id = ?').bind(id),
+        ...attachments.map((attachment) =>
+          db
+            .prepare('INSERT INTO proposal_attachments (proposal_id, name, url) VALUES (?, ?, ?)')
+            .bind(id, attachment.name, attachment.url),
+        ),
+      ]);
+
+      const updated = await getBillById(id);
+      if (!updated) {
+        throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
+      }
+      return updated;
+    }
+
+    let column: string;
+    let normalized: string | number | null;
+    let changingAssignment = false;
+
+    switch (field) {
+      case 'session': {
+        const session = parseTermCode(value);
+        if (!session) {
+          throw createError({ statusCode: 400, statusMessage: '無效的會期' });
+        }
+        const found = await db
+          .prepare('SELECT id FROM sessions WHERE id = ?')
+          .bind(session)
+          .first();
+        if (!found) {
+          throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
+        }
+        column = 'session';
+        normalized = session;
+        changingAssignment = session !== current.session;
+        break;
+      }
+      case 'committeeId': {
+        const committeeId = value === null ? null : toPositiveInteger(value);
+        if (value !== null && !committeeId) {
+          throw createError({ statusCode: 400, statusMessage: '無效的委員會索引' });
+        }
+        if (committeeId) {
+          const found = await db
+            .prepare('SELECT id FROM committees WHERE id = ?')
+            .bind(committeeId)
+            .first();
+          if (!found) {
+            throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
+          }
+        }
+        column = 'committee_id';
+        normalized = committeeId;
+        changingAssignment = committeeId !== current.committee_id;
+        break;
+      }
+      case 'proposedAt':
+        column = 'proposed_at';
+        normalized = normalizeProposalDate(value);
+        break;
+      case 'subject':
+        column = 'subject';
+        normalized = cleanString(value);
+        if (!normalized) {
+          throw createError({ statusCode: 400, statusMessage: '案由不可為空白' });
+        }
+        break;
+      case 'description':
+        if (typeof value !== 'string') {
+          throw createError({ statusCode: 400, statusMessage: '說明格式不正確' });
+        }
+        column = 'description';
+        normalized = value.trim();
+        break;
+      default:
+        throw createError({ statusCode: 400, statusMessage: '此欄位不可編輯' });
+    }
+
+    if (changingAssignment && current.meeting_id !== null) {
+      throw createError({ statusCode: 409, statusMessage: '請先到議案排案取消排入會議' });
+    }
+
+    const meetingGuard = changingAssignment ? ' AND meeting_id IS NULL' : '';
+    const updated = await db
+      .prepare(
+        `UPDATE proposals SET ${column} = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?${meetingGuard} RETURNING id`,
+      )
+      .bind(normalized, id)
+      .first<{ id: number }>();
+
+    if (!updated) {
+      const proposal = await getBillById(id);
+      throw createError({
+        statusCode: proposal ? 409 : 404,
+        statusMessage: proposal ? '請先到議案排案取消排入會議' : '找不到指定議案',
+      });
+    }
+
+    const proposal = await getBillById(id);
+    if (!proposal) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
+    }
+    return proposal;
+  };
+
+  const deleteBill = async (id: number) => {
+    const deleted = await db
+      .prepare('DELETE FROM proposals WHERE id = ? RETURNING id')
+      .bind(id)
+      .first<{ id: number }>();
+
+    if (!deleted) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
+    }
+
+    return { success: true };
+  };
+
   const cosignBill = async (id: number, userId: number) => {
     // The proposal and user checks are part of the write so scheduling cannot race past them.
     await db
@@ -1212,6 +1359,8 @@ export function createProposalRepository(db: D1Database) {
     getBillById,
     getBillByTermAndId,
     saveBill,
+    updateBill,
+    deleteBill,
     cosignBill,
     scheduleBill,
   };

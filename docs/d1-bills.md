@@ -121,12 +121,19 @@ Proposal reads:
 Proposal writes:
 
 - `POST /api/bills`
+- `PUT /api/proposals/:id` (secretariat only; updates one editable field)
+- `DELETE /api/proposals/:id` (secretariat only; permanently deletes the proposal)
 - `PUT /api/proposals/:id/meeting`
 - `POST /api/proposals/:id/cosponsors` (logged-in legislators only; signs as the caller)
 
 Creating a proposal requires a logged-in legislator or secretariat account. The server always
 records the logged-in user as proposer; a client-supplied `proposerId` cannot change it.
 Meeting assignments require a secretariat account.
+On the proposal detail page, secretariat users can edit one proposal field at a time: `session`,
+`committeeId`, `proposedAt`, `subject`, `description`, or `attachments`. `PUT /api/proposals/:id`
+accepts `{ field, value }` and returns the updated proposal. A scheduled proposal's session or
+committee cannot change until the secretariat clears its meeting assignment. Deleting a proposal
+also deletes its attachments and cosponsors through the existing foreign keys.
 
 `POST /api/bills` accepts:
 
