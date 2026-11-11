@@ -126,7 +126,6 @@
   const isAuthenticated = ref(false);
   const isSecretariat = ref(false);
   const route = useRoute();
-  const router = useRouter();
 
   const toggleMobileMenu = () => {
     mobileMenuOpen.value = !mobileMenuOpen.value;
@@ -155,8 +154,10 @@
     isSecretariat.value = false;
     closeMobileMenu();
 
-    if (route.path.startsWith('/admin') || route.path.startsWith('/secretariat')) {
-      await router.push('/secretariat/login');
+    if (window.location.pathname === '/' && !window.location.search && !window.location.hash) {
+      window.location.reload();
+    } else {
+      window.location.replace('/');
     }
   };
 
