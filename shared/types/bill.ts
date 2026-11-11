@@ -1,7 +1,5 @@
 import type { PermissionRole } from './auth';
 
-export type AttachmentKind = 'file' | 'link';
-
 export interface Committee {
   id: number;
   name: string;
@@ -44,13 +42,14 @@ export interface Meeting {
 export interface ProposalAttachment {
   id?: number;
   proposalId?: number;
-  kind: AttachmentKind;
+  name: string | null;
   url: string;
-  r2Key?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  sizeBytes?: number | null;
   createdAt?: string;
+}
+
+export interface ProposalAttachmentInput {
+  name: string;
+  url: string;
 }
 
 export interface ProposalCosponsor {
@@ -96,7 +95,7 @@ export interface ProposalInput {
   proposerId: number;
   subject: string;
   description?: string;
-  attachments?: Array<string | Partial<ProposalAttachment>>;
+  attachments?: ProposalAttachmentInput[];
 }
 
 export type Bill = Proposal;

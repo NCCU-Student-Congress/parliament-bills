@@ -88,20 +88,14 @@ Stores submitted proposals. There is no draft state.
 
 ### `proposal_attachments`
 
-Stores proposal attachments. Files should be uploaded to R2 and recorded here; links store their URL
-directly.
+Stores proposal attachment links. New links require a display name; the name stays nullable for
+older link records without one.
 
 - `id`
 - `proposal_id`
-- `kind`
+- `name`
 - `url`
-- `r2_key`
-- `filename`
-- `mime_type`
-- `size_bytes`
 - `created_at`
-
-`kind` is `file` or `link`.
 
 ### `proposal_cosponsors`
 

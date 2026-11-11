@@ -65,7 +65,7 @@
                       rel="noopener noreferrer"
                       class="block break-all text-primary-600 hover:underline"
                     >
-                      {{ attachment.filename || `附件 ${index + 1}` }}
+                      {{ attachment.name || `附件 ${index + 1}` }}
                     </a>
                   </template>
                   <span v-else>無</span>

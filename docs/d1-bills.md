@@ -20,6 +20,7 @@ Schema and subsequent changes live in:
 ```text
 migrations/0001_create_bills.sql
 migrations/0004_allow_unscheduled_proposals.sql
+migrations/0005_link_only_attachments.sql
 ```
 
 It creates:
@@ -41,7 +42,8 @@ It creates:
 - Proposal deadlines belong to meetings: `meetings.proposal_deadline_at`.
 - Proposals do not store a deadline snapshot.
 - User committee membership is stored as a JSON array in `users.committee_ids`.
-- Attachments are separate records. Link attachments store the URL directly; file attachments can store an R2 key plus metadata.
+- Attachments are separate link records with a display name and URL. Legacy links without a name
+  display as `附件 1`, `附件 2`, and so on.
 - Confirmed cosponsors are `proposal_cosponsors.status = 'confirmed'`.
 - Legislators can cosign any other proposer's unscheduled proposal, regardless of committee or
   session. Assigning a meeting closes cosigning; clearing it reopens cosigning.
@@ -135,11 +137,13 @@ Meeting assignments require a secretariat account.
   proposedAt?: string;
   subject: string;
   description?: string;
-  attachments?: Array<string | ProposalAttachment>;
+  attachments?: Array<{ name: string; url: string }>;
 }
 ```
 
 The proposal form sends `proposedAt` as a date selected by the user and displays proposal dates without a time of day. Existing timestamp values remain readable.
+Attachment rows are optional. Each non-empty row requires a name and an HTTP(S) URL; a missing
+scheme is saved with `https://`. File attachment payloads are rejected.
 It loads the current proposer from the protected `GET /api/proposals/form-data` endpoint.
 `POST /api/bills` rejects `cosponsorIds`; each legislator must cosign from `/cosign` themselves.
 Cosigning is idempotent, and the UI shows `已連署` after signing. There is no self-service withdrawal.

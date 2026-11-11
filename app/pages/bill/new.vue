@@ -71,15 +71,64 @@
         <textarea v-model="form.description" rows="7" class="form-textarea"></textarea>
       </label>
 
-      <label class="block">
-        <span class="mb-1 block text-sm font-medium text-gray-700">附件連結</span>
-        <textarea
-          v-model="attachmentsInput"
-          rows="4"
-          class="form-textarea"
-          placeholder="一行一個 URL；檔案上傳到 R2 的流程之後再接"
-        ></textarea>
-      </label>
+      <section aria-labelledby="attachments-heading" class="space-y-3">
+        <div>
+          <h2 id="attachments-heading" class="text-sm font-medium text-gray-700">附件連結</h2>
+          <p class="mt-1 text-sm text-gray-500">如有附件，請填寫名稱與連結。</p>
+        </div>
+
+        <div
+          v-for="(attachment, index) in attachmentRows"
+          :key="attachment.id"
+          class="rounded-lg border border-gray-200 p-4"
+        >
+          <div class="grid gap-3 md:grid-cols-[1fr_2fr_auto] md:items-end">
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-gray-700"
+                >附件 {{ index + 1 }} 名稱</span
+              >
+              <input
+                v-model="attachment.name"
+                type="text"
+                class="form-input"
+                placeholder="例如：議案附件"
+              />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-gray-700"
+                >附件 {{ index + 1 }} 網址</span
+              >
+              <input
+                v-model="attachment.url"
+                type="text"
+                inputmode="url"
+                class="form-input"
+                placeholder="https://example.com/document"
+                @blur="normalizeAttachmentRow(attachment)"
+              />
+            </label>
+            <button
+              type="button"
+              class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              :aria-label="`移除附件 ${index + 1}`"
+              @click="removeAttachmentRow(attachment.id)"
+            >
+              移除
+            </button>
+          </div>
+          <p v-if="attachmentErrors[attachment.id]" class="mt-2 text-sm text-red-700" role="alert">
+            {{ attachmentErrors[attachment.id] }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="inline-flex items-center rounded-lg border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white"
+          @click="addAttachmentRow"
+        >
+          ＋ 新增附件
+        </button>
+      </section>
 
       <div
         v-if="errorMessage || formDataError"
@@ -120,7 +169,15 @@
 <script setup lang="ts">
   import { computed, reactive, ref } from 'vue';
   import { parseTermCode, getCurrentTerm } from '~~/shared/utils/term';
-  import type { Bill, Committee, ProposalInput, Session, User } from '~~/shared/types/bill';
+  import { normalizeAttachmentUrl } from '~~/shared/utils/attachment';
+  import type {
+    Bill,
+    Committee,
+    ProposalAttachmentInput,
+    ProposalInput,
+    Session,
+    User,
+  } from '~~/shared/types/bill';
 
   interface ProposalFormData {
     proposer: Pick<User, 'name' | 'permissionRole'>;
@@ -139,6 +196,10 @@
     description: string;
   }
 
+  interface AttachmentRowInput extends ProposalAttachmentInput {
+    id: number;
+  }
+
   const localToday = new Date().toLocaleDateString('en-CA', {
     timeZone: 'Asia/Taipei',
     year: 'numeric',
@@ -154,7 +215,9 @@
     description: '',
   });
 
-  const attachmentsInput = ref('');
+  const attachmentRows = ref<AttachmentRowInput[]>([{ id: 0, name: '', url: '' }]);
+  const attachmentErrors = ref<Record<number, string>>({});
+  let nextAttachmentId = 1;
   const isSubmitting = ref(false);
   const errorMessage = ref('');
   const savedBill = ref<Bill | null>(null);
@@ -186,11 +249,45 @@
     return `/bill/proposal/${savedBill.value.id}`;
   });
 
+  function addAttachmentRow() {
+    attachmentRows.value.push({ id: nextAttachmentId++, name: '', url: '' });
+  }
+
+  function removeAttachmentRow(id: number) {
+    attachmentRows.value = attachmentRows.value.filter((row) => row.id !== id);
+    delete attachmentErrors.value[id];
+  }
+
+  function normalizeAttachmentRow(row: AttachmentRowInput) {
+    const url = normalizeAttachmentUrl(row.url);
+    if (url) row.url = url;
+  }
+
   function buildPayload(): Omit<ProposalInput, 'proposerId'> {
     const session = parseTermCode(form.session);
 
     if (!session) {
       throw new Error('會期格式錯誤');
+    }
+
+    attachmentErrors.value = {};
+    const attachments: ProposalAttachmentInput[] = [];
+    for (const [index, row] of attachmentRows.value.entries()) {
+      const name = row.name.trim();
+      const rawUrl = row.url.trim();
+      if (!name && !rawUrl) continue;
+
+      const url = normalizeAttachmentUrl(rawUrl);
+      if (!name || !url) {
+        attachmentErrors.value[row.id] = `附件 ${index + 1} 需要名稱與有效網址`;
+        continue;
+      }
+
+      attachments.push({ name, url });
+    }
+
+    if (Object.keys(attachmentErrors.value).length) {
+      throw new Error('請檢查附件欄位');
     }
 
     return {
@@ -199,10 +296,7 @@
       proposedAt: form.proposedAt,
       subject: form.subject.trim(),
       description: form.description.trim(),
-      attachments: attachmentsInput.value
-        .split('\n')
-        .map((item) => item.trim())
-        .filter(Boolean),
+      attachments,
     };
   }
 

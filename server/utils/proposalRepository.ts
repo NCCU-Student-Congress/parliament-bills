@@ -4,6 +4,7 @@ import type {
   Meeting,
   Proposal,
   ProposalAttachment,
+  ProposalAttachmentInput,
   ProposalCosponsor,
   ProposalInput,
   Session,
@@ -12,6 +13,7 @@ import type {
 import type { PermissionRole } from '../../shared/types/auth';
 import { isPermissionRole } from '../../shared/types/auth';
 import { getCurrentTerm, getEarliestTerm, parseTermCode } from '../../shared/utils/term';
+import { normalizeAttachmentUrl } from '../../shared/utils/attachment';
 import type { D1Database } from './d1';
 
 interface CommitteeRow {
@@ -75,12 +77,8 @@ interface ProposalRow {
 interface AttachmentRow {
   id: number;
   proposal_id: number;
-  kind: 'file' | 'link';
+  name: string | null;
   url: string;
-  r2_key: string | null;
-  filename: string | null;
-  mime_type: string | null;
-  size_bytes: number | null;
   created_at: string;
 }
 
@@ -106,7 +104,7 @@ interface NormalizedProposalInput {
   proposerId: number;
   subject: string;
   description: string;
-  attachments: ProposalAttachment[];
+  attachments: ProposalAttachmentInput[];
 }
 
 interface UserInput {
@@ -261,12 +259,8 @@ function rowToAttachment(row: AttachmentRow): ProposalAttachment {
   return {
     id: row.id,
     proposalId: row.proposal_id,
-    kind: row.kind,
+    name: row.name,
     url: row.url,
-    r2Key: row.r2_key,
-    filename: row.filename,
-    mimeType: row.mime_type,
-    sizeBytes: row.size_bytes,
     createdAt: row.created_at,
   };
 }
@@ -315,30 +309,30 @@ function rowToProposal(
   };
 }
 
-function normalizeAttachments(value: ProposalInput['attachments']): ProposalAttachment[] {
-  if (!Array.isArray(value)) return [];
+function normalizeAttachments(value: ProposalInput['attachments']): ProposalAttachmentInput[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw createError({ statusCode: 400, statusMessage: '附件格式不正確' });
+  }
 
-  return value
-    .map((item) => {
-      if (typeof item === 'string') {
-        const url = cleanString(item);
-        if (!url) return null;
-        return { kind: 'link' as const, url };
-      }
+  return value.map((item, index) => {
+    if (
+      !item ||
+      typeof item !== 'object' ||
+      Array.isArray(item) ||
+      Object.keys(item).some((key) => key !== 'name' && key !== 'url')
+    ) {
+      throw createError({ statusCode: 400, statusMessage: `附件 ${index + 1} 格式不正確` });
+    }
 
-      const url = cleanString(item?.url);
-      if (!url) return null;
+    const name = cleanString(item.name);
+    const url = normalizeAttachmentUrl(item.url);
+    if (!name || !url) {
+      throw createError({ statusCode: 400, statusMessage: `附件 ${index + 1} 需要名稱與有效網址` });
+    }
 
-      return {
-        kind: item?.kind === 'file' ? 'file' : 'link',
-        url,
-        r2Key: cleanString(item?.r2Key) || null,
-        filename: cleanString(item?.filename) || null,
-        mimeType: cleanString(item?.mimeType) || null,
-        sizeBytes: toPositiveInteger(item?.sizeBytes),
-      };
-    })
-    .filter((item): item is ProposalAttachment => Boolean(item));
+    return { name, url };
+  });
 }
 
 async function getAttachmentsByProposalId(
@@ -350,7 +344,7 @@ async function getAttachmentsByProposalId(
   const placeholders = proposalIds.map(() => '?').join(', ');
   const { results = [] } = await db
     .prepare(
-      `SELECT id, proposal_id, kind, url, r2_key, filename, mime_type, size_bytes, created_at
+      `SELECT id, proposal_id, name, url, created_at
        FROM proposal_attachments
        WHERE proposal_id IN (${placeholders})
        ORDER BY id ASC`,
@@ -1085,25 +1079,10 @@ export function createProposalRepository(db: D1Database) {
         proposal.attachments.map((attachment) =>
           db
             .prepare(
-              `INSERT INTO proposal_attachments (
-                 proposal_id,
-                 kind,
-                 url,
-                 r2_key,
-                 filename,
-                 mime_type,
-                 size_bytes
-               ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              `INSERT INTO proposal_attachments (proposal_id, name, url)
+               VALUES (?, ?, ?)`,
             )
-            .bind(
-              inserted.id,
-              attachment.kind,
-              attachment.url,
-              attachment.r2Key ?? null,
-              attachment.filename ?? null,
-              attachment.mimeType ?? null,
-              attachment.sizeBytes ?? null,
-            ),
+            .bind(inserted.id, attachment.name, attachment.url),
         ),
       );
     }
