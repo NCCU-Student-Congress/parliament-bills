@@ -5,6 +5,9 @@
   definePageMeta({
     middleware: ['auth'],
   });
+
+  const { data: session } = await useFetch<{ role?: string }>('/api/secretariat/session');
+  const isSecretariat = computed(() => session.value?.role === 'secretariat_admin');
 </script>
 
 <template>
@@ -15,6 +18,7 @@
 
       <div class="grid grid-cols-1 gap-6">
         <NuxtLink
+          v-if="isSecretariat"
           to="/admin?tab=scheduling"
           class="block bg-slate-700 hover:bg-slate-800 text-white font-semibold py-4 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md"
         >

@@ -19,7 +19,7 @@
         <nav class="hidden items-center gap-1 md:flex">
           <NuxtLink to="/bill" class="nav-link"> 議案查詢 </NuxtLink>
           <NuxtLink to="/bill/new" class="nav-link nav-link-accent"> 新增議案 </NuxtLink>
-          <NuxtLink to="/admin" class="nav-link"> 後台 </NuxtLink>
+          <NuxtLink v-if="isSecretariat" to="/admin" class="nav-link"> 後台 </NuxtLink>
           <NuxtLink to="/secretariat" class="nav-link"> 草擬系統 </NuxtLink>
           <a
             :href="EXTERNAL_LINKS.mainWebsite"
@@ -73,7 +73,14 @@
             新增議案
           </NuxtLink>
 
-          <NuxtLink to="/admin" class="mobile-nav-link" @click="closeMobileMenu"> 後台 </NuxtLink>
+          <NuxtLink
+            v-if="isSecretariat"
+            to="/admin"
+            class="mobile-nav-link"
+            @click="closeMobileMenu"
+          >
+            後台
+          </NuxtLink>
 
           <NuxtLink to="/secretariat" class="mobile-nav-link" @click="closeMobileMenu">
             草擬系統
@@ -114,6 +121,7 @@
 
   const mobileMenuOpen = ref(false);
   const isAuthenticated = ref(false);
+  const isSecretariat = ref(false);
   const route = useRoute();
   const router = useRouter();
 
@@ -130,6 +138,7 @@
       authenticated: false,
     }));
     isAuthenticated.value = Boolean(session.authenticated);
+    isSecretariat.value = session.role === 'secretariat_admin';
   };
 
   const handleLogout = async () => {
@@ -140,6 +149,7 @@
 
     sessionStorage.removeItem('secretariat_authenticated');
     isAuthenticated.value = false;
+    isSecretariat.value = false;
     closeMobileMenu();
 
     if (route.path.startsWith('/admin') || route.path.startsWith('/secretariat')) {

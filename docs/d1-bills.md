@@ -148,7 +148,7 @@ The protected write UI is:
 /bill/new
 ```
 
-The protected reference data admin is:
+The reference data admin is available only to secretariat accounts:
 
 ```text
 /admin

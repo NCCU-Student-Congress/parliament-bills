@@ -482,7 +482,7 @@
 
   definePageMeta({
     title: '後台資料管理',
-    middleware: ['auth'],
+    middleware: ['secretariat'],
   });
 
   type ResourceType = 'sessions' | 'committees' | 'users' | 'meetings';

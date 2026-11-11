@@ -63,7 +63,7 @@
           <span>供秘書處內部用以輔助草擬議事文件。</span>
         </NuxtLink>
 
-        <NuxtLink to="/admin" class="home-module">
+        <NuxtLink v-if="isSecretariat" to="/admin" class="home-module">
           <span class="home-module-kicker">管理</span>
           <strong>後台資料管理</strong>
           <span>建立會期、委員會、人員與會議，供提案流程使用。</span>
@@ -116,6 +116,9 @@
 </template>
 
 <script setup>
+  const { data: session } = await useFetch('/api/secretariat/session');
+  const isSecretariat = computed(() => session.value?.role === 'secretariat_admin');
+
   // 設定頁面 meta 標籤
   useHead({
     title: SITE_CONFIG.name,
