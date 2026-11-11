@@ -1,19 +1,17 @@
 // 網站基本設定
 export const SITE_CONFIG = {
   name: '政大學生議會議案系統',
-  fullName: '國立臺北大學三峽校區學生議會',
-  englishName: 'NTPU Student Congress (Sanxia Campus)',
-  domain: 'sxcongress.ntpusu.org',
-  email: 'ntpuscs@gm.ntpu.edu.tw',
-  githubRepo: 'https://github.com/ntpusu/open-parliament',
+  fullName: '國立政治大學學生議會',
+  englishName: 'NCCU Student Congress',
+  email: 'nccuscc@gmail.com',
 };
 
 // 本組織之資料
 export const ORG_DATA = {
-  nameZhFull: '國立臺北大學三峽校區學生議會',
-  nameZhShort: '北大三峽議會',
-  nameEnFull: 'NTPU Student Congress (Sanxia Campus)',
-  nameEnShort: 'NTPUSCS',
+  nameZhFull: '國立政治大學學生議會',
+  nameZhShort: '政大學生議會',
+  nameEnFull: 'NCCU Student Congress',
+  nameEnShort: 'NCCUSC',
   email: 'nccuscc@gmail.com',
   office: '四維堂',
   officeLocationUrl: 'https://sc.video.nccu.edu.tw/p/location',
@@ -80,7 +78,7 @@ export const EMPTY_MESSAGES = {
 };
 
 // 議案編號正規表達式
-export const BILL_NUMBER_REGEX = /^((?:\d+-[12])|(?:\d{3}))(?:屆|會期)?北大峽議字第(\d+)號$/;
+export const BILL_NUMBER_REGEX = /^第(\d+(?:-[12])?)會期第(\d+)號$/;
 
 // 解析議案編號
 export const parseBillNumber = (billNumber) => {
@@ -104,7 +102,7 @@ export const formatBillNumber = (term, number) => {
       ? `${Math.floor(numericTerm / 10)}-${numericTerm % 10}`
       : String(term);
 
-  return `${formattedTerm}會期北大峽議字第${number}號`;
+  return `第${formattedTerm}會期第${number}號`;
 };
 
 // 時間格式化

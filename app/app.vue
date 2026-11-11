@@ -15,13 +15,13 @@
     },
     title: '政大學生議會議案系統',
     meta: [
-      { name: 'description', content: '國立臺北大學三峽校區學生議會議事資訊網站' },
+      { name: 'description', content: '國立政治大學學生議會議事資訊網站' },
       {
         name: 'keywords',
-        content: '國立臺北大學,臺北大學,學生自治,三峽校區,學生議會,資訊公開,NTPU',
+        content: '國立政治大學,政大,學生自治,學生議會,資訊公開,NCCU',
       },
       { property: 'og:title', content: '政大學生議會議案系統' },
-      { property: 'og:description', content: '國立臺北大學三峽校區學生議會議事資訊網站' },
+      { property: 'og:description', content: '國立政治大學學生議會議事資訊網站' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
     ],

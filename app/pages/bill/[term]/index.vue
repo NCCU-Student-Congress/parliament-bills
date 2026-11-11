@@ -281,11 +281,11 @@
 
   // SEO 設定
   useHead({
-    title: `${termLabel}議案查詢 - 三峽校區議事服務`,
+    title: `${termLabel}議案查詢 - 政大學生議會`,
     meta: [
       {
         name: 'description',
-        content: `查詢三峽校區學生議會${termLabel}議案資料`,
+        content: `查詢政大學生議會${termLabel}議案資料`,
       },
     ],
   });

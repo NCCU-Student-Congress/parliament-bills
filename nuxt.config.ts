@@ -1,5 +1,3 @@
-import { SITE_CONFIG } from '#imports';
-
 export default defineNuxtConfig({
   compatibilityDate: '2026-02-26',
   devtools: {
@@ -7,11 +5,6 @@ export default defineNuxtConfig({
   },
   modules: ['@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
-  runtimeConfig: {
-    public: {
-      baseUrl: 'https://sxcongress.ntpusu.org/',
-    },
-  },
   ssr: true, // 確保開啟 SSR
   nitro: {
     preset: 'cloudflare-pages',
@@ -27,7 +20,7 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '國立臺北大學學生自治會三峽校區學生議會議事資訊網站。' },
+        { name: 'description', content: '國立政治大學學生議會議事資訊網站。' },
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/site-icon/favicon.ico' },

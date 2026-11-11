@@ -122,9 +122,7 @@
   // 設定頁面 meta 標籤
   useHead({
     title: SITE_CONFIG.name,
-    meta: [
-      { name: 'description', content: '國立臺北大學學生自治會三峽校區學生議會議事服務系統首頁' },
-    ],
+    meta: [{ name: 'description', content: '國立政治大學學生議會議事服務系統首頁' }],
   });
 
   // 統計資料

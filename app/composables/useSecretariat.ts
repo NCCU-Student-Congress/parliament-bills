@@ -94,7 +94,7 @@ export function useSecretariat() {
               `提案人：${bill.proposerName}`,
               `案由：${bill.subject}`,
               `說明：\n${bill.description}`,
-              `附件：詳見[已提案件查詢系統](https://sxcongress.ntpusu.org/bill/proposal/${bill.id})`,
+              `附件：詳見[已提案件查詢系統](${new URL(`/bill/proposal/${bill.id}`, window.location.origin).href})`,
               `決議：\n　一、提案機關說明及經本會議員詢答完畢。\n　二、議員提案包裹表決，議員附議，通過。\n　三、全案，同意票票，不同意票票，通過。`,
             ].join('\n\n') + '\n\n'
           );
