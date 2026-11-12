@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink :to="`/bill/proposal/${bill.id}`" target="_blank" rel="noopener">
+  <NuxtLink :to="`/bill/proposal/${bill.id}`">
     <div class="bill-card cursor-pointer">
       <p class="mb-2 text-base font-black leading-relaxed text-[#12122b]">
         {{ bill.subject }}
