@@ -336,6 +336,10 @@
             <input v-model="meetingForm.title" required class="control" />
           </label>
           <label class="field">
+            <span>會議地點</span>
+            <input v-model="meetingForm.location" class="control" />
+          </label>
+          <label class="field">
             <span>會議時間</span>
             <div class="datetime-fields">
               <input
@@ -408,6 +412,7 @@
                 <th>委員會</th>
                 <th>會期</th>
                 <th>日期</th>
+                <th>地點</th>
                 <th>截止</th>
                 <th>操作</th>
               </tr>
@@ -418,6 +423,7 @@
                 <td>{{ meeting.committeeName || getCommitteeName(meeting.committeeId) }}</td>
                 <td>{{ formatSession(meeting.session) }}</td>
                 <td>{{ formatDate(meeting.meetingDate) }}</td>
+                <td>{{ meeting.location || '未設定' }}</td>
                 <td>{{ formatDateTime(meeting.proposalDeadlineAt) }}</td>
                 <td>
                   <div class="row-actions">
@@ -435,7 +441,7 @@
                 </td>
               </tr>
               <tr v-if="meetings.length === 0">
-                <td colspan="6" class="empty-cell">尚無會議</td>
+                <td colspan="7" class="empty-cell">尚無會議</td>
               </tr>
             </tbody>
           </table>
@@ -546,6 +552,7 @@
     committeeId: '',
     session: '',
     title: '',
+    location: '',
     meetingDate: '',
     meetingTime: '',
     proposalDeadlineDate: '',
@@ -710,6 +717,7 @@
       committeeId: meetingForm.committeeId ? Number(meetingForm.committeeId) : null,
       session: Number(meetingForm.session),
       title: meetingForm.title.trim(),
+      location: meetingForm.location.trim(),
       meetingDate: toIsoString(meetingForm.meetingDate, meetingForm.meetingTime),
       proposalDeadlineAt: toIsoString(
         meetingForm.proposalDeadlineDate,
@@ -745,6 +753,7 @@
     meetingForm.committeeId = meeting.committeeId ? String(meeting.committeeId) : '';
     meetingForm.session = String(meeting.session);
     meetingForm.title = meeting.title;
+    meetingForm.location = meeting.location;
     const meetingDateTime = toDateTimeInput(meeting.meetingDate);
     const deadlineDateTime = toDateTimeInput(meeting.proposalDeadlineAt);
     meetingForm.meetingDate = meetingDateTime.slice(0, 10);
@@ -796,6 +805,7 @@
     meetingForm.committeeId = '';
     meetingForm.session = '';
     meetingForm.title = '';
+    meetingForm.location = '';
     meetingForm.meetingDate = '';
     meetingForm.meetingTime = '';
     meetingForm.proposalDeadlineDate = '';

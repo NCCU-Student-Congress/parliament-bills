@@ -22,6 +22,7 @@ migrations/0001_create_bills.sql
 migrations/0004_allow_unscheduled_proposals.sql
 migrations/0005_link_only_attachments.sql
 migrations/0006_remove_committee_code.sql
+migrations/0007_add_meeting_location.sql
 ```
 
 It creates:
@@ -43,6 +44,7 @@ It creates:
 - Proposal deadlines belong to meetings: `meetings.proposal_deadline_at`.
 - A meeting's proposal deadline must be no later than its meeting time; equal times are allowed.
 - Meeting times are entered as a date plus `HH:mm` in 24-hour time and displayed in 24-hour time.
+- Meeting locations are optional plain text stored on `meetings.location`.
 - Proposals do not store a deadline snapshot.
 - User committee membership is stored as a JSON array in `users.committee_ids`.
 - Attachments are separate link records with a display name and URL. Legacy links without a name

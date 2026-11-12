@@ -64,6 +64,7 @@ Stores meetings that the secretariat can assign proposals to.
 - `meeting_date`
 - `proposal_deadline_at`
 - `title`
+- `location`
 - `created_at`
 - `updated_at`
 

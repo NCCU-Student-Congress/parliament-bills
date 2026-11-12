@@ -50,6 +50,7 @@ interface MeetingRow {
   meeting_date: string;
   proposal_deadline_at: string;
   title: string;
+  location: string;
   created_at: string;
   updated_at: string;
 }
@@ -275,6 +276,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
     meetingDate: row.meeting_date,
     proposalDeadlineAt: row.proposal_deadline_at,
     title: row.title,
+    location: row.location,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -767,12 +769,14 @@ export function createProposalRepository(db: D1Database) {
     meetingDate?: unknown;
     proposalDeadlineAt?: unknown;
     title?: unknown;
+    location?: unknown;
   }) => {
     const committeeId = toPositiveInteger(input.committeeId);
     const session = parseTermCode(input.session);
     const meetingDate = normalizeDateTime(input.meetingDate, '');
     const proposalDeadlineAt = normalizeDateTime(input.proposalDeadlineAt, '');
     const title = cleanString(input.title);
+    const location = cleanString(input.location);
 
     if (!session) {
       throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
@@ -819,8 +823,9 @@ export function createProposalRepository(db: D1Database) {
            session,
            meeting_date,
            proposal_deadline_at,
-           title
-         ) VALUES (?, ?, ?, ?, ?)
+           title,
+           location
+         ) VALUES (?, ?, ?, ?, ?, ?)
          RETURNING
            id,
            committee_id,
@@ -828,10 +833,11 @@ export function createProposalRepository(db: D1Database) {
            meeting_date,
            proposal_deadline_at,
            title,
+           location,
            created_at,
            updated_at`,
       )
-      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title)
+      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title, location)
       .first<MeetingRow>();
 
     if (!row) {
@@ -852,6 +858,7 @@ export function createProposalRepository(db: D1Database) {
       meetingDate?: unknown;
       proposalDeadlineAt?: unknown;
       title?: unknown;
+      location?: unknown;
     },
   ) => {
     const committeeId = toPositiveInteger(input.committeeId);
@@ -859,6 +866,7 @@ export function createProposalRepository(db: D1Database) {
     const meetingDate = normalizeDateTime(input.meetingDate, '');
     const proposalDeadlineAt = normalizeDateTime(input.proposalDeadlineAt, '');
     const title = cleanString(input.title);
+    const location = cleanString(input.location);
 
     if (!session) {
       throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
@@ -919,6 +927,7 @@ export function createProposalRepository(db: D1Database) {
              meeting_date = ?,
              proposal_deadline_at = ?,
              title = ?,
+             location = ?,
              updated_at = CURRENT_TIMESTAMP
          WHERE id = ?
          RETURNING
@@ -928,10 +937,11 @@ export function createProposalRepository(db: D1Database) {
            meeting_date,
            proposal_deadline_at,
            title,
+           location,
            created_at,
            updated_at`,
       )
-      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title, id)
+      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title, location, id)
       .first<MeetingRow>();
 
     if (!row) {
@@ -969,6 +979,7 @@ export function createProposalRepository(db: D1Database) {
          meetings.meeting_date,
          meetings.proposal_deadline_at,
          meetings.title,
+         meetings.location,
          meetings.created_at,
          meetings.updated_at
        FROM meetings

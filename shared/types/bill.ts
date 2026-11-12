@@ -34,6 +34,7 @@ export interface Meeting {
   meetingDate: string;
   proposalDeadlineAt: string;
   title: string;
+  location: string;
   createdAt?: string;
   updatedAt?: string;
 }
