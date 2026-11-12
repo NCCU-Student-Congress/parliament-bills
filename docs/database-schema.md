@@ -76,6 +76,7 @@ Proposal deadlines live here. Proposals do not store their own deadline or deadl
 Stores submitted proposals. There is no draft state.
 
 - `id`
+- `proposal_type` (`discussion`, `report`, or `election`; existing rows default to `discussion`)
 - `committee_id`
 - `session`
 - `proposed_at`

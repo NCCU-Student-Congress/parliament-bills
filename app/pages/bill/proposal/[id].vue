@@ -284,6 +284,7 @@
     ProposalEditableField,
     Session,
   } from '~~/shared/types/bill';
+  import { proposalTypeLabels } from '~~/shared/types/bill';
   import { formatTermLabel } from '~~/shared/utils/term';
   import { normalizeAttachmentUrl } from '~~/shared/utils/attachment';
 
@@ -337,6 +338,7 @@
   );
 
   const displayFields: DisplayField[] = [
+    { label: '案型', key: 'proposalTypeLabel' },
     { label: '會期', key: 'sessionLabel', editable: 'session' },
     { label: '委員會', key: 'committeeName', editable: 'committeeId' },
     { label: '提案日期', key: 'proposedAtLabel', editable: 'proposedAt' },
@@ -391,6 +393,7 @@
 
   function getField(fieldName: string) {
     if (!bill.value) return undefined;
+    if (fieldName === 'proposalTypeLabel') return proposalTypeLabels[bill.value.proposalType];
     if (fieldName === 'sessionLabel') return formatTermLabel(bill.value.session);
     if (fieldName === 'proposedAtLabel') return formatDate(bill.value.proposedAt);
     if (fieldName === 'meetingDateLabel') return formatDateTime(bill.value.meetingDate);

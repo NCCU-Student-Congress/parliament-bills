@@ -7,6 +7,7 @@
       <p class="mb-4 text-sm font-bold text-[#5a5a70]">
         {{ bill.committeeName }} · {{ bill.meetingTitle || '尚未排入會議' }}
       </p>
+      <ProposalTypePill :proposal-type="bill.proposalType" class="mb-3" />
       <div class="text-sm font-semibold leading-relaxed text-[#12122b]">
         <p><strong>提案人：</strong>{{ bill.proposerName }}</p>
         <p><strong>提案日期：</strong>{{ formatDate(bill.proposedAt) }}</p>

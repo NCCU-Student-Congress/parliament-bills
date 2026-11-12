@@ -8,6 +8,7 @@
         {{ formatTermLabel(bill.session) }} · {{ bill.committeeName }}
       </p>
       <div class="flex flex-wrap gap-2 mb-3">
+        <ProposalTypePill :proposal-type="bill.proposalType" />
         <span
           class="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-black text-white"
         >

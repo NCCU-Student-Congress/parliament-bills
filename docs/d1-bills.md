@@ -1,7 +1,7 @@
 # D1 Bills Setup
 
 Bills now use the proposal schema in Cloudflare D1. The old row index, formal bill number,
-bill type, proposed action, and scheduled session fields are no longer part of the primary model.
+proposed action, and scheduled session fields are no longer part of the primary model.
 
 ## Binding
 
@@ -23,6 +23,7 @@ migrations/0004_allow_unscheduled_proposals.sql
 migrations/0005_link_only_attachments.sql
 migrations/0006_remove_committee_code.sql
 migrations/0007_add_meeting_location.sql
+migrations/0008_add_proposal_type.sql
 ```
 
 It creates:
@@ -38,6 +39,9 @@ It creates:
 ## Main Rules
 
 - A proposal has no draft status. Once created, it is a submitted proposal without a meeting.
+- Proposal types are `discussion` (討論案), `report` (報告案), and `election` (選舉案).
+  Existing proposals and create requests without a type default to `discussion`. The type cannot
+  be changed after submission.
 - The secretariat assigns or clears its meeting later in the admin's `議案排案` tab. The meeting must match the proposal's session and committee.
 - Meetings and proposals reference `sessions.id`; the id is the existing numeric term code such as `271`.
 - `POST /api/sessions` does not accept manual fields. It starts at `252` and appends the next session.
@@ -50,8 +54,9 @@ It creates:
 - Attachments are separate link records with a display name and URL. Legacy links without a name
   display as `附件 1`, `附件 2`, and so on.
 - Confirmed cosponsors are `proposal_cosponsors.status = 'confirmed'`.
-- Legislators can cosign any other proposer's unscheduled proposal, regardless of committee or
-  session. Assigning a meeting closes cosigning; clearing it reopens cosigning.
+- Legislators can cosign any other proposer's unscheduled discussion or election proposal,
+  regardless of committee or session. Reports cannot be cosigned. Assigning a meeting closes
+  cosigning; clearing it reopens cosigning for eligible proposals.
 
 ## Local Auth Login
 
@@ -121,7 +126,7 @@ Proposal reads:
 - `GET /api/bills?limit=10`
 - `GET /api/bills?type=all`
 - `GET /api/proposals/:id`
-- `GET /api/proposals/signable` (public, unscheduled proposals from every session)
+- `GET /api/proposals/signable` (public, unscheduled discussion and election proposals from every session)
 
 Proposal writes:
 
@@ -144,7 +149,8 @@ also deletes its attachments and cosponsors through the existing foreign keys.
 
 ```ts
 {
-  committeeId: number;
+  proposalType?: 'discussion' | 'report' | 'election';
+  committeeId: number | null;
   session: number;
   proposedAt?: string;
   subject: string;
@@ -154,6 +160,7 @@ also deletes its attachments and cosponsors through the existing foreign keys.
 ```
 
 The proposal form sends `proposedAt` as a date selected by the user and displays proposal dates without a time of day. Existing timestamp values remain readable.
+Both legislators and secretariat users can select any proposal type. The form defaults to `discussion`.
 Attachment rows are optional. Each non-empty row requires a name and an HTTP(S) URL; a missing
 scheme is saved with `https://`. File attachment payloads are rejected.
 It loads the current proposer from the protected `GET /api/proposals/form-data` endpoint.

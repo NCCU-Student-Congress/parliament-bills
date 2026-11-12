@@ -467,6 +467,7 @@
             <tbody>
               <tr v-for="bill in sortedBills" :key="bill.id">
                 <td>
+                  <ProposalTypePill :proposal-type="bill.proposalType" class="mr-2" />
                   <NuxtLink :to="`/bill/proposal/${bill.id}`" class="text-button">
                     {{ bill.subject }}
                   </NuxtLink>

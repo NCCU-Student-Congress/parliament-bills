@@ -23,6 +23,18 @@
       class="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
       @submit.prevent="submitBill"
     >
+      <label class="block">
+        <span class="mb-1 block text-sm font-medium text-gray-700">案型</span>
+        <select v-model="form.proposalType" required class="form-input">
+          <option v-for="type in proposalTypes" :key="type" :value="type">
+            {{ proposalTypeLabels[type] }}
+          </option>
+        </select>
+        <span v-if="form.proposalType === 'report'" class="mt-1 block text-sm text-gray-500">
+          報告案不開放連署。
+        </span>
+      </label>
+
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label class="block">
           <span class="mb-1 block text-sm font-medium text-gray-700">委員會</span>
@@ -175,9 +187,11 @@
     Committee,
     ProposalAttachmentInput,
     ProposalInput,
+    ProposalType,
     Session,
     User,
   } from '~~/shared/types/bill';
+  import { proposalTypes, proposalTypeLabels } from '~~/shared/types/bill';
 
   interface ProposalFormData {
     proposer: Pick<User, 'name' | 'permissionRole'>;
@@ -189,6 +203,7 @@
   });
 
   interface BillForm {
+    proposalType: ProposalType;
     committeeId: string;
     session: string;
     proposedAt: string;
@@ -208,6 +223,7 @@
   });
 
   const form = reactive<BillForm>({
+    proposalType: 'discussion',
     committeeId: '',
     session: String(getCurrentTerm()),
     proposedAt: localToday,
@@ -291,6 +307,7 @@
     }
 
     return {
+      proposalType: form.proposalType,
       committeeId: selectedCommitteeId.value,
       session,
       proposedAt: form.proposedAt,
