@@ -111,10 +111,6 @@
             <span>名稱</span>
             <input v-model="committeeForm.name" required class="control" placeholder="程序委員會" />
           </label>
-          <label class="field">
-            <span>代碼</span>
-            <input v-model="committeeForm.code" class="control" placeholder="procedure" />
-          </label>
           <div class="form-actions">
             <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
               {{ editingCommitteeId === null ? '新增委員會' : '儲存委員會' }}
@@ -135,14 +131,12 @@
             <thead>
               <tr>
                 <th>名稱</th>
-                <th>代碼</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="committee in committees" :key="committee.id">
                 <td>{{ committee.name }}</td>
-                <td>{{ committee.code || '無' }}</td>
                 <td>
                   <div class="row-actions">
                     <button class="text-button" type="button" @click="editCommittee(committee)">
@@ -159,7 +153,7 @@
                 </td>
               </tr>
               <tr v-if="committees.length === 0">
-                <td colspan="3" class="empty-cell">尚無委員會</td>
+                <td colspan="2" class="empty-cell">尚無委員會</td>
               </tr>
             </tbody>
           </table>
@@ -533,10 +527,7 @@
   const editingMeetingId = ref<number | null>(null);
   const billMeetingSelection = reactive<Record<number, string>>({});
 
-  const committeeForm = reactive({
-    name: '',
-    code: '',
-  });
+  const committeeForm = reactive({ name: '' });
 
   const userForm = reactive({
     name: '',
@@ -661,10 +652,7 @@
   }
 
   async function submitCommittee() {
-    const payload = {
-      name: committeeForm.name.trim(),
-      code: committeeForm.code.trim() || undefined,
-    };
+    const payload = { name: committeeForm.name.trim() };
     const url =
       editingCommitteeId.value === null
         ? '/api/committees'
@@ -742,7 +730,6 @@
   function editCommittee(committee: Committee) {
     editingCommitteeId.value = committee.id;
     committeeForm.name = committee.name;
-    committeeForm.code = committee.code;
   }
 
   function editUser(user: User) {
@@ -788,7 +775,6 @@
   function resetCommitteeForm() {
     editingCommitteeId.value = null;
     committeeForm.name = '';
-    committeeForm.code = '';
   }
 
   function resetUserForm() {

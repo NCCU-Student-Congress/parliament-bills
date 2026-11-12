@@ -3,7 +3,6 @@ import type { PermissionRole } from './auth';
 export interface Committee {
   id: number;
   name: string;
-  code: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -21,6 +21,7 @@ Schema and subsequent changes live in:
 migrations/0001_create_bills.sql
 migrations/0004_allow_unscheduled_proposals.sql
 migrations/0005_link_only_attachments.sql
+migrations/0006_remove_committee_code.sql
 ```
 
 It creates:

@@ -11,7 +11,6 @@ Stores committee names used by meetings, proposals, and user filtering.
 
 - `id`
 - `name`
-- `code`
 - `created_at`
 - `updated_at`
 

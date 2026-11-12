@@ -19,7 +19,6 @@ import type { D1Database } from './d1';
 interface CommitteeRow {
   id: number;
   name: string;
-  code: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -239,7 +238,6 @@ function rowToCommittee(row: CommitteeRow): Committee {
   return {
     id: row.id,
     name: row.name,
-    code: row.code ?? '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -511,9 +509,8 @@ export function createProposalRepository(db: D1Database) {
     return { success: true };
   };
 
-  const createCommittee = async (input: { name?: unknown; code?: unknown }) => {
+  const createCommittee = async (input: { name?: unknown }) => {
     const name = cleanString(input.name);
-    const code = cleanString(input.code) || null;
 
     if (!name) {
       throw createError({ statusCode: 400, statusMessage: '委員會名稱為必填欄位' });
@@ -521,11 +518,11 @@ export function createProposalRepository(db: D1Database) {
 
     const row = await db
       .prepare(
-        `INSERT INTO committees (name, code)
-         VALUES (?, ?)
-         RETURNING id, name, code, created_at, updated_at`,
+        `INSERT INTO committees (name)
+         VALUES (?)
+         RETURNING id, name, created_at, updated_at`,
       )
-      .bind(name, code)
+      .bind(name)
       .first<CommitteeRow>();
 
     if (!row) {
@@ -535,9 +532,8 @@ export function createProposalRepository(db: D1Database) {
     return rowToCommittee(row);
   };
 
-  const updateCommittee = async (id: number, input: { name?: unknown; code?: unknown }) => {
+  const updateCommittee = async (id: number, input: { name?: unknown }) => {
     const name = cleanString(input.name);
-    const code = cleanString(input.code) || null;
 
     if (!name) {
       throw createError({ statusCode: 400, statusMessage: '委員會名稱為必填欄位' });
@@ -547,12 +543,11 @@ export function createProposalRepository(db: D1Database) {
       .prepare(
         `UPDATE committees
          SET name = ?,
-             code = ?,
              updated_at = CURRENT_TIMESTAMP
          WHERE id = ?
-         RETURNING id, name, code, created_at, updated_at`,
+         RETURNING id, name, created_at, updated_at`,
       )
-      .bind(name, code, id)
+      .bind(name, id)
       .first<CommitteeRow>();
 
     if (!row) {
@@ -567,7 +562,7 @@ export function createProposalRepository(db: D1Database) {
   const getCommittees = async () => {
     const { results = [] } = await db
       .prepare(
-        `SELECT id, name, code, created_at, updated_at
+        `SELECT id, name, created_at, updated_at
          FROM committees
          ORDER BY name ASC`,
       )
