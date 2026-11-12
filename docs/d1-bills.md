@@ -15,21 +15,20 @@ Configure the same binding in Cloudflare Pages and `wrangler.toml`.
 
 ## Migration
 
-Schema and subsequent changes live in:
+The fresh D1 schema lives in one migration:
 
 ```text
 migrations/0001_create_bills.sql
-migrations/0004_allow_unscheduled_proposals.sql
-migrations/0005_link_only_attachments.sql
-migrations/0006_remove_committee_code.sql
-migrations/0007_add_meeting_location.sql
-migrations/0008_add_proposal_type.sql
 ```
+
+Earlier local-only migrations were consolidated into this file. Remove the old local D1 state at
+`.wrangler/state/v3/d1` before applying it to an existing development checkout.
 
 It creates:
 
 - `committees`
 - `users`
+- `auth_login_tokens`
 - `sessions`
 - `meetings`
 - `proposals`
@@ -40,8 +39,8 @@ It creates:
 
 - A proposal has no draft status. Once created, it is a submitted proposal without a meeting.
 - Proposal types are `discussion` (討論案), `report` (報告案), and `election` (選舉案).
-  Existing proposals and create requests without a type default to `discussion`. The type cannot
-  be changed after submission.
+  Create requests without a type default to `discussion`. The type cannot be changed after
+  submission.
 - The secretariat assigns or clears its meeting later in the admin's `議案排案` tab. The meeting must match the proposal's session and committee.
 - Meetings and proposals reference `sessions.id`; the id is the existing numeric term code such as `271`.
 - `POST /api/sessions` does not accept manual fields. It starts at `252` and appends the next session.
@@ -51,8 +50,7 @@ It creates:
 - Meeting locations are optional plain text stored on `meetings.location`.
 - Proposals do not store a deadline snapshot.
 - User committee membership is stored as a JSON array in `users.committee_ids`.
-- Attachments are separate link records with a display name and URL. Legacy links without a name
-  display as `附件 1`, `附件 2`, and so on.
+- Attachments are separate link records with a required display name and URL.
 - Confirmed cosponsors are `proposal_cosponsors.status = 'confirmed'`.
 - Legislators can cosign any other proposer's unscheduled discussion or election proposal,
   regardless of committee or session. Reports cannot be cosigned. Assigning a meeting closes

@@ -76,7 +76,7 @@ Proposal deadlines live here. Proposals do not store their own deadline or deadl
 Stores submitted proposals. There is no draft state.
 
 - `id`
-- `proposal_type` (`discussion`, `report`, or `election`; existing rows default to `discussion`)
+- `proposal_type` (`discussion`, `report`, or `election`; defaults to `discussion`)
 - `committee_id`
 - `session`
 - `proposed_at`
@@ -89,8 +89,7 @@ Stores submitted proposals. There is no draft state.
 
 ### `proposal_attachments`
 
-Stores proposal attachment links. New links require a display name; the name stays nullable for
-older link records without one.
+Stores proposal attachment links. Every link requires a display name.
 
 - `id`
 - `proposal_id`

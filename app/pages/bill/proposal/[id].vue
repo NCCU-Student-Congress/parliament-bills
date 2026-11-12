@@ -161,7 +161,7 @@
                       rel="noopener noreferrer"
                       class="block break-all text-primary-600 hover:underline"
                     >
-                      {{ attachment.name || `附件 ${index + 1}` }}
+                      {{ attachment.name }}
                     </a>
                   </template>
                   <span v-else>無</span>
@@ -428,7 +428,7 @@
       case 'attachments':
         attachmentDraft.value = bill.value.attachments.map((attachment, index) => ({
           id: index + 1,
-          name: attachment.name || `附件 ${index + 1}`,
+          name: attachment.name,
           url: attachment.url,
         }));
         nextAttachmentId = attachmentDraft.value.length + 1;

@@ -80,7 +80,7 @@ interface ProposalRow {
 interface AttachmentRow {
   id: number;
   proposal_id: number;
-  name: string | null;
+  name: string;
   url: string;
   created_at: string;
 }

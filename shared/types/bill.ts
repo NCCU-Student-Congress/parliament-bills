@@ -55,7 +55,7 @@ export interface Meeting {
 export interface ProposalAttachment {
   id?: number;
   proposalId?: number;
-  name: string | null;
+  name: string;
   url: string;
   createdAt?: string;
 }
