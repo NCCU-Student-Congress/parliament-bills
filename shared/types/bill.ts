@@ -1,5 +1,18 @@
 import type { PermissionRole } from './auth';
 
+export const proposalTypes = ['discussion', 'report', 'election'] as const;
+export type ProposalType = (typeof proposalTypes)[number];
+
+export const proposalTypeLabels: Record<ProposalType, string> = {
+  discussion: '討論案',
+  report: '報告案',
+  election: '選舉案',
+};
+
+export function isProposalType(value: unknown): value is ProposalType {
+  return typeof value === 'string' && proposalTypes.includes(value as ProposalType);
+}
+
 export interface Committee {
   id: number;
   name: string;
@@ -69,6 +82,7 @@ export interface ProposalCosponsor {
 
 export interface Proposal {
   id: number;
+  proposalType: ProposalType;
   committeeId: number | null;
   committeeName: string;
   session: number;
@@ -89,6 +103,7 @@ export interface Proposal {
 }
 
 export interface ProposalInput {
+  proposalType?: ProposalType;
   committeeId: number | null;
   session: number;
   proposedAt?: string;

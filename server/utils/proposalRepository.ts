@@ -7,9 +7,11 @@ import type {
   ProposalAttachmentInput,
   ProposalCosponsor,
   ProposalInput,
+  ProposalType,
   Session,
   User,
 } from '../../shared/types/bill';
+import { isProposalType } from '../../shared/types/bill';
 import type { PermissionRole } from '../../shared/types/auth';
 import { isPermissionRole } from '../../shared/types/auth';
 import { getCurrentTerm, getEarliestTerm, parseTermCode } from '../../shared/utils/term';
@@ -57,6 +59,7 @@ interface MeetingRow {
 
 interface ProposalRow {
   id: number;
+  proposal_type: ProposalType;
   committee_id: number | null;
   committee_name: string | null;
   session: number;
@@ -98,6 +101,7 @@ interface CosponsorRow {
 }
 
 interface NormalizedProposalInput {
+  proposalType: ProposalType;
   committeeId: number | null;
   session: number;
   proposedAt: string;
@@ -123,6 +127,7 @@ interface NormalizedUserInput {
 
 const PROPOSAL_COLUMNS = `
   proposals.id,
+  proposals.proposal_type,
   proposals.committee_id,
   committees.name AS committee_name,
   proposals.session,
@@ -316,6 +321,7 @@ function rowToProposal(
 ): Proposal {
   return {
     id: row.id,
+    proposalType: row.proposal_type,
     committeeId: row.committee_id,
     committeeName: row.committee_name ?? '無（大會）',
     session: row.session,
@@ -440,6 +446,7 @@ async function rowsToProposals(db: D1Database, rows: ProposalRow[]): Promise<Pro
 }
 
 function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
+  const proposalType = input.proposalType === undefined ? 'discussion' : input.proposalType;
   const committeeId = toPositiveInteger(input.committeeId);
   const proposerId = toPositiveInteger(input.proposerId);
   const session = parseTermCode(input.session) ?? getCurrentTerm();
@@ -457,7 +464,12 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
     throw createError({ statusCode: 400, statusMessage: '案由為必填欄位' });
   }
 
+  if (!isProposalType(proposalType)) {
+    throw createError({ statusCode: 400, statusMessage: '案型不正確' });
+  }
+
   return {
+    proposalType,
     committeeId,
     session,
     proposedAt: normalizeDateTime(input.proposedAt),
@@ -1011,7 +1023,8 @@ export function createProposalRepository(db: D1Database) {
   };
 
   const getAllBills = () => getProposals();
-  const getSignableBills = () => getProposals('WHERE proposals.meeting_id IS NULL');
+  const getSignableBills = () =>
+    getProposals("WHERE proposals.meeting_id IS NULL AND proposals.proposal_type <> 'report'");
 
   const getLatestTermBills = async () => {
     const row = await db
@@ -1088,16 +1101,18 @@ export function createProposalRepository(db: D1Database) {
     const inserted = await db
       .prepare(
         `INSERT INTO proposals (
+           proposal_type,
            committee_id,
            session,
            proposed_at,
            proposer_id,
            subject,
            description
-         ) VALUES (?, ?, ?, ?, ?, ?)
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)
          RETURNING id`,
       )
       .bind(
+        proposal.proposalType,
         proposal.committeeId,
         proposal.session,
         proposal.proposedAt,
@@ -1276,6 +1291,7 @@ export function createProposalRepository(db: D1Database) {
          INNER JOIN users ON users.id = ?
          WHERE proposals.id = ?
            AND proposals.meeting_id IS NULL
+           AND proposals.proposal_type <> 'report'
            AND proposals.proposer_id <> users.id
            AND users.permission_role = 'legislator'
          ON CONFLICT(proposal_id, user_id) DO UPDATE SET
@@ -1290,6 +1306,7 @@ export function createProposalRepository(db: D1Database) {
              SELECT 1 FROM proposals
              WHERE proposals.id = excluded.proposal_id
                AND proposals.meeting_id IS NULL
+               AND proposals.proposal_type <> 'report'
                AND proposals.proposer_id <> excluded.user_id
            )`,
       )
@@ -1299,6 +1316,10 @@ export function createProposalRepository(db: D1Database) {
     const bill = await getBillById(id);
     if (!bill) {
       throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
+    }
+
+    if (bill.proposalType === 'report') {
+      throw createError({ statusCode: 403, statusMessage: '報告案不可連署' });
     }
 
     if (
