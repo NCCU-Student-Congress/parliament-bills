@@ -1,3 +1,6 @@
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-02-26',
   devtools: {
@@ -7,11 +10,35 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   ssr: true, // 確保開啟 SSR
   nitro: {
-    preset: 'cloudflare-pages',
+    preset: 'cloudflare_module',
     cloudflare: {
+      deployConfig: true,
+      nodeCompat: true,
       dev: {
         persistDir: '.wrangler/state/v3',
       },
+    },
+  },
+  hooks: {
+    'nitro:init'(nitro) {
+      nitro.hooks.hook('compiled', async () => {
+        // Workers applies every matching _headers rule, so reset earlier cache values.
+        const base = nitro.options.baseURL.replace(/\/$/, '');
+        const rules = Object.entries(nitro.options.routeRules)
+          .filter(([, rule]) => rule.headers)
+          .sort(([a], [b]) => a.split('/').length - b.split('/').length)
+          .map(([path, rule]) =>
+            [
+              base + path.replace('/**', '/*'),
+              ...Object.entries(rule.headers!).flatMap(([name, value]) => [
+                `  ! ${name}`,
+                `  ${name}: ${value}`,
+              ]),
+            ].join('\n'),
+          );
+
+        await writeFile(join(nitro.options.output.publicDir, '_headers'), `${rules.join('\n')}\n`);
+      });
     },
   },
   app: {

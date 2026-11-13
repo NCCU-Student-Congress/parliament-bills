@@ -11,7 +11,7 @@ Nuxt server routes expect a Cloudflare D1 binding named:
 DB
 ```
 
-Configure the same binding in Cloudflare Pages and `wrangler.toml`.
+Configure the binding in `wrangler.toml` for the Cloudflare Worker.
 
 ## Migration
 
@@ -58,7 +58,7 @@ It creates:
 
 ## Local Auth Login
 
-Secretariat routes use passwordless magic-link login. For local development, enable the auth bypass
+Secretariat routes use passwordless magic-link login. Set these values in `.dev.vars` for local development, and enable the auth bypass
 so you can log in without Resend:
 
 ```dotenv

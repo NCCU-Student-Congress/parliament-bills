@@ -4,7 +4,7 @@
 
 「政大學生議會議案系統」由國立政治大學學生議會維護，提供議案查詢、提案建檔、會議資料管理與秘書處文件產製等功能。本專案旨在協助學生議會公開、整理並管理議事資訊，讓議案資料能以更穩定、易查詢的方式流通。
 
-本專案以 Cloudflare Pages 與 Cloudflare D1 為核心，提供政大學生議會議案系統。
+本專案以 Cloudflare Workers 與 Cloudflare D1 為核心，提供政大學生議會議案系統。
 
 ## 系統功能狀態
 
@@ -40,7 +40,7 @@
 - **樣式**：Tailwind CSS
 - **圖示庫**：Heroicons
 - **議案資料庫**：Cloudflare D1
-- **部署環境**：Cloudflare Pages [![Powered by Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?logo=cloudflare)](https://pages.cloudflare.com/)
+- **部署環境**：Cloudflare Workers
 
 - **套件管理**：pnpm (Node.js 環境)
 - **版本控制**：Git / GitHub
@@ -51,13 +51,15 @@
 
 ```sh
 pnpm install --frozen-lockfile
-cp .env.example .env
+cp .dev.vars.example .dev.vars
 pnpm dev
 ```
 
 啟動後開啟 <http://localhost:3000>。`pnpm dev` 會先將 `migrations/` 套用至 `.wrangler/state` 中的本機 Cloudflare D1 資料庫，再啟動 Nuxt；新建的本機資料庫沒有議案資料。
 
-若要登入後台，請先在 `.env` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
+若要登入後台，請先在 `.dev.vars` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
+
+正式部署時，Worker 的建置指令為 `pnpm run build`，部署指令為 `pnpm exec wrangler deploy`。D1 binding `DB` 定義在 `wrangler.toml`；`AUTH_SECRET` 與 `RESEND_API_KEY` 等機密值須設為 Worker secrets，`.dev.vars` 只供本機使用。可執行 `pnpm preview`，透過 Wrangler 在本機預覽建置成果（預設 <http://localhost:8787>）。GitHub 已連接的 Pages 專案不會自動轉成 Worker；需在 Cloudflare 建立 Worker Builds 的 Git 連線，並停用舊 Pages 的自動部署。
 
 後續由 agent 匯入舊站會議與議案時，請依照[會議資訊匯入規則](./docs/meeting-data-migration.md)處理來源、提案人與附件。
 
