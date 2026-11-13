@@ -47,6 +47,16 @@
       </button>
       <button
         class="admin-tab"
+        :class="{ active: activeAdminTab === 'agenda' }"
+        type="button"
+        role="tab"
+        :aria-selected="activeAdminTab === 'agenda'"
+        @click="activeAdminTab = 'agenda'"
+      >
+        設定議程
+      </button>
+      <button
+        class="admin-tab"
         :class="{ active: activeAdminTab === 'reference' }"
         type="button"
         role="tab"
@@ -448,6 +458,7 @@
         </div>
       </section>
     </div>
+    <AgendaEditor v-else-if="activeAdminTab === 'agenda'" :meetings="meetings" class="w-full" />
     <div v-else class="w-full">
       <section class="admin-section">
         <div class="section-head">
@@ -526,13 +537,17 @@
   });
 
   type ResourceType = 'sessions' | 'committees' | 'users' | 'meetings';
-  type AdminTab = 'reference' | 'meetings' | 'scheduling';
+  type AdminTab = 'reference' | 'meetings' | 'scheduling' | 'agenda';
 
   const notice = ref('');
   const errorMessage = ref('');
   const isSubmitting = ref(false);
   const activeAdminTab = ref<AdminTab>(
-    useRoute().query.tab === 'scheduling' ? 'scheduling' : 'meetings',
+    useRoute().query.tab === 'scheduling'
+      ? 'scheduling'
+      : useRoute().query.tab === 'agenda'
+        ? 'agenda'
+        : 'meetings',
   );
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
@@ -928,7 +943,8 @@
 
 <style scoped>
   .admin-tabs {
-    display: inline-flex;
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.35rem;
     margin-bottom: 1.25rem;
     border: 1px solid #dcdce2;

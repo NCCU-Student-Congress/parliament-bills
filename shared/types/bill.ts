@@ -57,6 +57,12 @@ export interface ScheduledMeeting extends Meeting {
   proposalCount: number;
 }
 
+export interface AgendaEntry {
+  kind: 'heading' | 'text' | 'proposal';
+  content: string;
+  proposalId: number | null;
+}
+
 export interface ProposalMeeting {
   id: number;
   title: string;

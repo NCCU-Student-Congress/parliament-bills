@@ -10,7 +10,7 @@
 
     <header class="mb-8">
       <h1 class="mb-2 text-3xl font-bold text-gray-900">{{ termLabel }}會議</h1>
-      <p class="text-gray-600">選擇會議，查看該場已排入的議案。</p>
+      <p class="text-gray-600">選擇會議，查看議程與已排入的議案。</p>
     </header>
 
     <div
@@ -50,7 +50,7 @@
       </section>
     </main>
     <div v-else class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600">
-      本會期尚無已排案的會議。
+      本會期尚無會議。
     </div>
   </div>
 </template>

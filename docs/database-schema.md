@@ -98,6 +98,14 @@ Links a proposal to zero or more meetings in the same session and committee. Sch
 
 The proposal and meeting IDs form a composite primary key. A meeting with assigned proposals must be unscheduled before deletion.
 
+### `meeting_agenda_entries`
+
+Stores the ordered agenda for each meeting. Each row is a fixed-section heading, free text, or a
+proposal assigned to that meeting. Proposal rows reference `proposals.id`; the public agenda hides a
+proposal row when that proposal is no longer assigned to the meeting. The secretariat can reorder
+content entries and save the agenda. Meeting pages show the standard sections even before an agenda
+is saved; the election section is omitted when it has no content.
+
 ### `proposal_attachments`
 
 Stores proposal attachment links. Every link requires a display name.

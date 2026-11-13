@@ -25,7 +25,8 @@
           議案排入會議
         </NuxtLink>
         <NuxtLink
-          to="/secretariat/agenda"
+          v-if="isSecretariat"
+          to="/admin?tab=agenda"
           class="block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md"
         >
           <div class="flex items-center justify-center">
@@ -43,7 +44,7 @@
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               ></path>
             </svg>
-            <span>草擬議程</span>
+            <span>設定議程</span>
           </div>
         </NuxtLink>
 

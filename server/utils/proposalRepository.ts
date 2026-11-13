@@ -1098,9 +1098,7 @@ export function createProposalRepository(db: D1Database) {
       )
       .all<{ meeting_id: number; proposal_count: number }>();
     const counts = new Map(results.map((row) => [row.meeting_id, row.proposal_count]));
-    return meetings
-      .filter((meeting) => counts.has(meeting.id))
-      .map((meeting) => ({ ...meeting, proposalCount: counts.get(meeting.id) ?? 0 }));
+    return meetings.map((meeting) => ({ ...meeting, proposalCount: counts.get(meeting.id) ?? 0 }));
   };
 
   const getProposals = async (whereClause = '', values: (string | number)[] = []) => {

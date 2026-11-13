@@ -58,24 +58,6 @@ export function useSecretariat() {
     { immediate: true },
   );
 
-  const generateAgenda = (orderString: string): string => {
-    if (!orderString || !bills.value.length)
-      return '請輸入有效的議案編號順序，並確保已載入議案資料。';
-    return (
-      orderString
-        .split(',')
-        .map((s) => parseInt(s.trim(), 10))
-        .filter((n) => !isNaN(n))
-        .map((num, index) => {
-          const bill = bills.value.find((b) => b.id === num);
-          return bill
-            ? `（${toChineseNumeral(index + 1)}）審查${formatTermLabel(bill.session)}【${bill.subject}】。`
-            : `（${toChineseNumeral(index + 1)}）無法找到${formatTermLabel(currentTerm)}索引 ${num} 的議案。`;
-        })
-        .join('\n') + '\n'
-    );
-  };
-
   const generateMinutes = (orderString: string): string => {
     if (!orderString || !bills.value.length)
       return '請輸入有效的議案編號順序，並確保已載入議案資料。';
@@ -104,5 +86,5 @@ export function useSecretariat() {
       .join('');
   };
 
-  return { bills, currentTerm, isLoading, error, fetchBills, generateAgenda, generateMinutes };
+  return { bills, currentTerm, isLoading, error, fetchBills, generateMinutes };
 }

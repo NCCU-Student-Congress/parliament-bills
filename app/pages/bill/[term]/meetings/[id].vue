@@ -11,12 +11,15 @@
     </nav>
 
     <div
-      v-if="meetingsError || billsError"
+      v-if="meetingsError || billsError || agendaError"
       class="rounded-lg border border-red-200 bg-red-50 p-5 text-red-700"
     >
-      {{ meetingsError?.message || billsError?.message || '載入資料失敗' }}
+      {{ meetingsError?.message || billsError?.message || agendaError?.message || '載入資料失敗' }}
     </div>
-    <div v-else-if="meetingsPending || billsPending" class="py-12 text-center text-gray-600">
+    <div
+      v-else-if="meetingsPending || billsPending || agendaPending"
+      class="py-12 text-center text-gray-600"
+    >
       載入中...
     </div>
     <div
@@ -40,6 +43,38 @@
           </div>
         </dl>
       </header>
+
+      <section
+        class="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+        aria-label="會議議程"
+      >
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-xl font-bold text-gray-900">會議議程</h2>
+          <button
+            type="button"
+            class="rounded border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            @click="copyAgenda"
+          >
+            {{ copied ? '已複製' : '複製議程' }}
+          </button>
+        </div>
+        <div class="space-y-1 leading-8 text-gray-900">
+          <div
+            v-for="(line, index) in agendaLinesForMeeting"
+            :key="index"
+            :class="line.entry.kind === 'heading' ? 'pt-3 font-bold first:pt-0' : 'pl-4'"
+          >
+            <NuxtLink
+              v-if="line.entry.kind === 'proposal'"
+              :to="`/bill/proposal/${line.entry.proposalId}`"
+              class="rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary hover:bg-gray-100"
+            >
+              {{ line.text }}
+            </NuxtLink>
+            <span v-else class="whitespace-pre-wrap">{{ line.text }}</span>
+          </div>
+        </div>
+      </section>
 
       <BillFilter
         :filters="filters"
@@ -67,6 +102,7 @@
   import { computed, ref } from 'vue';
   import { useRoute } from 'vue-router';
   import { formatTermLabel, parseTermCode } from '~~/shared/utils/term';
+  import { agendaLines, normalizeAgenda } from '~~/shared/utils/agenda';
 
   const route = useRoute();
   const term = computed(() => parseTermCode(route.params.term));
@@ -85,10 +121,48 @@
     pending: billsPending,
     error: billsError,
   } = await useFetch(() => `/api/meetings/${meetingId.value}/proposals`);
+  const {
+    data: agendaData,
+    pending: agendaPending,
+    error: agendaError,
+  } = await useFetch(() => `/api/meetings/${meetingId.value}/agenda`);
   const meeting = computed(() =>
     (meetingsData.value ?? []).find((item) => item.id === meetingId.value),
   );
   const meetingBills = computed(() => billsData.value ?? []);
+  const displayAgendaEntries = computed(() =>
+    meeting.value ? normalizeAgenda(meeting.value, meetingBills.value, agendaData.value ?? []) : [],
+  );
+  const agendaLinesForMeeting = computed(() =>
+    agendaLines(displayAgendaEntries.value, meetingBills.value),
+  );
+  const orderedMeetingBills = computed(() => {
+    const order = new Map(
+      displayAgendaEntries.value
+        .filter((entry) => entry.kind === 'proposal')
+        .map((entry, index) => [entry.proposalId, index]),
+    );
+    return [...meetingBills.value].sort(
+      (a, b) =>
+        (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+    );
+  });
+  const copied = ref(false);
+  async function copyAgenda() {
+    try {
+      await navigator.clipboard.writeText(
+        agendaLinesForMeeting.value
+          .map((line, index) => `${index && line.entry.kind === 'heading' ? '\n' : ''}${line.text}`)
+          .join('\n'),
+      );
+      copied.value = true;
+      setTimeout(() => {
+        copied.value = false;
+      }, 2000);
+    } catch {
+      copied.value = false;
+    }
+  }
   const filters = ref({ keyword: '', proposer: '', dateFrom: '', dateTo: '' });
   function updateFilters(value) {
     filters.value = {
@@ -101,7 +175,7 @@
   const filteredBills = computed(() => {
     const keyword = filters.value.keyword.toLocaleLowerCase('zh-TW');
     const proposer = filters.value.proposer.toLocaleLowerCase('zh-TW');
-    return meetingBills.value.filter((bill) => {
+    return orderedMeetingBills.value.filter((bill) => {
       const proposedAt = bill.proposedAt.slice(0, 10);
       if (filters.value.dateFrom && proposedAt < filters.value.dateFrom) return false;
       if (filters.value.dateTo && proposedAt > filters.value.dateTo) return false;
