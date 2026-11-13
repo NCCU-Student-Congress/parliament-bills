@@ -19,7 +19,7 @@ import { isPermissionRole } from '../../shared/types/auth';
 import { getCurrentTerm, getEarliestTerm, parseTermCode } from '../../shared/utils/term';
 import { normalizeAttachmentUrl } from '../../shared/utils/attachment';
 import { renderProposalText } from '../../shared/utils/proposalText';
-import type { D1Database } from './d1';
+import type { D1Database, D1PreparedStatement } from './d1';
 
 interface CommitteeRow {
   id: number;
@@ -415,42 +415,46 @@ function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
   return attachments;
 }
 
-async function getAttachmentsByProposalId(
-  db: D1Database,
-  proposalIds: number[],
-): Promise<Map<number, ProposalAttachment[]>> {
-  if (!proposalIds.length) return new Map();
+// The proposals a lookup returns, as SQL for `proposal_id IN (...)`. Child rows are selected by
+// this subquery rather than by a list of ids, so all four reads fit in one batch and no list can
+// exceed D1's limit on bound parameters.
+interface ProposalIdSource {
+  sql: string;
+  values: (string | number)[];
+}
 
-  const placeholders = proposalIds.map(() => '?').join(', ');
-  const { results = [] } = await db
-    .prepare(
-      `SELECT id, proposal_id, name, url, created_at
-       FROM proposal_attachments
-       WHERE proposal_id IN (${placeholders})
-       ORDER BY id ASC`,
-    )
-    .bind(...proposalIds)
-    .all<AttachmentRow>();
+function bindValues(statement: D1PreparedStatement, values: (string | number)[]) {
+  return values.length ? statement.bind(...values) : statement;
+}
 
-  const map = new Map<number, ProposalAttachment[]>();
-  for (const row of results) {
+function groupByProposal<Row extends { proposal_id: number }, Item>(
+  rows: Row[],
+  toItem: (row: Row) => Item,
+) {
+  const map = new Map<number, Item[]>();
+  for (const row of rows) {
     const current = map.get(row.proposal_id) ?? [];
-    current.push(rowToAttachment(row));
+    current.push(toItem(row));
     map.set(row.proposal_id, current);
   }
-
   return map;
 }
 
-async function getCosponsorsByProposalId(
-  db: D1Database,
-  proposalIds: number[],
-): Promise<Map<number, ProposalCosponsor[]>> {
-  if (!proposalIds.length) return new Map();
+function attachmentsStatement(db: D1Database, ids: ProposalIdSource) {
+  return bindValues(
+    db.prepare(
+      `SELECT id, proposal_id, name, url, created_at
+       FROM proposal_attachments
+       WHERE proposal_id IN (${ids.sql})
+       ORDER BY id ASC`,
+    ),
+    ids.values,
+  );
+}
 
-  const placeholders = proposalIds.map(() => '?').join(', ');
-  const { results = [] } = await db
-    .prepare(
+function cosponsorsStatement(db: D1Database, ids: ProposalIdSource) {
+  return bindValues(
+    db.prepare(
       `SELECT
          proposal_cosponsors.proposal_id,
          proposal_cosponsors.user_id,
@@ -458,72 +462,35 @@ async function getCosponsorsByProposalId(
          proposal_cosponsors.signed_at
        FROM proposal_cosponsors
        INNER JOIN users ON users.id = proposal_cosponsors.user_id
-       WHERE proposal_cosponsors.proposal_id IN (${placeholders})
+       WHERE proposal_cosponsors.proposal_id IN (${ids.sql})
        ORDER BY proposal_cosponsors.signed_at ASC, proposal_cosponsors.user_id ASC`,
-    )
-    .bind(...proposalIds)
-    .all<CosponsorRow>();
-
-  const map = new Map<number, ProposalCosponsor[]>();
-  for (const row of results) {
-    const current = map.get(row.proposal_id) ?? [];
-    current.push(rowToCosponsor(row));
-    map.set(row.proposal_id, current);
-  }
-
-  return map;
+    ),
+    ids.values,
+  );
 }
 
-async function getMeetingsByProposalId(
-  db: D1Database,
-  proposalIds: number[],
-): Promise<Map<number, ProposalMeeting[]>> {
-  if (!proposalIds.length) return new Map();
-
-  const placeholders = proposalIds.map(() => '?').join(', ');
-  const { results = [] } = await db
-    .prepare(
+function meetingsStatement(db: D1Database, ids: ProposalIdSource) {
+  return bindValues(
+    db.prepare(
       `SELECT proposal_meetings.proposal_id, meetings.id, meetings.title,
               meetings.meeting_date, meetings.proposal_deadline_at, meetings.location
        FROM proposal_meetings
        INNER JOIN meetings ON meetings.id = proposal_meetings.meeting_id
-       WHERE proposal_meetings.proposal_id IN (${placeholders})
+       WHERE proposal_meetings.proposal_id IN (${ids.sql})
        ORDER BY meetings.meeting_date ASC, meetings.id ASC`,
-    )
-    .bind(...proposalIds)
-    .all<ProposalMeetingRow>();
-
-  const map = new Map<number, ProposalMeeting[]>();
-  for (const row of results) {
-    const current = map.get(row.proposal_id) ?? [];
-    current.push({
-      id: row.id,
-      title: row.title,
-      meetingDate: row.meeting_date,
-      proposalDeadlineAt: row.proposal_deadline_at,
-      location: row.location,
-    });
-    map.set(row.proposal_id, current);
-  }
-  return map;
+    ),
+    ids.values,
+  );
 }
 
-async function rowsToProposals(db: D1Database, rows: ProposalRow[]): Promise<Proposal[]> {
-  const proposalIds = rows.map((row) => row.id);
-  const [attachments, cosponsors, meetings] = await Promise.all([
-    getAttachmentsByProposalId(db, proposalIds),
-    getCosponsorsByProposalId(db, proposalIds),
-    getMeetingsByProposalId(db, proposalIds),
-  ]);
-
-  return rows.map((row) =>
-    rowToProposal(
-      row,
-      attachments.get(row.id) ?? [],
-      cosponsors.get(row.id) ?? [],
-      meetings.get(row.id) ?? [],
-    ),
-  );
+function rowToProposalMeeting(row: ProposalMeetingRow): ProposalMeeting {
+  return {
+    id: row.id,
+    title: row.title,
+    meetingDate: row.meeting_date,
+    proposalDeadlineAt: row.proposal_deadline_at,
+    location: row.location,
+  };
 }
 
 function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
@@ -1299,19 +1266,49 @@ export function createProposalRepository(db: D1Database) {
     return meetings.map((meeting) => ({ ...meeting, proposalCount: counts.get(meeting.id) ?? 0 }));
   };
 
+  // whereClause may only refer to the proposals table, since it also filters the child queries.
   const getProposals = async (whereClause = '', values: (string | number)[] = []) => {
-    const statement = db.prepare(
-      `SELECT ${PROPOSAL_COLUMNS}
-       FROM proposals
-       LEFT JOIN committees ON committees.id = proposals.committee_id
-       INNER JOIN users AS proposers ON proposers.id = proposals.proposer_id
-       ${whereClause}
-       ORDER BY proposals.proposed_at DESC, proposals.id DESC`,
+    const ids = { sql: `SELECT proposals.id FROM proposals ${whereClause}`, values };
+    // One batch is one D1 round trip, and every table is read from the same snapshot.
+    const [proposalRows, attachmentRows, cosponsorRows, meetingRows] = await db.batch<{
+      results?: unknown[];
+    }>([
+      bindValues(
+        db.prepare(
+          `SELECT ${PROPOSAL_COLUMNS}
+           FROM proposals
+           LEFT JOIN committees ON committees.id = proposals.committee_id
+           INNER JOIN users AS proposers ON proposers.id = proposals.proposer_id
+           ${whereClause}
+           ORDER BY proposals.proposed_at DESC, proposals.id DESC`,
+        ),
+        values,
+      ),
+      attachmentsStatement(db, ids),
+      cosponsorsStatement(db, ids),
+      meetingsStatement(db, ids),
+    ]);
+    const attachments = groupByProposal(
+      (attachmentRows?.results ?? []) as AttachmentRow[],
+      rowToAttachment,
     );
-    const prepared = values.length ? statement.bind(...values) : statement;
-    const { results = [] } = await prepared.all<ProposalRow>();
+    const cosponsors = groupByProposal(
+      (cosponsorRows?.results ?? []) as CosponsorRow[],
+      rowToCosponsor,
+    );
+    const meetings = groupByProposal(
+      (meetingRows?.results ?? []) as ProposalMeetingRow[],
+      rowToProposalMeeting,
+    );
 
-    return rowsToProposals(db, results);
+    return ((proposalRows?.results ?? []) as ProposalRow[]).map((row) =>
+      rowToProposal(
+        row,
+        attachments.get(row.id) ?? [],
+        cosponsors.get(row.id) ?? [],
+        meetings.get(row.id) ?? [],
+      ),
+    );
   };
 
   const getAllBills = () => getProposals();
