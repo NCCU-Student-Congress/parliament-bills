@@ -8,7 +8,12 @@
     </div>
     <label class="mb-5 block font-semibold" for="agenda-meeting"
       >會議
-      <select id="agenda-meeting" v-model.number="meetingId" class="control mt-2 w-full">
+      <select
+        id="agenda-meeting"
+        :value="meetingId"
+        class="control mt-2 w-full"
+        @change="selectMeeting"
+      >
         <option :value="0">請選擇會議</option>
         <option v-for="meeting in meetingsInReverseOrder" :key="meeting.id" :value="meeting.id">
           {{ meeting.title }}（{{ meeting.meetingTypeName }}）
@@ -250,11 +255,42 @@
     { deep: true },
   );
 
+  function hasUnsavedChanges() {
+    return loadedMeetingId !== 0 && JSON.stringify(entries.value) !== savedSnapshot;
+  }
+
+  async function savePendingChanges() {
+    if (!hasUnsavedChanges()) return true;
+    clearTimeout(saveTimer);
+    if (dragPointerId !== null) cancelDrag();
+    await queueSave();
+    return !hasUnsavedChanges();
+  }
+
+  async function selectMeeting(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const nextId = Number(select.value);
+    if (!(await savePendingChanges())) {
+      select.value = String(meetingId.value);
+      return;
+    }
+    meetingId.value = nextId;
+  }
+
+  function warnBeforeUnload(event: BeforeUnloadEvent) {
+    if (hasUnsavedChanges()) event.preventDefault();
+  }
+
+  onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload));
+
   onBeforeUnmount(() => {
+    window.removeEventListener('beforeunload', warnBeforeUnload);
     cancelDrag();
     clearTimeout(saveTimer);
     if (loadedMeetingId) void queueSave(loadedMeetingId);
   });
+
+  defineExpose({ savePendingChanges });
 
   function insertEntry(index: number) {
     const key = nextKey++;

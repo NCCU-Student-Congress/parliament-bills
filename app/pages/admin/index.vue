@@ -107,7 +107,7 @@
           新增會期
         </button>
 
-        <div class="table-wrap">
+        <div class="table-wrap" role="region" aria-label="會期列表" tabindex="0">
           <table class="admin-table">
             <thead>
               <tr>
@@ -125,11 +125,13 @@
                 <td>
                   <button
                     v-if="isFutureSession(session)"
-                    class="text-button danger"
+                    class="icon-action danger"
                     type="button"
+                    :aria-label="`刪除會期 ${session.title}`"
+                    :title="`刪除會期 ${session.title}`"
                     @click="deleteResource('sessions', session.id, '會期')"
                   >
-                    刪除
+                    <TrashIcon class="h-5 w-5" aria-hidden="true" />
                   </button>
                 </td>
               </tr>
@@ -170,7 +172,7 @@
           </div>
         </form>
 
-        <div class="table-wrap">
+        <div class="table-wrap" role="region" aria-label="委員會列表" tabindex="0">
           <table class="admin-table">
             <thead>
               <tr>
@@ -183,15 +185,23 @@
                 <td>{{ committee.name }}</td>
                 <td>
                   <div class="row-actions">
-                    <button class="text-button" type="button" @click="editCommittee(committee)">
-                      編輯
+                    <button
+                      class="icon-action"
+                      type="button"
+                      :aria-label="`編輯委員會 ${committee.name}`"
+                      :title="`編輯委員會 ${committee.name}`"
+                      @click="editCommittee(committee)"
+                    >
+                      <PencilIcon class="h-5 w-5" aria-hidden="true" />
                     </button>
                     <button
-                      class="text-button danger"
+                      class="icon-action danger"
                       type="button"
+                      :aria-label="`刪除委員會 ${committee.name}`"
+                      :title="`刪除委員會 ${committee.name}`"
                       @click="deleteResource('committees', committee.id, '委員會')"
                     >
-                      刪除
+                      <TrashIcon class="h-5 w-5" aria-hidden="true" />
                     </button>
                   </div>
                 </td>
@@ -225,8 +235,8 @@
               <option value="secretariat_admin">秘書處</option>
             </select>
           </label>
-          <label class="field md:col-span-2">
-            <span>所屬委員會（可複選）</span>
+          <fieldset class="field md:col-span-2">
+            <legend>所屬委員會（可複選）</legend>
             <div
               class="checkbox-list"
               :class="{ disabled: userForm.permissionRole === 'secretariat_admin' }"
@@ -242,7 +252,7 @@
               </label>
               <span v-if="committees.length === 0" class="checkbox-empty">尚無委員會</span>
             </div>
-          </label>
+          </fieldset>
           <div class="form-actions">
             <button
               class="btn btn-primary w-28 justify-center"
@@ -281,8 +291,8 @@
               <option value="secretariat_admin">秘書處</option>
             </select>
           </label>
-          <label class="field">
-            <span>所屬委員會（可複選）</span>
+          <fieldset class="field">
+            <legend>所屬委員會（可複選）</legend>
             <div
               class="checkbox-list"
               :class="{ disabled: bulkUserForm.permissionRole === 'secretariat_admin' }"
@@ -298,7 +308,7 @@
               </label>
               <span v-if="committees.length === 0" class="checkbox-empty">尚無委員會</span>
             </div>
-          </label>
+          </fieldset>
           <div class="form-actions md:col-span-2">
             <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
               大量新增人員
@@ -312,7 +322,7 @@
         <div class="section-head">
           <h2 class="section-title">成員名單</h2>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" role="region" aria-label="成員名單" tabindex="0">
           <table class="admin-table">
             <thead>
               <tr>
@@ -331,13 +341,23 @@
                 <td>{{ getCommitteeNames(user.committeeIds) }}</td>
                 <td>
                   <div class="row-actions">
-                    <button class="text-button" type="button" @click="editUser(user)">編輯</button>
                     <button
-                      class="text-button danger"
+                      class="icon-action"
                       type="button"
+                      :aria-label="`編輯人員 ${user.name}`"
+                      :title="`編輯人員 ${user.name}`"
+                      @click="editUser(user)"
+                    >
+                      <PencilIcon class="h-5 w-5" aria-hidden="true" />
+                    </button>
+                    <button
+                      class="icon-action danger"
+                      type="button"
+                      :aria-label="`刪除人員 ${user.name}`"
+                      :title="`刪除人員 ${user.name}`"
                       @click="deleteResource('users', user.id, '人員')"
                     >
-                      刪除
+                      <TrashIcon class="h-5 w-5" aria-hidden="true" />
                     </button>
                   </div>
                 </td>
@@ -462,7 +482,7 @@
           </div>
         </form>
 
-        <div class="table-wrap">
+        <div class="table-wrap" role="region" aria-label="會議列表" tabindex="0">
           <table class="admin-table">
             <thead>
               <tr>
@@ -485,15 +505,23 @@
                 <td>{{ formatDateTime(meeting.proposalDeadlineAt) }}</td>
                 <td>
                   <div class="row-actions">
-                    <button class="text-button" type="button" @click="editMeeting(meeting)">
-                      編輯
+                    <button
+                      class="icon-action"
+                      type="button"
+                      :aria-label="`編輯會議 ${meeting.title}`"
+                      :title="`編輯會議 ${meeting.title}`"
+                      @click="editMeeting(meeting)"
+                    >
+                      <PencilIcon class="h-5 w-5" aria-hidden="true" />
                     </button>
                     <button
-                      class="text-button danger"
+                      class="icon-action danger"
                       type="button"
+                      :aria-label="`刪除會議 ${meeting.title}`"
+                      :title="`刪除會議 ${meeting.title}`"
                       @click="deleteResource('meetings', meeting.id, '會議')"
                     >
-                      刪除
+                      <TrashIcon class="h-5 w-5" aria-hidden="true" />
                     </button>
                   </div>
                 </td>
@@ -508,6 +536,7 @@
     </div>
     <AgendaEditor
       v-else-if="activeAdminTab === 'agenda'"
+      ref="agendaEditor"
       role="tabpanel"
       aria-labelledby="admin-tab-agenda"
       :meetings="meetings"
@@ -598,6 +627,7 @@
 </template>
 
 <script setup lang="ts">
+  import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
   import { vAutoResize } from '~/utils/autoResizeTextarea';
   import { computed, reactive, ref, watch } from 'vue';
   import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
@@ -621,6 +651,7 @@
     tabOrder.includes(route.query.tab as AdminTab) ? (route.query.tab as AdminTab) : 'meetings',
   );
   const minutesEditor = ref<{ hasUnsavedChanges: () => boolean } | null>(null);
+  const agendaEditor = ref<{ savePendingChanges: () => Promise<boolean> } | null>(null);
 
   function setActiveAdminTab(tab: AdminTab) {
     if (tab !== activeAdminTab.value) {
@@ -652,11 +683,16 @@
     );
   }
 
-  onBeforeRouteUpdate((to, from) => {
-    if (to.query.tab !== from.query.tab && !confirmUnsavedMinutes()) return false;
+  async function canLeaveAdminTab() {
+    if (agendaEditor.value && !(await agendaEditor.value.savePendingChanges())) return false;
+    return confirmUnsavedMinutes();
+  }
+
+  onBeforeRouteUpdate(async (to, from) => {
+    if (to.query.tab !== from.query.tab && !(await canLeaveAdminTab())) return false;
   });
-  onBeforeRouteLeave(() => {
-    if (!confirmUnsavedMinutes()) return false;
+  onBeforeRouteLeave(async () => {
+    if (!(await canLeaveAdminTab())) return false;
   });
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
@@ -1420,7 +1456,42 @@
   .row-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
+    gap: 0.25rem;
+  }
+
+  .icon-action {
+    display: inline-flex;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #000024;
+  }
+
+  .icon-action:hover {
+    background: #f5f5f7;
+  }
+
+  .icon-action.danger {
+    color: #c40010;
+  }
+
+  .icon-action.danger:hover {
+    background: #fff0f1;
+  }
+
+  .icon-action:focus-visible,
+  .table-wrap:focus-visible {
+    outline: 2px solid #e60012;
+    outline-offset: 2px;
+  }
+
+  @media (pointer: coarse) {
+    .icon-action {
+      min-width: 3rem;
+      min-height: 3rem;
+    }
   }
 
   .text-button {
