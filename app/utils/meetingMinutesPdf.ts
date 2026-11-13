@@ -13,14 +13,20 @@ const BODY_SIZE = 12;
 const LINE_HEIGHT_RATIO = 1.5;
 const CASE_GAP = BODY_SIZE * 1.25;
 
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+function wrapText(
+  text: string,
+  font: PDFFont,
+  size: number,
+  firstLineWidth: number,
+  continuationWidth = firstLineWidth,
+): string[] {
   const lines: string[] = [];
   for (const paragraph of text.replace(/\r\n?/g, '\n').split('\n')) {
     let line = '';
     let width = 0;
     for (const char of paragraph) {
       const charWidth = font.widthOfTextAtSize(char, size);
-      if (line && width + charWidth > maxWidth) {
+      if (line && width + charWidth > (lines.length ? continuationWidth : firstLineWidth)) {
         lines.push(line);
         line = '';
         width = 0;
@@ -78,18 +84,32 @@ export async function createMeetingMinutesPdf(
 
   function drawText(
     text: string,
-    options: { size?: number; indent?: number; gap?: number; center?: boolean } = {},
+    options: {
+      size?: number;
+      indent?: number;
+      hangingIndent?: number;
+      gap?: number;
+      center?: boolean;
+    } = {},
   ) {
     const size = options.size ?? BODY_SIZE;
     const indent = options.indent ?? 0;
+    const hangingIndent = options.hangingIndent ?? 0;
     const lineHeight = size * LINE_HEIGHT_RATIO;
-    for (const line of wrapText(text, font, size, contentWidth - indent)) {
+    const lines = wrapText(
+      text,
+      font,
+      size,
+      contentWidth - indent,
+      contentWidth - indent - hangingIndent,
+    );
+    for (const [index, line] of lines.entries()) {
       ensureSpace(lineHeight);
       if (line) {
         page.drawText(line, {
           x: options.center
             ? (pageWidth - font.widthOfTextAtSize(line, size)) / 2
-            : PAGE_MARGIN + indent,
+            : PAGE_MARGIN + indent + (index ? hangingIndent : 0),
           y,
           size,
           font,
@@ -119,10 +139,15 @@ export async function createMeetingMinutesPdf(
       ensureSpace(52);
       const match = line.text.match(/^([一二三四五六七八九十百千\d]+、)(.*)$/);
       const prefix = match?.[1] ?? '';
-      const subject = match ? `${prefix}案由：${match[2]}` : `案由：${line.text}`;
-      drawText(subject, { indent: 12 });
+      const subjectLabel = `${prefix}案由：`;
+      const subject = `${subjectLabel}${match ? match[2] : line.text}`;
+      drawText(subject, {
+        indent: 12,
+        hangingIndent: font.widthOfTextAtSize(subjectLabel, BODY_SIZE),
+      });
       drawText(`決議：${decisionMap.get(line.entry.proposalId!) || '尚未填寫'}`, {
         indent: 12 + font.widthOfTextAtSize(prefix, BODY_SIZE),
+        hangingIndent: font.widthOfTextAtSize('決議：', BODY_SIZE),
         gap: CASE_GAP,
       });
     } else {
