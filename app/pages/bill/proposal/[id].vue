@@ -122,13 +122,21 @@
                     class="edit-control"
                   />
                   <textarea
-                    v-else-if="field.editable === 'subject' || field.editable === 'description'"
+                    v-else-if="field.editable === 'subject'"
                     v-model="draftValue"
                     v-auto-resize
                     :aria-label="field.label"
                     rows="1"
                     class="edit-control auto-resize-textarea"
                   ></textarea>
+                  <DescriptionEditor
+                    v-else-if="field.editable === 'description'"
+                    v-model="draftValue"
+                    :max-length="20000"
+                    :aria-label="field.label"
+                    aria-describedby="edit-description-paragraph-help"
+                    class="edit-control"
+                  />
                   <template v-else-if="field.editable === 'attachments'">
                     <div
                       v-for="(attachment, index) in attachmentDraft"
@@ -175,6 +183,13 @@
                       ＋ 新增附件
                     </button>
                   </template>
+                  <p
+                    v-if="field.editable === 'description'"
+                    id="edit-description-paragraph-help"
+                    class="text-xs text-gray-500"
+                  >
+                    按 Enter 即可換段，段落間距會自動顯示。
+                  </p>
                 </div>
                 <div v-else-if="field.key === 'attachments'" class="space-y-2">
                   <template v-if="bill.attachments.length">

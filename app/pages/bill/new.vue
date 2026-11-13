@@ -104,21 +104,22 @@
       </div>
 
       <div>
-        <label for="proposal-description" class="mb-1 block text-sm font-medium text-gray-700"
-          >說明</label
+        <span id="proposal-description-label" class="mb-1 block text-sm font-medium text-gray-700"
+          >說明</span
         >
-        <textarea
+        <DescriptionEditor
           id="proposal-description"
-          ref="descriptionInput"
+          ref="descriptionEditor"
           v-model="form.description"
-          maxlength="20000"
-          v-auto-resize
-          name="description"
-          rows="1"
-          aria-describedby="cosponsor-count-help"
-          class="form-textarea auto-resize-textarea"
+          :max-length="20000"
+          aria-labelledby="proposal-description-label"
+          aria-describedby="cosponsor-count-help description-paragraph-help"
+          class="form-textarea"
           @focus="lastFocusedField = 'description'"
-        ></textarea>
+        />
+        <p id="description-paragraph-help" class="mt-1 text-sm text-gray-500">
+          按 Enter 即可換段，段落間距會自動顯示。
+        </p>
         <button
           type="button"
           class="mt-2 rounded-lg border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white"
@@ -277,11 +278,15 @@
     description: '',
   });
   const subjectInput = ref<HTMLTextAreaElement | null>(null);
-  const descriptionInput = ref<HTMLTextAreaElement | null>(null);
+  const descriptionEditor = ref<{ insertText: (value: string) => void } | null>(null);
   const lastFocusedField = ref<'subject' | 'description' | null>(null);
 
   async function insertCosponsorCount(field: 'subject' | 'description') {
-    const input = field === 'subject' ? subjectInput.value : descriptionInput.value;
+    if (field === 'description') {
+      descriptionEditor.value?.insertText(COSPONSOR_COUNT_TOKEN);
+      return;
+    }
+    const input = subjectInput.value;
     if (!input) return;
     const start = lastFocusedField.value === field ? input.selectionStart : form[field].length;
     const end = lastFocusedField.value === field ? input.selectionEnd : start;
