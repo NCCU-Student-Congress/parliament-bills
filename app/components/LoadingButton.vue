@@ -42,8 +42,15 @@
     animation: loading-button-spin 0.8s linear infinite;
   }
 
-  .loading-button-indicator::-webkit-progress-bar,
-  .loading-button-indicator::-webkit-progress-value,
+  /* Separate rules: a browser drops a whole selector list that names a pseudo-element it lacks. */
+  .loading-button-indicator::-webkit-progress-bar {
+    background: transparent;
+  }
+
+  .loading-button-indicator::-webkit-progress-value {
+    background: transparent;
+  }
+
   .loading-button-indicator::-moz-progress-bar {
     background: transparent;
   }
