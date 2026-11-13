@@ -100,7 +100,7 @@
 
 <script setup>
   import { computed, ref } from 'vue';
-  import { useRoute } from 'vue-router';
+  import { useRoute } from '#app';
   import { formatTermLabel, parseTermCode } from '~~/shared/utils/term';
   import { agendaLines, normalizeAgenda } from '~~/shared/utils/agenda';
 
