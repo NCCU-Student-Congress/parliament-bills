@@ -25,13 +25,8 @@ export default defineEventHandler(async (event) => {
       .all<{ proposal_id: number; decision: string }>(),
     db
       .prepare(
-        `SELECT decisions.decision_key, decisions.decision
-         FROM meeting_text_decisions AS decisions
-         INNER JOIN meeting_agenda_entries AS entry
-           ON entry.meeting_id = decisions.meeting_id
-           AND entry.decision_key = decisions.decision_key
-           AND entry.kind = 'text'
-         WHERE decisions.meeting_id = ?`,
+        `SELECT decision_key, decision FROM meeting_agenda_entries
+         WHERE meeting_id = ? AND kind = 'text' AND decision IS NOT NULL`,
       )
       .bind(id)
       .all<{ decision_key: string; decision: string }>(),

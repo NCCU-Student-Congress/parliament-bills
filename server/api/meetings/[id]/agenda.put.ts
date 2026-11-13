@@ -82,23 +82,31 @@ export default defineEventHandler(async (event) => {
       message: '議程必須包含所有已排入的議案',
     });
   }
+  const { results: priorTextDecisions = [] } = await db
+    .prepare(
+      `SELECT decision_key, decision FROM meeting_agenda_entries
+       WHERE meeting_id = ? AND kind = 'text' AND decision IS NOT NULL`,
+    )
+    .bind(id)
+    .all<{ decision_key: string; decision: string }>();
+  const decisionByKey = new Map(priorTextDecisions.map((row) => [row.decision_key, row.decision]));
   await db.batch([
     db.prepare('DELETE FROM meeting_agenda_entries WHERE meeting_id = ?').bind(id),
     ...entries.map((entry, position) =>
       db
         .prepare(
-          'INSERT INTO meeting_agenda_entries (meeting_id, position, kind, content, proposal_id, decision_key) VALUES (?, ?, ?, ?, ?, ?)',
+          'INSERT INTO meeting_agenda_entries (meeting_id, position, kind, content, proposal_id, decision_key, decision) VALUES (?, ?, ?, ?, ?, ?, ?)',
         )
-        .bind(id, position, entry.kind, entry.content, entry.proposalId, entry.decisionKey ?? null),
+        .bind(
+          id,
+          position,
+          entry.kind,
+          entry.content,
+          entry.proposalId,
+          entry.decisionKey ?? null,
+          entry.decisionKey ? (decisionByKey.get(entry.decisionKey) ?? null) : null,
+        ),
     ),
-    db
-      .prepare(
-        `DELETE FROM meeting_text_decisions
-         WHERE meeting_id = ? AND decision_key NOT IN (
-           SELECT decision_key FROM meeting_agenda_entries WHERE meeting_id = ? AND kind = 'text'
-         )`,
-      )
-      .bind(id, id),
   ]);
   return entries;
 });

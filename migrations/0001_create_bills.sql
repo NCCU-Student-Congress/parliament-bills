@@ -1,136 +1,127 @@
-CREATE TABLE IF NOT EXISTS committees (
+CREATE TABLE committees (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL UNIQUE CHECK (length(trim(name)) > 0),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  email TEXT NOT NULL UNIQUE CHECK (length(trim(email)) > 0),
   permission_role TEXT NOT NULL DEFAULT 'legislator'
     CHECK (permission_role IN ('legislator', 'secretariat_admin')),
-  committee_ids TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(committee_ids)),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS users_permission_role_idx ON users (permission_role);
+CREATE TABLE user_committees (
+  user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  committee_id INTEGER NOT NULL REFERENCES committees (id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, committee_id)
+);
+CREATE INDEX user_committees_committee_idx ON user_committees (committee_id, user_id);
 
-CREATE TABLE IF NOT EXISTS auth_login_tokens (
+CREATE TABLE auth_login_tokens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  email TEXT NOT NULL,
-  token_hash TEXT NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
   redirect_path TEXT,
   expires_at TEXT NOT NULL,
   consumed_at TEXT,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX auth_login_tokens_expires_at_idx ON auth_login_tokens (expires_at);
 
-CREATE INDEX IF NOT EXISTS auth_login_tokens_token_hash_idx
-  ON auth_login_tokens (token_hash);
-CREATE INDEX IF NOT EXISTS auth_login_tokens_email_idx
-  ON auth_login_tokens (email);
-CREATE INDEX IF NOT EXISTS auth_login_tokens_expires_at_idx
-  ON auth_login_tokens (expires_at);
-
-CREATE TABLE IF NOT EXISTS sessions (
+CREATE TABLE sessions (
   id INTEGER PRIMARY KEY,
-  title TEXT NOT NULL,
+  title TEXT NOT NULL CHECK (length(trim(title)) > 0),
   starts_at TEXT,
   ends_at TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS meetings (
+CREATE TABLE meetings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  committee_id INTEGER,
-  session INTEGER NOT NULL,
+  committee_id INTEGER REFERENCES committees (id) ON DELETE SET NULL,
+  meeting_type_name TEXT NOT NULL CHECK (length(trim(meeting_type_name)) > 0),
+  session INTEGER NOT NULL REFERENCES sessions (id) ON DELETE RESTRICT,
   meeting_date TEXT NOT NULL,
-  proposal_deadline_at TEXT NOT NULL,
-  title TEXT NOT NULL,
+  proposal_deadline_at TEXT NOT NULL CHECK (proposal_deadline_at <= meeting_date),
+  title TEXT NOT NULL CHECK (length(trim(title)) > 0),
   location TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE SET NULL,
-  FOREIGN KEY (session) REFERENCES sessions (id) ON DELETE RESTRICT
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX meetings_committee_session_idx ON meetings (committee_id, session);
+CREATE INDEX meetings_session_date_idx ON meetings (session, meeting_date);
 
-CREATE INDEX IF NOT EXISTS meetings_committee_session_idx ON meetings (committee_id, session);
-CREATE INDEX IF NOT EXISTS meetings_session_idx ON meetings (session);
-CREATE INDEX IF NOT EXISTS meetings_proposal_deadline_at_idx ON meetings (proposal_deadline_at);
-
-CREATE TABLE IF NOT EXISTS proposals (
+CREATE TABLE proposals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   proposal_type TEXT NOT NULL DEFAULT 'discussion'
     CHECK (proposal_type IN ('discussion', 'report', 'election')),
-  committee_id INTEGER,
-  session INTEGER NOT NULL,
+  committee_id INTEGER REFERENCES committees (id) ON DELETE SET NULL,
+  session INTEGER NOT NULL REFERENCES sessions (id) ON DELETE RESTRICT,
   proposed_at TEXT NOT NULL,
-  proposer_id INTEGER NOT NULL,
-  subject TEXT NOT NULL,
+  proposer_id INTEGER NOT NULL REFERENCES users (id) ON DELETE RESTRICT,
+  subject TEXT NOT NULL CHECK (length(trim(subject)) > 0),
   description TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE SET NULL,
-  FOREIGN KEY (session) REFERENCES sessions (id) ON DELETE RESTRICT,
-  FOREIGN KEY (proposer_id) REFERENCES users (id) ON DELETE RESTRICT
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX proposals_committee_session_idx ON proposals (committee_id, session);
+CREATE INDEX proposals_session_date_idx ON proposals (session, proposed_at DESC, id DESC);
+CREATE INDEX proposals_proposer_idx ON proposals (proposer_id);
 
-CREATE INDEX IF NOT EXISTS proposals_committee_session_idx ON proposals (committee_id, session);
-CREATE INDEX IF NOT EXISTS proposals_session_idx ON proposals (session);
-CREATE INDEX IF NOT EXISTS proposals_proposed_at_idx ON proposals (proposed_at);
-CREATE INDEX IF NOT EXISTS proposals_proposer_id_idx ON proposals (proposer_id);
-
-CREATE TABLE IF NOT EXISTS proposal_meetings (
-  proposal_id INTEGER NOT NULL,
-  meeting_id INTEGER NOT NULL,
+CREATE TABLE proposal_meetings (
+  proposal_id INTEGER NOT NULL REFERENCES proposals (id) ON DELETE CASCADE,
+  meeting_id INTEGER NOT NULL REFERENCES meetings (id) ON DELETE RESTRICT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (proposal_id, meeting_id),
-  FOREIGN KEY (proposal_id) REFERENCES proposals (id) ON DELETE CASCADE,
-  FOREIGN KEY (meeting_id) REFERENCES meetings (id) ON DELETE RESTRICT
+  PRIMARY KEY (proposal_id, meeting_id)
 );
+CREATE INDEX proposal_meetings_meeting_idx ON proposal_meetings (meeting_id, proposal_id);
 
-CREATE INDEX IF NOT EXISTS proposal_meetings_meeting_id_idx
-  ON proposal_meetings (meeting_id);
-
-CREATE TABLE IF NOT EXISTS proposal_attachments (
+CREATE TABLE proposal_attachments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  proposal_id INTEGER NOT NULL,
-  name TEXT NOT NULL,
-  url TEXT NOT NULL,
+  proposal_id INTEGER NOT NULL REFERENCES proposals (id) ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  url TEXT NOT NULL CHECK (length(trim(url)) > 0),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (proposal_id) REFERENCES proposals (id) ON DELETE CASCADE
+  UNIQUE (proposal_id, url)
 );
 
-CREATE INDEX IF NOT EXISTS proposal_attachments_proposal_id_idx
-  ON proposal_attachments (proposal_id);
+CREATE TABLE proposal_cosponsors (
+  proposal_id INTEGER NOT NULL REFERENCES proposals (id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  signed_at TEXT,
+  PRIMARY KEY (proposal_id, user_id)
+);
+CREATE INDEX proposal_cosponsors_user_idx ON proposal_cosponsors (user_id);
 
-CREATE TABLE IF NOT EXISTS proposal_cosponsors (
+CREATE TABLE meeting_agenda_entries (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  proposal_id INTEGER NOT NULL,
-  user_id INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending', 'confirmed', 'declined', 'expired', 'cancelled')),
-  invited_at TEXT,
-  confirmed_at TEXT,
-  declined_at TEXT,
-  token_hash TEXT,
-  token_expires_at TEXT,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (proposal_id) REFERENCES proposals (id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-  UNIQUE (proposal_id, user_id)
+  meeting_id INTEGER NOT NULL REFERENCES meetings (id) ON DELETE CASCADE,
+  position INTEGER NOT NULL CHECK (position >= 0),
+  kind TEXT NOT NULL CHECK (kind IN ('heading', 'text', 'proposal')),
+  content TEXT NOT NULL DEFAULT '',
+  proposal_id INTEGER REFERENCES proposals (id) ON DELETE CASCADE,
+  decision_key TEXT,
+  decision TEXT,
+  CHECK (
+    (kind = 'proposal' AND proposal_id IS NOT NULL AND content = '' AND decision_key IS NULL AND decision IS NULL)
+    OR (kind = 'heading' AND proposal_id IS NULL AND length(trim(content)) > 0 AND decision_key IS NULL AND decision IS NULL)
+    OR (kind = 'text' AND proposal_id IS NULL AND length(trim(content)) > 0 AND decision_key IS NOT NULL)
+  ),
+  UNIQUE (meeting_id, position),
+  UNIQUE (meeting_id, proposal_id),
+  UNIQUE (meeting_id, decision_key)
 );
 
-CREATE INDEX IF NOT EXISTS proposal_cosponsors_proposal_id_idx
-  ON proposal_cosponsors (proposal_id);
-CREATE INDEX IF NOT EXISTS proposal_cosponsors_user_id_idx
-  ON proposal_cosponsors (user_id);
-CREATE INDEX IF NOT EXISTS proposal_cosponsors_status_idx
-  ON proposal_cosponsors (status);
+CREATE TABLE meeting_proposal_decisions (
+  meeting_id INTEGER NOT NULL REFERENCES meetings (id) ON DELETE CASCADE,
+  proposal_id INTEGER NOT NULL REFERENCES proposals (id) ON DELETE CASCADE,
+  decision TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (meeting_id, proposal_id)
+);

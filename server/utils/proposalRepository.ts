@@ -33,7 +33,6 @@ interface UserRow {
   name: string;
   email: string;
   permission_role: PermissionRole;
-  committee_ids: string;
   created_at: string;
   updated_at: string;
 }
@@ -95,18 +94,11 @@ interface ProposalMeetingRow {
 }
 
 interface CosponsorRow {
-  id: number;
   proposal_id: number;
   user_id: number;
   user_name: string;
   user_email: string;
-  status: ProposalCosponsor['status'];
-  invited_at: string | null;
-  confirmed_at: string | null;
-  declined_at: string | null;
-  token_expires_at: string | null;
-  created_at: string;
-  updated_at: string;
+  signed_at: string | null;
 }
 
 interface NormalizedProposalInput {
@@ -206,18 +198,6 @@ function normalizeProposalDate(value: unknown): string {
   return date;
 }
 
-function parseJsonArray(value: string): number[] {
-  try {
-    const parsed = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((item) => Number(item))
-      .filter((item): item is number => Number.isInteger(item) && item > 0);
-  } catch {
-    return [];
-  }
-}
-
 function getNextTermCode(term: number): number {
   const congress = Math.floor(term / 10);
   const session = term % 10;
@@ -266,16 +246,35 @@ function rowToCommittee(row: CommitteeRow): Committee {
   };
 }
 
-function rowToUser(row: UserRow): User {
+function rowToUser(row: UserRow, committeeIds: number[]): User {
   return {
     id: row.id,
     name: row.name,
     email: row.email,
     permissionRole: row.permission_role,
-    committeeIds: parseJsonArray(row.committee_ids),
+    committeeIds,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+async function rowsToUsers(db: D1Database, rows: UserRow[]): Promise<User[]> {
+  if (!rows.length) return [];
+  const placeholders = rows.map(() => '?').join(', ');
+  const { results: memberships = [] } = await db
+    .prepare(
+      `SELECT user_id, committee_id FROM user_committees
+       WHERE user_id IN (${placeholders}) ORDER BY committee_id ASC`,
+    )
+    .bind(...rows.map((row) => row.id))
+    .all<{ user_id: number; committee_id: number }>();
+  const committeeIdsByUser = new Map<number, number[]>();
+  for (const membership of memberships) {
+    const ids = committeeIdsByUser.get(membership.user_id) ?? [];
+    ids.push(membership.committee_id);
+    committeeIdsByUser.set(membership.user_id, ids);
+  }
+  return rows.map((row) => rowToUser(row, committeeIdsByUser.get(row.id) ?? []));
 }
 
 function rowToSession(row: SessionRow): Session {
@@ -317,18 +316,11 @@ function rowToAttachment(row: AttachmentRow): ProposalAttachment {
 
 function rowToCosponsor(row: CosponsorRow): ProposalCosponsor {
   return {
-    id: row.id,
     proposalId: row.proposal_id,
     userId: row.user_id,
     userName: row.user_name,
     userEmail: row.user_email,
-    status: row.status,
-    invitedAt: row.invited_at,
-    confirmedAt: row.confirmed_at,
-    declinedAt: row.declined_at,
-    tokenExpiresAt: row.token_expires_at,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    signedAt: row.signed_at,
   };
 }
 
@@ -366,7 +358,7 @@ function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '附件格式不正確' });
   }
 
-  return value.map((item, index) => {
+  const attachments = value.map((item, index) => {
     if (
       !item ||
       typeof item !== 'object' ||
@@ -392,6 +384,14 @@ function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
 
     return { name, url };
   });
+  if (new Set(attachments.map((attachment) => attachment.url)).size !== attachments.length) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: '附件網址不可重複',
+    });
+  }
+  return attachments;
 }
 
 async function getAttachmentsByProposalId(
@@ -431,22 +431,15 @@ async function getCosponsorsByProposalId(
   const { results = [] } = await db
     .prepare(
       `SELECT
-         proposal_cosponsors.id,
          proposal_cosponsors.proposal_id,
          proposal_cosponsors.user_id,
          users.name AS user_name,
          users.email AS user_email,
-         proposal_cosponsors.status,
-         proposal_cosponsors.invited_at,
-         proposal_cosponsors.confirmed_at,
-         proposal_cosponsors.declined_at,
-         proposal_cosponsors.token_expires_at,
-         proposal_cosponsors.created_at,
-         proposal_cosponsors.updated_at
+         proposal_cosponsors.signed_at
        FROM proposal_cosponsors
        INNER JOIN users ON users.id = proposal_cosponsors.user_id
        WHERE proposal_cosponsors.proposal_id IN (${placeholders})
-       ORDER BY proposal_cosponsors.id ASC`,
+       ORDER BY proposal_cosponsors.signed_at ASC, proposal_cosponsors.user_id ASC`,
     )
     .bind(...proposalIds)
     .all<CosponsorRow>();
@@ -585,6 +578,22 @@ function normalizeUserInput(input: UserInput): NormalizedUserInput {
 }
 
 export function createProposalRepository(db: D1Database) {
+  const validateCommitteeIds = async (committeeIds: number[]) => {
+    if (!committeeIds.length) return;
+    const placeholders = committeeIds.map(() => '?').join(', ');
+    const { results = [] } = await db
+      .prepare(`SELECT id FROM committees WHERE id IN (${placeholders})`)
+      .bind(...committeeIds)
+      .all<{ id: number }>();
+    if (results.length !== committeeIds.length) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '找不到指定委員會',
+      });
+    }
+  };
+
   const deleteById = async (table: string, id: number, notFoundMessage: string) => {
     const result = await db.prepare(`DELETE FROM ${table} WHERE id = ?`).bind(id).run<{
       meta?: { changes?: number };
@@ -757,16 +766,26 @@ export function createProposalRepository(db: D1Database) {
 
   const createUser = async (input: UserInput) => {
     const user = normalizeUserInput(input);
-
+    await validateCommitteeIds(user.committeeIds);
+    await db.batch([
+      db
+        .prepare('INSERT INTO users (name, email, permission_role) VALUES (?, ?, ?)')
+        .bind(user.name, user.email, user.permissionRole),
+      ...user.committeeIds.map((committeeId) =>
+        db
+          .prepare(
+            `INSERT INTO user_committees (user_id, committee_id)
+             SELECT id, ? FROM users WHERE email = ?`,
+          )
+          .bind(committeeId, user.email),
+      ),
+    ]);
     const row = await db
       .prepare(
-        `INSERT INTO users (name, email, permission_role, committee_ids)
-         VALUES (?, ?, ?, ?)
-         RETURNING id, name, email, permission_role, committee_ids, created_at, updated_at`,
+        'SELECT id, name, email, permission_role, created_at, updated_at FROM users WHERE email = ?',
       )
-      .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds))
+      .bind(user.email)
       .first<UserRow>();
-
     if (!row) {
       throw createError({
         statusCode: 500,
@@ -775,7 +794,7 @@ export function createProposalRepository(db: D1Database) {
       });
     }
 
-    return rowToUser(row);
+    return (await rowsToUsers(db, [row]))[0]!;
   };
 
   const createUsers = async (inputs: UserInput[]) => {
@@ -788,6 +807,7 @@ export function createProposalRepository(db: D1Database) {
     }
 
     const normalizedUsers = inputs.map(normalizeUserInput);
+    await validateCommitteeIds([...new Set(normalizedUsers.flatMap((user) => user.committeeIds))]);
     const inputEmailSet = new Set<string>();
     const duplicateInputEmails = new Set<string>();
 
@@ -821,25 +841,30 @@ export function createProposalRepository(db: D1Database) {
     }
 
     await db.batch(
-      normalizedUsers.map((user) =>
+      normalizedUsers.flatMap((user) => [
         db
-          .prepare(
-            `INSERT INTO users (name, email, permission_role, committee_ids)
-             VALUES (?, ?, ?, ?)`,
-          )
-          .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds)),
-      ),
+          .prepare('INSERT INTO users (name, email, permission_role) VALUES (?, ?, ?)')
+          .bind(user.name, user.email, user.permissionRole),
+        ...user.committeeIds.map((committeeId) =>
+          db
+            .prepare(
+              `INSERT INTO user_committees (user_id, committee_id)
+               SELECT id, ? FROM users WHERE email = ?`,
+            )
+            .bind(committeeId, user.email),
+        ),
+      ]),
     );
 
     const { results: rows = [] } = await db
       .prepare(
-        `SELECT id, name, email, permission_role, committee_ids, created_at, updated_at
+        `SELECT id, name, email, permission_role, created_at, updated_at
          FROM users
          WHERE email IN (${placeholders})`,
       )
       .bind(...normalizedUsers.map((user) => user.email))
       .all<UserRow>();
-    const usersByEmail = new Map(rows.map((row) => [row.email, rowToUser(row)]));
+    const usersByEmail = new Map((await rowsToUsers(db, rows)).map((user) => [user.email, user]));
 
     return normalizedUsers
       .map((user) => usersByEmail.get(user.email))
@@ -848,26 +873,41 @@ export function createProposalRepository(db: D1Database) {
 
   const updateUser = async (id: number, input: UserInput) => {
     const user = normalizeUserInput(input);
-
-    const row = await db
-      .prepare(
-        `UPDATE users
+    await validateCommitteeIds(user.committeeIds);
+    const existing = await db.prepare('SELECT id FROM users WHERE id = ?').bind(id).first();
+    if (!existing) {
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定人員' });
+    }
+    await db.batch([
+      db
+        .prepare(
+          `UPDATE users
          SET name = ?,
              email = ?,
              permission_role = ?,
-             committee_ids = ?,
              updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?
-         RETURNING id, name, email, permission_role, committee_ids, created_at, updated_at`,
+         WHERE id = ?`,
+        )
+        .bind(user.name, user.email, user.permissionRole, id),
+      db.prepare('DELETE FROM user_committees WHERE user_id = ?').bind(id),
+      ...user.committeeIds.map((committeeId) =>
+        db
+          .prepare('INSERT INTO user_committees (user_id, committee_id) VALUES (?, ?)')
+          .bind(id, committeeId),
+      ),
+    ]);
+    const row = await db
+      .prepare(
+        'SELECT id, name, email, permission_role, created_at, updated_at FROM users WHERE id = ?',
       )
-      .bind(user.name, user.email, user.permissionRole, JSON.stringify(user.committeeIds), id)
+      .bind(id)
       .first<UserRow>();
 
     if (!row) {
       throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定人員' });
     }
 
-    return rowToUser(row);
+    return (await rowsToUsers(db, [row]))[0]!;
   };
 
   const deleteUser = (id: number) => deleteById('users', id, '找不到指定人員');
@@ -875,13 +915,13 @@ export function createProposalRepository(db: D1Database) {
   const getUsers = async () => {
     const { results = [] } = await db
       .prepare(
-        `SELECT id, name, email, permission_role, committee_ids, created_at, updated_at
+        `SELECT id, name, email, permission_role, created_at, updated_at
          FROM users
          ORDER BY name ASC`,
       )
       .all<UserRow>();
 
-    return results.map(rowToUser);
+    return rowsToUsers(db, results);
   };
 
   const createMeeting = async (input: {
@@ -1586,8 +1626,8 @@ export function createProposalRepository(db: D1Database) {
     // The proposal and user checks are part of the write so scheduling cannot race past them.
     await db
       .prepare(
-        `INSERT INTO proposal_cosponsors (proposal_id, user_id, status, confirmed_at)
-         SELECT proposals.id, users.id, 'confirmed', CURRENT_TIMESTAMP
+        `INSERT INTO proposal_cosponsors (proposal_id, user_id, signed_at)
+         SELECT proposals.id, users.id, CURRENT_TIMESTAMP
          FROM proposals
          INNER JOIN users ON users.id = ?
          WHERE proposals.id = ?
@@ -1595,21 +1635,7 @@ export function createProposalRepository(db: D1Database) {
            AND proposals.proposal_type <> 'report'
            AND proposals.proposer_id <> users.id
            AND users.permission_role = 'legislator'
-         ON CONFLICT(proposal_id, user_id) DO UPDATE SET
-           status = 'confirmed',
-           confirmed_at = CURRENT_TIMESTAMP,
-           declined_at = NULL,
-           token_hash = NULL,
-           token_expires_at = NULL,
-           updated_at = CURRENT_TIMESTAMP
-         WHERE proposal_cosponsors.status <> 'confirmed'
-           AND EXISTS (
-             SELECT 1 FROM proposals
-             WHERE proposals.id = excluded.proposal_id
-               AND NOT EXISTS (SELECT 1 FROM proposal_meetings WHERE proposal_id = proposals.id)
-               AND proposals.proposal_type <> 'report'
-               AND proposals.proposer_id <> excluded.user_id
-           )`,
+         ON CONFLICT(proposal_id, user_id) DO NOTHING`,
       )
       .bind(userId, id)
       .run();
@@ -1623,11 +1649,7 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 403, statusMessage: 'Forbidden', message: '報告案不可連署' });
     }
 
-    if (
-      bill.cosponsors.some(
-        (cosponsor) => cosponsor.userId === userId && cosponsor.status === 'confirmed',
-      )
-    ) {
+    if (bill.cosponsors.some((cosponsor) => cosponsor.userId === userId)) {
       return bill;
     }
 

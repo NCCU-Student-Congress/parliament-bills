@@ -90,18 +90,11 @@ export interface ProposalAttachmentInput {
 }
 
 export interface ProposalCosponsor {
-  id?: number;
   proposalId?: number;
   userId: number;
   userName?: string;
   userEmail?: string;
-  status: 'pending' | 'confirmed' | 'declined' | 'expired' | 'cancelled';
-  invitedAt?: string | null;
-  confirmedAt?: string | null;
-  declinedAt?: string | null;
-  tokenExpiresAt?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
+  signedAt: string | null;
 }
 
 export interface Proposal {

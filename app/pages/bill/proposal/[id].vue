@@ -349,10 +349,7 @@
   });
 
   const confirmedCosponsors = computed(() =>
-    (bill.value?.cosponsors ?? [])
-      .filter((cosponsor) => cosponsor.status === 'confirmed')
-      .map((cosponsor) => cosponsor.userName)
-      .filter(Boolean),
+    (bill.value?.cosponsors ?? []).map((cosponsor) => cosponsor.userName).filter(Boolean),
   );
 
   const displayFields: DisplayField[] = [

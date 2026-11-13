@@ -728,7 +728,7 @@
 
   function confirmedCosponsorNames(bill: Bill) {
     return bill.cosponsors
-      .filter((cosponsor) => cosponsor.status === 'confirmed' && cosponsor.userName)
+      .filter((cosponsor) => cosponsor.userName)
       .map((cosponsor) => cosponsor.userName)
       .join('、');
   }

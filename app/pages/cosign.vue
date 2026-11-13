@@ -114,13 +114,11 @@
   });
 
   function confirmedCount(bill: Bill) {
-    return bill.cosponsors.filter((cosponsor) => cosponsor.status === 'confirmed').length;
+    return bill.cosponsors.length;
   }
 
   function hasSigned(bill: Bill) {
-    return bill.cosponsors.some(
-      (cosponsor) => cosponsor.userId === session.value?.userId && cosponsor.status === 'confirmed',
-    );
+    return bill.cosponsors.some((cosponsor) => cosponsor.userId === session.value?.userId);
   }
 
   function canSign(bill: Bill) {

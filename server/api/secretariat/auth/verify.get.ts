@@ -12,7 +12,6 @@ import { useD1Database } from '../../../utils/d1';
 interface LoginTokenRow {
   id: number;
   user_id: number;
-  email: string;
   redirect_path: string | null;
   expires_at: string;
   consumed_at: string | null;
@@ -44,7 +43,6 @@ export default defineEventHandler(async (event) => {
       `SELECT
          auth_login_tokens.id,
          auth_login_tokens.user_id,
-         auth_login_tokens.email,
          auth_login_tokens.redirect_path,
          auth_login_tokens.expires_at,
          auth_login_tokens.consumed_at,

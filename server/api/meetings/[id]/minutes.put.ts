@@ -87,12 +87,10 @@ export default defineEventHandler(async (event) => {
               .bind(id, item.proposalId, item.decision)
           : db
               .prepare(
-                `INSERT INTO meeting_text_decisions (meeting_id, decision_key, decision)
-                 VALUES (?, ?, ?)
-                 ON CONFLICT(meeting_id, decision_key) DO UPDATE SET
-                   decision = excluded.decision, updated_at = CURRENT_TIMESTAMP`,
+                `UPDATE meeting_agenda_entries SET decision = ?
+                 WHERE meeting_id = ? AND decision_key = ? AND kind = 'text'`,
               )
-              .bind(id, item.decisionKey, item.decision),
+              .bind(item.decision, id, item.decisionKey),
       ),
     );
   }

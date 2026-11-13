@@ -42,10 +42,7 @@
   });
 
   const confirmedCosponsors = computed(() =>
-    (props.bill.cosponsors ?? [])
-      .filter((cosponsor) => cosponsor.status === 'confirmed')
-      .map((cosponsor) => cosponsor.userName)
-      .filter(Boolean),
+    (props.bill.cosponsors ?? []).map((cosponsor) => cosponsor.userName).filter(Boolean),
   );
 
   const formatDate = (value) => {

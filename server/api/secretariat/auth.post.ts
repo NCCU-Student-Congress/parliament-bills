@@ -47,17 +47,22 @@ export default defineEventHandler(async (event) => {
     targetEmail =
       normalizeEmail(getEnv(event, 'AUTH_BYPASS_ADMIN_EMAIL')) || DEFAULT_BYPASS_ADMIN_EMAIL;
 
-    await db
-      .prepare(
-        `INSERT INTO users (name, email, permission_role, committee_ids)
-         VALUES (?, ?, 'secretariat_admin', '[]')
-         ON CONFLICT(email) DO UPDATE SET
-           permission_role = 'secretariat_admin',
-           committee_ids = '[]',
-           updated_at = CURRENT_TIMESTAMP`,
-      )
-      .bind('開發管理員', targetEmail)
-      .run();
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO users (name, email, permission_role)
+           VALUES (?, ?, 'secretariat_admin')
+           ON CONFLICT(email) DO UPDATE SET
+             permission_role = 'secretariat_admin',
+             updated_at = CURRENT_TIMESTAMP`,
+        )
+        .bind('開發管理員', targetEmail),
+      db
+        .prepare(
+          'DELETE FROM user_committees WHERE user_id = (SELECT id FROM users WHERE email = ?)',
+        )
+        .bind(targetEmail),
+    ]);
   }
 
   const user = await db
@@ -90,10 +95,10 @@ export default defineEventHandler(async (event) => {
 
   await db
     .prepare(
-      `INSERT INTO auth_login_tokens (user_id, email, token_hash, redirect_path, expires_at)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO auth_login_tokens (user_id, token_hash, redirect_path, expires_at)
+       VALUES (?, ?, ?, ?)`,
     )
-    .bind(user.id, user.email, tokenHash, redirectPath, expiresAt)
+    .bind(user.id, tokenHash, redirectPath, expiresAt)
     .run();
 
   const origin = getRequestURL(event).origin;
