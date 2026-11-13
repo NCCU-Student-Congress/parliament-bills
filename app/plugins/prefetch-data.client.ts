@@ -33,7 +33,7 @@ function apiUrlsForPage(pathname: string): string[] {
 
 // Session and committee names, which useSessions and useCommittees keep for the whole tab.
 function referenceDataForPage(pathname: string): Record<string, string> {
-  if (pathname.startsWith('/bill/proposal/')) {
+  if (pathname.startsWith('/bill/proposal/') || pathname === '/bill/new') {
     return { sessions: '/api/sessions', committees: '/api/committees' };
   }
   if (pathname === '/bill' || /^\/bill\/[^/]+$/.test(pathname)) {

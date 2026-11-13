@@ -190,10 +190,10 @@
       </section>
 
       <div
-        v-if="errorMessage || formDataError"
+        v-if="errorMessage"
         class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
       >
-        {{ errorMessage || '無法載入登入者資料，請重新登入。' }}
+        {{ errorMessage }}
       </div>
 
       <div
@@ -240,13 +240,8 @@
     ProposalInput,
     ProposalType,
     Session,
-    User,
   } from '~~/shared/types/bill';
   import { proposalTypes, proposalTypeLabels } from '~~/shared/types/bill';
-
-  interface ProposalFormData {
-    proposer: Pick<User, 'name' | 'permissionRole'>;
-  }
 
   definePageMeta({
     title: '新增議案',
@@ -304,22 +299,19 @@
   const errorMessage = ref('');
   const savedBill = ref<Bill | null>(null);
 
-  const [
-    { data: committeesData },
-    { data: sessionsData },
-    { data: formData, error: formDataError },
-  ] = await Promise.all([
+  const [{ data: committeesData }, { data: sessionsData }] = await Promise.all([
     useCommittees(),
     useSessions(),
-    useFetch<ProposalFormData>('/api/proposals/form-data'),
   ]);
+  // The auth middleware has just checked the session, which includes the proposer's name.
+  const sessionCheck = useSecretariatSessionCheck();
 
   const committees = computed(() => committeesData.value ?? []);
   const sessions = computed(() => sessionsData.value ?? []);
-  const proposer = computed(() => formData.value?.proposer);
+  const proposer = computed(() => sessionCheck.value?.session);
   const proposerLabel = computed(() => {
-    if (!proposer.value) return '載入中...';
-    const role = proposer.value.permissionRole === 'secretariat_admin' ? '秘書處' : '議員';
+    if (!proposer.value?.name) return '載入中...';
+    const role = proposer.value.role === 'secretariat_admin' ? '秘書處' : '議員';
     return `${proposer.value.name}（${role}）`;
   });
 

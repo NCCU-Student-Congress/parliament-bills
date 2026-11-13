@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
   return {
     authenticated: true,
     userId: session.userId,
+    name: session.name,
     email: session.email,
     role: session.role,
   };

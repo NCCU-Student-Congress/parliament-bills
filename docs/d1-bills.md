@@ -186,7 +186,8 @@ The proposal form sends `proposedAt` as a date selected by the user and displays
 Both legislators and secretariat users can select any proposal type. The form defaults to `discussion`.
 Attachment rows are optional. Each non-empty row requires a name and an HTTP(S) URL; a missing
 scheme is saved with `https://`. File attachment payloads are rejected.
-It loads the current proposer from the protected `GET /api/proposals/form-data` endpoint.
+It shows the current proposer from `GET /api/secretariat/session`, which the `auth` middleware
+has already loaded.
 `POST /api/bills` rejects `cosponsorIds`; each legislator must cosign from `/cosign` themselves.
 Cosigning is idempotent, and the UI shows `已連署` after signing. There is no self-service withdrawal.
 

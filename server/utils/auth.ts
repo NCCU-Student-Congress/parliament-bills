@@ -145,14 +145,16 @@ export function clearAuthSessionCookie(event: H3Event) {
 }
 
 // The cookie only proves who logged in; the users row decides whether that person still has access.
-export async function readCurrentSession(event: H3Event): Promise<AuthSession | null> {
+export async function readCurrentSession(
+  event: H3Event,
+): Promise<(AuthSession & { name: string }) | null> {
   const session = await readAuthSession(event);
   if (!session) return null;
 
   const user = await useD1Database(event)
-    .prepare('SELECT email, permission_role FROM users WHERE id = ? LIMIT 1')
+    .prepare('SELECT name, email, permission_role FROM users WHERE id = ? LIMIT 1')
     .bind(session.userId)
-    .first<{ email: string; permission_role: string }>();
+    .first<{ name: string; email: string; permission_role: string }>();
 
   if (
     !user ||
@@ -163,7 +165,7 @@ export async function readCurrentSession(event: H3Event): Promise<AuthSession | 
     return null;
   }
 
-  return { ...session, email: user.email, role: user.permission_role };
+  return { ...session, name: user.name, email: user.email, role: user.permission_role };
 }
 
 export async function requireRole(event: H3Event, roles: PermissionRole[]) {

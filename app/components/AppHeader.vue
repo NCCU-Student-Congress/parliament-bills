@@ -158,7 +158,7 @@
     }));
     isAuthenticated.value = Boolean(session.authenticated);
     isSecretariat.value = session.role === 'secretariat_admin';
-    sessionCheck.value = session.authenticated ? { session, checkedAt: Date.now() } : null;
+    sessionCheck.value = toSessionCheck(session);
   };
 
   const handleLogout = async () => {

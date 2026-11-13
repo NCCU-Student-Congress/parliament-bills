@@ -1,13 +1,13 @@
 import { onMounted } from 'vue';
 
-// Secretariat data: show the copy this tab loaded on an earlier visit at once, then refetch it in
-// the background, since another admin may have changed it meanwhile. The first visit renders the
-// page right away and lets each card show its own spinner until its data arrives.
-export function useAdminFetch<T>(url: string) {
+// Data that may have changed since this tab last loaded it: show that earlier copy at once, then
+// refetch in the background. The first visit renders the page right away and lets the page show
+// its own loading state until the data arrives.
+export function useRevalidatingFetch<T>(url: string) {
   let servedFromCache = false;
   const result = useFetch<T>(url, {
     ...FRESH_FETCH_OPTIONS,
-    key: `admin:${url}`,
+    key: `revalidating:${url}`,
     lazy: true,
     getCachedData(key, nuxtApp, ctx) {
       if (nuxtApp.isHydrating) return nuxtApp.payload.data[key];

@@ -763,27 +763,27 @@
     data: sessionsData,
     status: sessionsStatus,
     refresh: refreshSessions,
-  } = useAdminFetch<Session[]>('/api/sessions');
+  } = useRevalidatingFetch<Session[]>('/api/sessions');
   const {
     data: committeesData,
     status: committeesStatus,
     refresh: refreshCommittees,
-  } = useAdminFetch<Committee[]>('/api/committees');
+  } = useRevalidatingFetch<Committee[]>('/api/committees');
   const {
     data: usersData,
     status: usersStatus,
     refresh: refreshUsers,
-  } = useAdminFetch<User[]>('/api/users');
+  } = useRevalidatingFetch<User[]>('/api/users');
   const {
     data: meetingsData,
     status: meetingsStatus,
     refresh: refreshMeetings,
-  } = useAdminFetch<Meeting[]>('/api/meetings');
+  } = useRevalidatingFetch<Meeting[]>('/api/meetings');
   const {
     data: billsData,
     status: billsStatus,
     refresh: refreshBills,
-  } = useAdminFetch<Bill[]>('/api/bills');
+  } = useRevalidatingFetch<Bill[]>('/api/bills');
   // A card shows its spinner only until its first data arrives; background refreshes keep the rows.
   const isFirstLoad = (data: Ref<unknown>, status: Ref<string>) =>
     computed(() => data.value === undefined && status.value !== 'error');

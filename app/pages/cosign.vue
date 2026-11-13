@@ -21,7 +21,7 @@
     <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
       無法載入可連署的議案，請稍後再試。
     </div>
-    <div v-else-if="pending" class="py-12 text-center text-gray-600">載入中...</div>
+    <div v-else-if="pending && !bills" class="py-12 text-center text-gray-600">載入中...</div>
     <div
       v-else-if="!bills?.length"
       class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600"
@@ -81,16 +81,9 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue';
+  import { computed, ref } from 'vue';
   import type { Bill } from '~~/shared/types/bill';
-  import type { PermissionRole } from '~~/shared/types/auth';
   import { formatTermLabel } from '~~/shared/utils/term';
-
-  interface SessionState {
-    authenticated: boolean;
-    userId?: number;
-    role?: PermissionRole;
-  }
 
   definePageMeta({
     title: '連署',
@@ -98,17 +91,17 @@
     middleware: ['auth'],
   });
 
-  const [{ data: bills, pending, error, refresh }, { data: session, refresh: refreshSession }] =
-    await Promise.all([
-      useFetch<Bill[]>('/api/proposals/signable'),
-      useFetch<SessionState>('/api/secretariat/session'),
-    ]);
+  // The auth middleware has just checked the session, and the header keeps it current.
+  const sessionCheck = useSecretariatSessionCheck();
+  const session = computed(() => sessionCheck.value?.session);
+  const {
+    data: bills,
+    pending,
+    error,
+    refresh,
+  } = useRevalidatingFetch<Bill[]>('/api/proposals/signable');
   const submittingId = ref<number | null>(null);
   const errorMessage = ref('');
-
-  onMounted(() => {
-    refreshSession();
-  });
 
   function confirmedCount(bill: Bill) {
     return bill.cosponsors.length;
