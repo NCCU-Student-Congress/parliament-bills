@@ -7,8 +7,11 @@ import { formatTermLabel } from '~~/shared/utils/term';
 // Replace this file with the licensed 標楷體 TTF when it becomes available.
 const MINUTES_FONT_URL = '/fonts/LXGWWenKaiTC-Regular.ttf';
 const PAGE_MARGIN = 48;
-const BODY_SIZE = 11;
-const BODY_LINE_HEIGHT = 19;
+const TITLE_SIZE = 16;
+const HEADING_SIZE = 14;
+const BODY_SIZE = 12;
+const LINE_HEIGHT_RATIO = 1.5;
+const CASE_GAP = BODY_SIZE * 1.25;
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const lines: string[] = [];
@@ -68,7 +71,7 @@ export async function createMeetingMinutesPdf(
   ) {
     const size = options.size ?? BODY_SIZE;
     const indent = options.indent ?? 0;
-    const lineHeight = size === BODY_SIZE ? BODY_LINE_HEIGHT : size + 9;
+    const lineHeight = size * LINE_HEIGHT_RATIO;
     for (const line of wrapText(text, font, size, contentWidth - indent)) {
       ensureSpace(lineHeight);
       if (line) {
@@ -88,8 +91,9 @@ export async function createMeetingMinutesPdf(
   }
 
   addPage();
-  drawText(`${meeting.title} 會議記錄`, { size: 17, gap: 5, center: true });
+  drawText(`${meeting.title} 會議記錄`, { size: TITLE_SIZE, gap: 5, center: true });
   drawText(`${formatTermLabel(meeting.session)}　${meeting.meetingTypeName}`, {
+    size: HEADING_SIZE,
     gap: 13,
     center: true,
   });
@@ -99,7 +103,7 @@ export async function createMeetingMinutesPdf(
     if (line.entry.kind === 'heading') {
       ensureSpace(50);
       y -= 5;
-      drawText(line.text, { size: 13, gap: 5 });
+      drawText(line.text, { size: HEADING_SIZE, gap: 5 });
     } else if (line.entry.kind === 'proposal') {
       ensureSpace(52);
       const match = line.text.match(/^([一二三四五六七八九十百千\d]+、)(.*)$/);
@@ -108,7 +112,7 @@ export async function createMeetingMinutesPdf(
       drawText(subject, { indent: 12 });
       drawText(`決議：${decisionMap.get(line.entry.proposalId!) || '尚未填寫'}`, {
         indent: 12 + font.widthOfTextAtSize(prefix, BODY_SIZE),
-        gap: 9,
+        gap: CASE_GAP,
       });
     } else {
       drawText(line.text, { indent: 12, gap: 5 });
