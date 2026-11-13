@@ -30,7 +30,9 @@
       <div class="space-y-4">
         <template v-for="item in orderedItems" :key="item.key">
           <div v-if="item.kind === 'heading'" class="flex flex-wrap items-center gap-1 pt-3">
-            <h3 class="text-lg font-bold text-[#12122b]">{{ item.title }}</h3>
+            <h3 class="min-w-0 text-lg font-bold text-[#12122b]">
+              <AgendaHangingText :text="item.title" />
+            </h3>
             <div v-if="item.closing" class="flex items-center gap-1 whitespace-nowrap">
               <span class="text-lg font-bold text-[#12122b]">（</span>
               <label class="sr-only" for="minutes-closing-hour">散會小時</label>
@@ -69,7 +71,7 @@
               :id="`title-${item.key}`"
               class="mt-1 whitespace-pre-wrap font-semibold text-[#12122b]"
             >
-              {{ item.title }}
+              <AgendaHangingText :text="item.title" />
             </h4>
             <label class="mt-3 block" :for="`decision-${item.key}`">
               <span class="mb-1 block text-sm font-semibold">決議</span>

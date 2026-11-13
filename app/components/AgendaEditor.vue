@@ -93,7 +93,9 @@
                 class="mb-1 block text-xs font-semibold text-gray-500"
                 >議案</span
               >
-              <p v-if="entry.kind === 'heading'" class="py-1 font-bold">{{ entry.content }}</p>
+              <p v-if="entry.kind === 'heading'" class="py-1 font-bold">
+                <AgendaHangingText :text="entry.content" />
+              </p>
               <p v-else-if="entry.kind === 'proposal'" class="py-1 font-medium">
                 {{ proposalMap.get(entry.proposalId ?? -1)?.subject || '議案已移出會議' }}
               </p>

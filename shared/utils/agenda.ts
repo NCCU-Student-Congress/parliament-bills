@@ -27,6 +27,11 @@ export function agendaNumber(index: number): string {
   return String(number);
 }
 
+export function splitAgendaNumberedText(text: string) {
+  const match = text.match(/^([壹貳參肆伍陸柒捌玖拾一二三四五六七八九十百千\d]+、)([\s\S]*)$/);
+  return { prefix: match?.[1] ?? '', content: match?.[2] ?? text };
+}
+
 function fixedAgenda(meeting: Meeting, groups: Record<Section, AgendaEntry[]>): AgendaEntry[] {
   const date = new Date(meeting.meetingDate);
   const parts = Object.fromEntries(

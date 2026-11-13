@@ -86,7 +86,7 @@
         </div>
         <div class="space-y-1 leading-8 text-gray-900">
           <div
-            v-for="(line, index) in agendaDisplayLines"
+            v-for="(line, index) in agendaLinesForMeeting"
             :key="index"
             :class="line.entry.kind === 'heading' ? 'pt-3 font-bold first:pt-0' : 'pl-4'"
           >
@@ -94,18 +94,11 @@
               v-if="line.entry.kind === 'proposal'"
               :to="`/bill/proposal/${line.entry.proposalId}`"
               class="block rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary hover:bg-gray-100"
-              :class="{ 'agenda-numbered-line': line.prefix }"
             >
-              <span v-if="line.prefix">{{ line.prefix }}</span>
-              <span>{{ line.content }}</span>
+              <AgendaHangingText :text="line.text" />
             </NuxtLink>
-            <span
-              v-else
-              class="whitespace-pre-wrap"
-              :class="{ 'agenda-numbered-line': line.prefix }"
-            >
-              <span v-if="line.prefix">{{ line.prefix }}</span>
-              <span>{{ line.content }}</span>
+            <span v-else class="whitespace-pre-wrap">
+              <AgendaHangingText :text="line.text" />
             </span>
           </div>
         </div>
@@ -170,16 +163,6 @@
   );
   const agendaLinesForMeeting = computed(() =>
     agendaLines(displayAgendaEntries.value, meetingBills.value),
-  );
-  const agendaDisplayLines = computed(() =>
-    agendaLinesForMeeting.value.map((line) => {
-      const match = line.text.match(/^([壹貳參肆伍陸柒捌玖拾一二三四五六七八九十百千\d]+、)(.*)$/);
-      return {
-        ...line,
-        prefix: match?.[1] ?? '',
-        content: match?.[2] ?? line.text,
-      };
-    }),
   );
   const orderedMeetingBills = computed(() => {
     const order = new Map(
@@ -269,10 +252,3 @@
 
   useHead(() => ({ title: `${meeting.value?.title || '會議'} - 議案查詢` }));
 </script>
-
-<style scoped>
-  .agenda-numbered-line {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-  }
-</style>

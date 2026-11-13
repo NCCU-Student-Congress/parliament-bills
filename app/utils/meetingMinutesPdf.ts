@@ -1,7 +1,7 @@
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, PageSizes, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import type { AgendaEntry, Meeting, MeetingDecision, Proposal } from '~~/shared/types/bill';
-import { agendaLines } from '~~/shared/utils/agenda';
+import { agendaLines, splitAgendaNumberedText } from '~~/shared/utils/agenda';
 import { formatTermLabel } from '~~/shared/utils/term';
 
 // Byte-for-byte parts of TW-Kai.ttf, kept below the Cloudflare Pages per-asset limit.
@@ -155,13 +155,17 @@ export async function createMeetingMinutesPdf(
         line.entry.content.endsWith('、散會') && closingTime
           ? `（${closingTime.slice(0, 2)}時${closingTime.slice(3, 5)}分）`
           : '';
-      drawText(`${line.text}${closingLabel}`, { size: HEADING_SIZE, gap: 5 });
+      const { prefix } = splitAgendaNumberedText(line.text);
+      drawText(`${line.text}${closingLabel}`, {
+        size: HEADING_SIZE,
+        hangingIndent: font.widthOfTextAtSize(prefix, HEADING_SIZE),
+        gap: 5,
+      });
     } else if (line.entry.kind === 'proposal') {
       ensureSpace(52);
-      const match = line.text.match(/^([一二三四五六七八九十百千\d]+、)(.*)$/);
-      const prefix = match?.[1] ?? '';
+      const { prefix, content } = splitAgendaNumberedText(line.text);
       const subjectLabel = `${prefix}案由：`;
-      const subject = `${subjectLabel}${match ? match[2] : line.text}`;
+      const subject = `${subjectLabel}${content}`;
       drawText(subject, {
         indent: 12,
         hangingIndent: font.widthOfTextAtSize(subjectLabel, BODY_SIZE),
@@ -169,7 +173,7 @@ export async function createMeetingMinutesPdf(
       drawDecision(proposalDecisions.get(line.entry.proposalId!), prefix);
     } else {
       ensureSpace(52);
-      const prefix = line.text.match(/^([一二三四五六七八九十百千\d]+、)/)?.[1] ?? '';
+      const { prefix } = splitAgendaNumberedText(line.text);
       drawText(line.text, {
         indent: 12,
         hangingIndent: font.widthOfTextAtSize(prefix, BODY_SIZE),
