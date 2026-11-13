@@ -1,147 +1,43 @@
-# Database Schema Notes
+# Database Schema
 
-The runtime database is Cloudflare D1. New development starts from the proposal schema in
-`migrations/0001_create_bills.sql`; old public JSON bill data is no longer a runtime fallback.
+The runtime database is Cloudflare D1. `migrations/0001_create_bills.sql` is the complete schema
+for a new, empty database. Earlier migrations and data are not supported.
 
-## Tables
+## People and access
 
-### `committees`
+- `committees` stores committee names.
+- `users` stores people who can propose or cosign, including imported historical people. Email is
+  required and unique; historical people without a real address use a unique `.invalid` address.
+  `permission_role` is `legislator` or `secretariat_admin`.
+- `user_committees` links users and committees with a composite primary key. Membership is currently
+  used by the admin UI, not for authorization. Deleting a committee or user removes its memberships.
+- `auth_login_tokens` stores hashed, single-use magic-link tokens associated with a user. A token's
+  email is read from the user; it is not duplicated in the token row.
 
-Stores committee names used by meetings, proposals, and user filtering.
+## Sessions and proposals
 
-- `id`
-- `name`
-- `created_at`
-- `updated_at`
+- `sessions.id` is the numeric term code, such as `271`.
+- `meetings` belongs to a session and optionally to a committee. Its `meeting_type_name` is a
+  historical name snapshot, retained when a committee is renamed or deleted. It owns the proposal
+  deadline, which must not be later than the meeting time.
+- `proposals` belongs to a session, optionally to a committee, and has one proposer. The type is
+  `discussion`, `report`, or `election`. There is no draft state.
+- `proposal_meetings` links a proposal to zero or more meetings. The application requires matching
+  session and committee on both sides. A meeting with assigned proposals must be unscheduled before
+  deletion.
+- `proposal_attachments` stores named URLs; a URL can occur only once per proposal.
+- `proposal_cosponsors` stores one completed signature per proposal and user. `signed_at` records
+  self-service signatures and may be null for historical signatures with no known date. Users sign
+  themselves; there is no invitation or pending state.
 
-### `users`
+## Agenda and minutes
 
-Stores people for proposer/cosponsor references and permission management.
+- `meeting_agenda_entries` holds ordered headings, text, and scheduled proposal references. Text
+  entries have stable `decision_key` values and may hold a decision. Saving a reordered agenda
+  preserves text decisions by key; removing a text entry removes its decision.
+- `meeting_proposal_decisions` stores decisions per meeting and proposal. They remain when a proposal
+  is unscheduled and reappear if it returns to that meeting. Deleting the meeting or proposal removes
+  its decisions.
 
-- `id`
-- `name`
-- `email`
-- `permission_role`
-- `committee_ids`
-- `created_at`
-- `updated_at`
-
-`permission_role` is one of `legislator` or `secretariat_admin`. `committee_ids` is a JSON array
-of committee ids. It is only used for filtering in the current student council use case.
-
-### `auth_login_tokens`
-
-Stores hashed, single-use passwordless login tokens for Resend magic links.
-
-- `id`
-- `user_id`
-- `email`
-- `token_hash`
-- `redirect_path`
-- `expires_at`
-- `consumed_at`
-- `created_at`
-
-### `sessions`
-
-Stores managed legislative sessions. The primary key is the existing numeric session code, such as
-`271`.
-
-- `id`
-- `title`
-- `starts_at`
-- `ends_at`
-- `created_at`
-- `updated_at`
-
-### `meetings`
-
-Stores meetings that the secretariat can assign proposals to.
-
-- `id`
-- `committee_id`
-- `meeting_type_name` (the meeting's original committee name, or `大會`)
-- `session`
-- `meeting_date`
-- `proposal_deadline_at`
-- `title`
-- `location`
-- `created_at`
-- `updated_at`
-
-Proposal deadlines live here. Proposals do not store their own deadline or deadline snapshot.
-`session` references `sessions.id`.
-The meeting type name is saved when a meeting is created. Renaming or deleting the committee does not change the historical meeting type.
-
-### `proposals`
-
-Stores submitted proposals. There is no draft state.
-
-- `id`
-- `proposal_type` (`discussion`, `report`, or `election`; defaults to `discussion`)
-- `committee_id`
-- `session`
-- `proposed_at`
-- `proposer_id`
-- `subject`
-- `description`
-- `created_at`
-- `updated_at`
-
-### `proposal_meetings`
-
-Links a proposal to zero or more meetings in the same session and committee. Scheduling is managed by the secretariat.
-
-- `proposal_id`
-- `meeting_id`
-- `created_at`
-
-The proposal and meeting IDs form a composite primary key. A meeting with assigned proposals must be unscheduled before deletion.
-
-### `meeting_agenda_entries`
-
-Stores the ordered agenda for each meeting. Each row is a fixed-section heading, free text, or a
-proposal assigned to that meeting. Proposal rows reference `proposals.id`; the public agenda hides a
-proposal row when that proposal is no longer assigned to the meeting. The secretariat can reorder
-content entries and save the agenda. Meeting pages show the standard sections even before an agenda
-is saved; newly scheduled proposals are added to their matching sections automatically, while
-existing ordering is preserved. The election section is omitted when it has no content.
-
-### `meeting_proposal_decisions`
-
-Stores one decision per meeting and proposal. Decisions remain stored when a proposal is unscheduled,
-and are shown again if it is assigned to the same meeting later. Deleting the meeting or proposal
-deletes its decisions. Only secretariat admins can read or edit decisions.
-
-- `meeting_id`
-- `proposal_id`
-- `decision`
-- `updated_at`
-
-### `proposal_attachments`
-
-Stores proposal attachment links. Every link requires a display name.
-
-- `id`
-- `proposal_id`
-- `name`
-- `url`
-- `created_at`
-
-### `proposal_cosponsors`
-
-Stores cosponsor invitation and confirmation state.
-
-- `id`
-- `proposal_id`
-- `user_id`
-- `status`
-- `invited_at`
-- `confirmed_at`
-- `declined_at`
-- `token_hash`
-- `token_expires_at`
-- `created_at`
-- `updated_at`
-
-`status` is one of `pending`, `confirmed`, `declined`, `expired`, or `cancelled`.
+Only secretariat admins can read or edit decisions. The public agenda hides proposal entries that
+are no longer scheduled for the meeting.

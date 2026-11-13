@@ -21,19 +21,29 @@ The fresh D1 schema lives in one migration:
 migrations/0001_create_bills.sql
 ```
 
-Earlier local-only migrations were consolidated into this file. Remove the old local D1 state at
-`.wrangler/state/v3/d1` before applying it to an existing development checkout.
+The previous migration history was discarded. Start with an empty local D1 state before applying
+this file; old data is not migrated. On a checkout with an old local database, reset only the local
+D1 state and reapply the new baseline:
+
+```sh
+rm -rf .wrangler/state/v3/d1
+pnpm exec wrangler d1 migrations apply DB --local --persist-to .wrangler/state
+```
 
 It creates:
 
 - `committees`
 - `users`
+- `user_committees`
 - `auth_login_tokens`
 - `sessions`
 - `meetings`
 - `proposals`
+- `proposal_meetings`
 - `proposal_attachments`
 - `proposal_cosponsors`
+- `meeting_agenda_entries`
+- `meeting_proposal_decisions`
 
 ## Main Rules
 
@@ -49,9 +59,9 @@ It creates:
 - Meeting times are entered as a date plus `HH:mm` in 24-hour time and displayed in 24-hour time.
 - Meeting locations are optional plain text stored on `meetings.location`.
 - Proposals do not store a deadline snapshot.
-- User committee membership is stored as a JSON array in `users.committee_ids`.
+- User committee membership is stored in `user_committees`; the API still uses `committeeIds` arrays.
 - Attachments are separate link records with a required display name and URL.
-- Confirmed cosponsors are `proposal_cosponsors.status = 'confirmed'`.
+- Each row in `proposal_cosponsors` is a completed signature. The system has no invitation state.
 - Legislators can cosign any other proposer's unscheduled discussion or election proposal,
   regardless of committee or session. Reports cannot be cosigned. Assigning a meeting closes
   cosigning; clearing it reopens cosigning for eligible proposals.
