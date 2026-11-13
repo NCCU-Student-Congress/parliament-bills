@@ -70,12 +70,10 @@
     });
   }
   const termLabel = formatTermLabel(term);
-  const {
-    data: meetingsData,
-    pending: meetingsPending,
-    error: meetingsError,
-  } = await useFetch(`/api/meetings/scheduled?session=${term}`);
-  const { data: sessionsData } = await useFetch('/api/sessions');
+  const [
+    { data: meetingsData, pending: meetingsPending, error: meetingsError },
+    { data: sessionsData },
+  ] = await Promise.all([useFetch(`/api/meetings/scheduled?session=${term}`), useSessions()]);
 
   const isOutOfRange = computed(
     () =>

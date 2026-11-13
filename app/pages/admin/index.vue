@@ -742,14 +742,19 @@
     );
   });
 
-  const { data: sessionsData, refresh: refreshSessions } =
-    await useFetch<Session[]>('/api/sessions');
-  const { data: committeesData, refresh: refreshCommittees } =
-    await useFetch<Committee[]>('/api/committees');
-  const { data: usersData, refresh: refreshUsers } = await useFetch<User[]>('/api/users');
-  const { data: meetingsData, refresh: refreshMeetings } =
-    await useFetch<Meeting[]>('/api/meetings');
-  const { data: billsData, refresh: refreshBills } = await useFetch<Bill[]>('/api/bills');
+  const [
+    { data: sessionsData, refresh: refreshSessions },
+    { data: committeesData, refresh: refreshCommittees },
+    { data: usersData, refresh: refreshUsers },
+    { data: meetingsData, refresh: refreshMeetings },
+    { data: billsData, refresh: refreshBills },
+  ] = await Promise.all([
+    useFetch<Session[]>('/api/sessions'),
+    useFetch<Committee[]>('/api/committees'),
+    useFetch<User[]>('/api/users'),
+    useFetch<Meeting[]>('/api/meetings'),
+    useFetch<Bill[]>('/api/bills'),
+  ]);
 
   const sessions = computed(() => sessionsData.value ?? []);
   const committees = computed(() => committeesData.value ?? []);
@@ -831,6 +836,8 @@
   }
 
   async function refreshAll() {
+    // Public pages reuse their loaded sessions and committees; drop them so they refetch.
+    clearNuxtData(['sessions', 'committees']);
     await Promise.all([refreshSessions(), refreshCommittees(), refreshUsers(), refreshMeetings()]);
   }
 

@@ -48,12 +48,10 @@
   import { formatTermLabel } from '../../../shared/utils/term';
   import { SITE_CONFIG } from '~/utils/constants.js';
 
-  const { data: meetingsData, pending, error } = await useFetch('/api/meetings/scheduled');
-  const {
-    data: sessionsData,
-    pending: sessionsPending,
-    error: sessionsError,
-  } = await useFetch('/api/sessions');
+  const [
+    { data: meetingsData, pending, error },
+    { data: sessionsData, pending: sessionsPending, error: sessionsError },
+  ] = await Promise.all([useFetch('/api/meetings/scheduled'), useSessions()]);
   const scheduledSessions = computed(() => {
     const ids = new Set((meetingsData.value ?? []).map((meeting) => meeting.session));
     return (sessionsData.value ?? []).filter((session) => ids.has(session.id));

@@ -304,11 +304,15 @@
   const errorMessage = ref('');
   const savedBill = ref<Bill | null>(null);
 
-  const { data: committeesData } = await useFetch<Committee[]>('/api/committees');
-  const { data: sessionsData } = await useFetch<Session[]>('/api/sessions');
-  const { data: formData, error: formDataError } = await useFetch<ProposalFormData>(
-    '/api/proposals/form-data',
-  );
+  const [
+    { data: committeesData },
+    { data: sessionsData },
+    { data: formData, error: formDataError },
+  ] = await Promise.all([
+    useCommittees(),
+    useSessions(),
+    useFetch<ProposalFormData>('/api/proposals/form-data'),
+  ]);
 
   const committees = computed(() => committeesData.value ?? []);
   const sessions = computed(() => sessionsData.value ?? []);

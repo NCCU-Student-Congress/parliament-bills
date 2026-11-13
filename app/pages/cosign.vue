@@ -98,15 +98,11 @@
     middleware: ['auth'],
   });
 
-  const {
-    data: bills,
-    pending,
-    error,
-    refresh,
-  } = await useFetch<Bill[]>('/api/proposals/signable');
-  const { data: session, refresh: refreshSession } = await useFetch<SessionState>(
-    '/api/secretariat/session',
-  );
+  const [{ data: bills, pending, error, refresh }, { data: session, refresh: refreshSession }] =
+    await Promise.all([
+      useFetch<Bill[]>('/api/proposals/signable'),
+      useFetch<SessionState>('/api/secretariat/session'),
+    ]);
   const submittingId = ref<number | null>(null);
   const errorMessage = ref('');
 

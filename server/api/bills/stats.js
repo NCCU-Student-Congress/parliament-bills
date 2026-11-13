@@ -3,17 +3,20 @@ export default defineEventHandler(async (event) => {
     const db = useD1Database(event);
     const today = getTaipeiDateString();
 
-    const currentSession = await db
-      .prepare(
-        `SELECT id
+    const [currentSession, totalBills] = await Promise.all([
+      db
+        .prepare(
+          `SELECT id
          FROM sessions
          WHERE (starts_at IS NULL OR date(starts_at) <= date(?))
            AND (ends_at IS NULL OR date(ends_at) >= date(?))
          ORDER BY id DESC
          LIMIT 1`,
-      )
-      .bind(today, today)
-      .first();
+        )
+        .bind(today, today)
+        .first(),
+      db.prepare('SELECT COUNT(*) AS count FROM proposals').first('count'),
+    ]);
 
     if (!currentSession?.id) {
       throw createError({
@@ -23,7 +26,6 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const totalBills = await db.prepare('SELECT COUNT(*) AS count FROM proposals').first('count');
     const thisTermBills = await db
       .prepare('SELECT COUNT(*) AS count FROM proposals WHERE session = ?')
       .bind(currentSession.id)

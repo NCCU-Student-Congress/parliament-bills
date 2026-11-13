@@ -510,9 +510,11 @@ async function getMeetingsByProposalId(
 
 async function rowsToProposals(db: D1Database, rows: ProposalRow[]): Promise<Proposal[]> {
   const proposalIds = rows.map((row) => row.id);
-  const attachments = await getAttachmentsByProposalId(db, proposalIds);
-  const cosponsors = await getCosponsorsByProposalId(db, proposalIds);
-  const meetings = await getMeetingsByProposalId(db, proposalIds);
+  const [attachments, cosponsors, meetings] = await Promise.all([
+    getAttachmentsByProposalId(db, proposalIds),
+    getCosponsorsByProposalId(db, proposalIds),
+    getMeetingsByProposalId(db, proposalIds),
+  ]);
 
   return rows.map((row) =>
     rowToProposal(
@@ -1283,14 +1285,16 @@ export function createProposalRepository(db: D1Database) {
   };
 
   const getScheduledMeetings = async (session?: number): Promise<ScheduledMeeting[]> => {
-    const meetings = await getMeetings(session ? { session } : {});
-    const { results = [] } = await db
-      .prepare(
-        `SELECT proposal_meetings.meeting_id, COUNT(*) AS proposal_count
-         FROM proposal_meetings
-         GROUP BY proposal_meetings.meeting_id`,
-      )
-      .all<{ meeting_id: number; proposal_count: number }>();
+    const [meetings, { results = [] }] = await Promise.all([
+      getMeetings(session ? { session } : {}),
+      db
+        .prepare(
+          `SELECT proposal_meetings.meeting_id, COUNT(*) AS proposal_count
+           FROM proposal_meetings
+           GROUP BY proposal_meetings.meeting_id`,
+        )
+        .all<{ meeting_id: number; proposal_count: number }>(),
+    ]);
     const counts = new Map(results.map((row) => [row.meeting_id, row.proposal_count]));
     return meetings.map((meeting) => ({ ...meeting, proposalCount: counts.get(meeting.id) ?? 0 }));
   };

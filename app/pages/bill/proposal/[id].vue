@@ -336,12 +336,17 @@
     });
   }
 
-  const { data: bill, pending, error } = await useFetch<Bill>(`/api/proposals/${id.value}`);
-  const { data: authSession, refresh: refreshSession } = await useFetch<{ role?: string }>(
-    '/api/secretariat/session',
-  );
-  const { data: sessionsData } = await useFetch<Session[]>('/api/sessions');
-  const { data: committeesData } = await useFetch<Committee[]>('/api/committees');
+  const [
+    { data: bill, pending, error },
+    { data: authSession, refresh: refreshSession },
+    { data: sessionsData },
+    { data: committeesData },
+  ] = await Promise.all([
+    useFetch<Bill>(`/api/proposals/${id.value}`),
+    useFetch<{ role?: string }>('/api/secretariat/session'),
+    useSessions(),
+    useCommittees(),
+  ]);
   const isSecretariat = computed(() => authSession.value?.role === 'secretariat_admin');
   const sessions = computed(() => sessionsData.value ?? []);
   const committees = computed(() => committeesData.value ?? []);

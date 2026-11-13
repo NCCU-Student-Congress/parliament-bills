@@ -123,21 +123,15 @@
     });
   }
   const termLabel = formatTermLabel(term);
-  const {
-    data: meetingsData,
-    pending: meetingsPending,
-    error: meetingsError,
-  } = await useFetch(`/api/meetings/scheduled?session=${term}`);
-  const {
-    data: billsData,
-    pending: billsPending,
-    error: billsError,
-  } = await useFetch(`/api/meetings/${meetingId}/proposals`);
-  const {
-    data: agendaData,
-    pending: agendaPending,
-    error: agendaError,
-  } = await useFetch(`/api/meetings/${meetingId}/agenda`);
+  const [
+    { data: meetingsData, pending: meetingsPending, error: meetingsError },
+    { data: billsData, pending: billsPending, error: billsError },
+    { data: agendaData, pending: agendaPending, error: agendaError },
+  ] = await Promise.all([
+    useFetch(`/api/meetings/scheduled?session=${term}`),
+    useFetch(`/api/meetings/${meetingId}/proposals`),
+    useFetch(`/api/meetings/${meetingId}/agenda`),
+  ]);
   const meeting = computed(() => (meetingsData.value ?? []).find((item) => item.id === meetingId));
   const meetingBills = computed(() => billsData.value ?? []);
   const displayAgendaEntries = computed(() =>
