@@ -61,22 +61,22 @@
   import { formatTermLabel, parseTermCode } from '~~/shared/utils/term';
 
   const route = useRoute();
-  const term = computed(() => parseTermCode(route.params.term));
-  if (!term.value) {
+  const term = parseTermCode(route.params.term);
+  if (!term) {
     throw createError({ statusCode: 404, statusMessage: '會期參數欠缺或格式錯誤' });
   }
-  const termLabel = computed(() => formatTermLabel(term.value));
+  const termLabel = formatTermLabel(term);
   const {
     data: meetingsData,
     pending: meetingsPending,
     error: meetingsError,
-  } = await useFetch(() => `/api/meetings/scheduled?session=${term.value}`);
+  } = await useFetch(`/api/meetings/scheduled?session=${term}`);
   const { data: sessionsData } = await useFetch('/api/sessions');
 
   const isOutOfRange = computed(
     () =>
       (sessionsData.value ?? []).length > 0 &&
-      !(sessionsData.value ?? []).some((session) => session.id === term.value),
+      !(sessionsData.value ?? []).some((session) => session.id === term),
   );
 
   const meetingGroups = computed(() => {
@@ -107,5 +107,5 @@
     });
   }
 
-  useHead(() => ({ title: `${termLabel.value}會議 - 議案查詢` }));
+  useHead(() => ({ title: `${termLabel}會議 - 議案查詢` }));
 </script>

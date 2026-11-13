@@ -105,30 +105,28 @@
   import { agendaLines, normalizeAgenda } from '~~/shared/utils/agenda';
 
   const route = useRoute();
-  const term = computed(() => parseTermCode(route.params.term));
-  const meetingId = computed(() => Number(route.params.id));
-  if (!term.value || !Number.isInteger(meetingId.value) || meetingId.value <= 0) {
+  const term = parseTermCode(route.params.term);
+  const meetingId = Number(route.params.id);
+  if (!term || !Number.isInteger(meetingId) || meetingId <= 0) {
     throw createError({ statusCode: 404, statusMessage: '會議參數欠缺或格式錯誤' });
   }
-  const termLabel = computed(() => formatTermLabel(term.value));
+  const termLabel = formatTermLabel(term);
   const {
     data: meetingsData,
     pending: meetingsPending,
     error: meetingsError,
-  } = await useFetch(() => `/api/meetings/scheduled?session=${term.value}`);
+  } = await useFetch(`/api/meetings/scheduled?session=${term}`);
   const {
     data: billsData,
     pending: billsPending,
     error: billsError,
-  } = await useFetch(() => `/api/meetings/${meetingId.value}/proposals`);
+  } = await useFetch(`/api/meetings/${meetingId}/proposals`);
   const {
     data: agendaData,
     pending: agendaPending,
     error: agendaError,
-  } = await useFetch(() => `/api/meetings/${meetingId.value}/agenda`);
-  const meeting = computed(() =>
-    (meetingsData.value ?? []).find((item) => item.id === meetingId.value),
-  );
+  } = await useFetch(`/api/meetings/${meetingId}/agenda`);
+  const meeting = computed(() => (meetingsData.value ?? []).find((item) => item.id === meetingId));
   const meetingBills = computed(() => billsData.value ?? []);
   const displayAgendaEntries = computed(() =>
     meeting.value ? normalizeAgenda(meeting.value, meetingBills.value, agendaData.value ?? []) : [],
