@@ -63,4 +63,4 @@ pnpm dev
 ## 授權與聯絡資訊
 
 - **維護單位**：國立政治大學學生議會， NCCU Student Congress
-- **專案授權**：本專案採混合授權。國立政治大學學生議會新增或修改之部分保留所有權利；其餘授權與來源資訊詳見 [LICENSE](./LICENSE)。
+- **專案授權**：國立政治大學學生議會自行創作的內容保留所有權利，不以開源授權釋出。專案使用了 `NTPUSU/open-parliament` 的部分內容；其原有的 MIT 授權與著作權聲明見 [第三方聲明](./THIRD_PARTY_NOTICES.md)。詳見 [LICENSE](./LICENSE)。
