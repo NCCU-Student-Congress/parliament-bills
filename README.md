@@ -60,6 +60,8 @@ pnpm dev
 
 若要登入秘書處或後台，請先在 `.env` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
 
+後續由 agent 匯入舊站會議與議案時，請依照[會議資訊匯入規則](./docs/meeting-data-migration.md)處理來源、提案人與附件。
+
 ## 授權與聯絡資訊
 
 - **維護單位**：國立政治大學學生議會， NCCU Student Congress
