@@ -32,7 +32,9 @@
           ＋ {{ proposal.subject }}
         </button>
       </div>
-      <p class="mb-4 text-sm text-gray-600">段落標題固定；可在各段落下方插入文字或調整議案順序。</p>
+      <p class="mb-4 text-sm text-gray-600">
+        段落標題固定；議案僅能在同一段落排序，可在各段落下方插入文字。
+      </p>
       <button
         v-if="!hasElectionSection"
         type="button"
@@ -91,7 +93,7 @@
             <div v-if="entry.kind !== 'heading'" class="flex flex-col gap-1 text-sm">
               <button
                 type="button"
-                :disabled="index === 0"
+                :disabled="!canMoveEntry(index, index - 1)"
                 aria-label="上移"
                 @click="moveEntry(index, index - 1)"
               >
@@ -99,7 +101,7 @@
               </button>
               <button
                 type="button"
-                :disabled="index === entries.length - 1"
+                :disabled="!canMoveEntry(index, index + 1)"
                 aria-label="下移"
                 @click="moveEntry(index, index + 1)"
               >
@@ -295,6 +297,27 @@
     entries.value.splice(index, 1);
     entryKeys.value.splice(index, 1);
   }
+  function canDropAt(from: number, slot: number) {
+    if (slot < 0 || slot > entries.value.length || !entries.value[from]) return false;
+    if (entries.value[from]?.kind !== 'proposal') return true;
+    let sectionStart = from - 1;
+    while (sectionStart >= 0 && entries.value[sectionStart]?.kind !== 'heading') sectionStart--;
+    let sectionEnd = from + 1;
+    while (sectionEnd < entries.value.length && entries.value[sectionEnd]?.kind !== 'heading')
+      sectionEnd++;
+    return slot > sectionStart && slot <= sectionEnd;
+  }
+  function canMoveEntry(from: number, to: number) {
+    return (
+      from >= 0 &&
+      to >= 0 &&
+      from < entries.value.length &&
+      to < entries.value.length &&
+      from !== to &&
+      entries.value[from]?.kind !== 'heading' &&
+      canDropAt(from, to > from ? to + 1 : to)
+    );
+  }
   function startDrag(event: PointerEvent, index: number) {
     if (event.button !== 0 || !event.isPrimary || dragPointerId !== null) return;
     const handle = event.currentTarget;
@@ -330,7 +353,10 @@
         break;
       }
     }
-    dropSlot.value = slot === dragIndex.value || slot === dragIndex.value + 1 ? -1 : slot;
+    dropSlot.value =
+      slot === dragIndex.value || slot === dragIndex.value + 1 || !canDropAt(dragIndex.value, slot)
+        ? -1
+        : slot;
   }
   function scrollWhileDragging(time: number) {
     if (dragPointerId === null) return;
@@ -369,15 +395,7 @@
     dropSlot.value = -1;
   }
   function moveEntry(from: number, to: number) {
-    if (
-      from < 0 ||
-      to < 0 ||
-      from >= entries.value.length ||
-      to >= entries.value.length ||
-      from === to ||
-      entries.value[from]?.kind === 'heading'
-    )
-      return;
+    if (!canMoveEntry(from, to)) return;
     const previousPositions = new Map(
       Array.from(listRef.value?.children ?? []).map((row) => [
         (row as HTMLElement).dataset.entryKey,
