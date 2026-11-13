@@ -7,17 +7,7 @@
       <p class="mb-4 text-sm font-bold text-[#5a5a70]">
         {{ formatTermLabel(bill.session) }} · {{ bill.committeeName }}
       </p>
-      <div class="flex flex-wrap gap-2 mb-3">
-        <ProposalTypePill :proposal-type="bill.proposalType" />
-        <span
-          class="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-black text-white"
-        >
-          {{ bill.meetings.map((meeting) => meeting.title).join('、') || '尚未排入會議' }}
-        </span>
-        <span class="inline-flex items-center text-xs font-bold text-[#5a5a70]">
-          {{ formatDate(bill.proposedAt) }}
-        </span>
-      </div>
+      <ProposalTypePill :proposal-type="bill.proposalType" class="mb-3" />
       <div class="text-sm font-semibold leading-relaxed text-[#12122b]">
         <p><strong>提案人：</strong>{{ bill.proposerName }}</p>
       </div>
@@ -44,15 +34,4 @@
   const confirmedCosponsors = computed(() =>
     (props.bill.cosponsors ?? []).map((cosponsor) => cosponsor.userName).filter(Boolean),
   );
-
-  const formatDate = (value) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString('zh-TW', {
-      timeZone: 'Asia/Taipei',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  };
 </script>
