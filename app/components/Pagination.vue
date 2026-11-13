@@ -66,7 +66,7 @@
               v-if="page !== '...'"
               @click="goToPage(page)"
               :class="[
-                'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors',
+                'relative inline-flex w-12 items-center justify-center px-2 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors',
                 page === currentPage
                   ? 'z-10 bg-primary text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
                   : 'text-gray-900 bg-white',
@@ -76,7 +76,7 @@
             </button>
             <span
               v-else
-              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0 bg-white"
+              class="relative inline-flex w-12 items-center justify-center px-2 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0 bg-white"
             >
               ...
             </span>

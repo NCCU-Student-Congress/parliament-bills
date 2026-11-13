@@ -50,13 +50,21 @@
       >
         <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h2 class="text-xl font-bold text-gray-900">會議議程</h2>
-          <button
-            type="button"
-            class="rounded border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            @click="copyAgenda"
-          >
-            {{ copied ? '已複製' : '複製議程' }}
-          </button>
+          <div class="relative">
+            <button
+              type="button"
+              class="rounded border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              @click="copyAgenda"
+            >
+              複製議程
+            </button>
+            <span
+              role="status"
+              class="absolute right-0 top-full whitespace-nowrap pt-1 text-xs text-green-700"
+            >
+              {{ copied ? '已複製' : '' }}
+            </span>
+          </div>
         </div>
         <div class="space-y-1 leading-8 text-gray-900">
           <div

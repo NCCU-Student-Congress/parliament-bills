@@ -203,13 +203,15 @@
       </div>
 
       <div class="flex flex-wrap gap-3">
-        <button
+        <LoadingButton
           type="submit"
-          :disabled="isSubmitting || !proposer"
+          :loading="isSubmitting"
+          loading-label="寫入提案中"
+          :disabled="!proposer"
           class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {{ isSubmitting ? '寫入中...' : '送出提案' }}
-        </button>
+          送出提案
+        </LoadingButton>
         <NuxtLink
           to="/bill"
           class="inline-flex items-center rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"

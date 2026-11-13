@@ -63,15 +63,16 @@
             >
               您的提案
             </span>
-            <button
+            <LoadingButton
               v-else-if="canSign(bill)"
               type="button"
-              :disabled="submittingId === bill.id"
+              :loading="submittingId === bill.id"
+              loading-label="連署中"
               class="rounded-lg bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
               @click="cosign(bill.id)"
             >
-              {{ submittingId === bill.id ? '連署中...' : '連署' }}
-            </button>
+              連署
+            </LoadingButton>
           </div>
         </div>
       </article>

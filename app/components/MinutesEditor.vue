@@ -82,7 +82,7 @@
               class="control auto-resize-textarea"
               rows="1"
               maxlength="10000"
-              :aria-describedby="`title-${item.key} minutes-hint`"
+              :aria-describedby="`title-${item.key}`"
               placeholder="請輸入決議；可暫時留白"
             ></textarea>
           </article>
@@ -91,22 +91,26 @@
       <p v-if="!hasDecisionItems" class="rounded-lg bg-gray-50 p-5 text-gray-600">
         本場會議尚無可填寫決議的項目。
       </p>
-      <p id="minutes-hint" class="mt-3 text-sm text-gray-600">
-        未填寫的決議在 PDF 中會顯示「決議：」，冒號後留空。
-      </p>
-
       <div class="mt-5 flex flex-wrap items-center gap-3">
-        <button class="btn btn-primary" type="submit" :disabled="saving || downloading || !dirty">
-          {{ saving ? '儲存中...' : '儲存會議記錄' }}
-        </button>
-        <button
+        <LoadingButton
+          class="btn btn-primary"
+          type="submit"
+          :loading="saving"
+          loading-label="儲存中"
+          :disabled="downloading || !dirty"
+        >
+          儲存會議記錄
+        </LoadingButton>
+        <LoadingButton
           class="btn btn-secondary"
           type="button"
-          :disabled="loading || saving || downloading || dirty"
+          :loading="downloading"
+          loading-label="製作 PDF 中"
+          :disabled="loading || saving || dirty"
           @click="downloadPdf"
         >
-          {{ downloading ? '製作 PDF 中...' : '下載 PDF' }}
-        </button>
+          下載 PDF
+        </LoadingButton>
         <span v-if="dirty" class="text-sm text-amber-800">有未儲存的修改</span>
         <Transition name="save-notice">
           <span v-if="saveNotice && !dirty" role="status" class="text-sm text-green-700">

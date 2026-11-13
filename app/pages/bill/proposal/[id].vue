@@ -270,15 +270,16 @@
         >
           複製連結
         </button>
-        <button
+        <LoadingButton
           v-if="isSecretariat"
           type="button"
-          :disabled="isDeleting"
+          :loading="isDeleting"
+          loading-label="刪除議案中"
           class="ml-auto inline-flex items-center rounded-lg bg-red-700 px-4 py-2 text-white transition-colors hover:bg-red-800 disabled:opacity-50"
           @click="deleteBill"
         >
-          {{ isDeleting ? '刪除中...' : '刪除議案' }}
-        </button>
+          刪除議案
+        </LoadingButton>
       </div>
     </div>
 

@@ -152,7 +152,11 @@
             <input v-model="committeeForm.name" required class="control" placeholder="程序委員會" />
           </label>
           <div class="form-actions">
-            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+            <button
+              class="btn btn-primary w-28 justify-center"
+              type="submit"
+              :disabled="isSubmitting"
+            >
               {{ editingCommitteeId === null ? '新增委員會' : '儲存委員會' }}
             </button>
             <button
@@ -240,7 +244,11 @@
             </div>
           </label>
           <div class="form-actions">
-            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+            <button
+              class="btn btn-primary w-28 justify-center"
+              type="submit"
+              :disabled="isSubmitting"
+            >
               {{ editingUserId === null ? '新增人員' : '儲存人員' }}
             </button>
             <button
@@ -436,7 +444,11 @@
             </span>
           </label>
           <div class="form-actions">
-            <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+            <button
+              class="btn btn-primary w-28 justify-center"
+              type="submit"
+              :disabled="isSubmitting"
+            >
               {{ editingMeetingId === null ? '新增會議' : '儲存會議' }}
             </button>
             <button
