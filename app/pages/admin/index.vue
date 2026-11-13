@@ -609,9 +609,12 @@
                     class="schedule-option"
                   >
                     <input
-                      v-model="billMeetingSelection[bill.id]"
                       type="checkbox"
+                      :name="`meeting-${bill.id}`"
                       :value="meeting.id"
+                      :checked="billMeetingSelection[bill.id]?.includes(meeting.id)"
+                      :disabled="scheduleStatus[bill.id]?.state === 'saving'"
+                      @change="scheduleBill(bill, meeting.id, $event)"
                     />
                     <span class="min-w-0">
                       <span class="schedule-option-title">{{ meeting.title }}</span>
@@ -625,16 +628,14 @@
               </div>
             </div>
 
-            <div class="schedule-actions">
-              <button
-                class="btn btn-primary schedule-save"
-                type="button"
-                :disabled="isSubmitting || sameMeetingSelection(bill)"
-                @click="scheduleBill(bill)"
-              >
-                儲存排案
-              </button>
-            </div>
+            <p
+              v-if="scheduleStatus[bill.id]"
+              class="schedule-status"
+              :class="{ 'text-red-700': scheduleStatus[bill.id]?.state === 'error' }"
+              :role="scheduleStatus[bill.id]?.state === 'error' ? 'alert' : 'status'"
+            >
+              {{ scheduleStatus[bill.id]?.message }}
+            </p>
           </article>
         </div>
         <p v-else class="schedule-empty py-6 text-center">尚無議案</p>
@@ -715,6 +716,9 @@
   const editingUserId = ref<number | null>(null);
   const editingMeetingId = ref<number | null>(null);
   const billMeetingSelection = reactive<Record<number, number[]>>({});
+  const scheduleStatus = reactive<
+    Record<number, { state: 'saving' | 'saved' | 'error'; message: string }>
+  >({});
 
   const committeeForm = reactive({ name: '' });
 
@@ -779,11 +783,7 @@
     status: meetingsStatus,
     refresh: refreshMeetings,
   } = useRevalidatingFetch<Meeting[]>('/api/meetings');
-  const {
-    data: billsData,
-    status: billsStatus,
-    refresh: refreshBills,
-  } = useRevalidatingFetch<Bill[]>('/api/bills');
+  const { data: billsData, status: billsStatus } = useRevalidatingFetch<Bill[]>('/api/bills');
   // A card shows its spinner only until its first data arrives; background refreshes keep the rows.
   const isFirstLoad = (data: Ref<unknown>, status: Ref<string>) =>
     computed(() => data.value === undefined && status.value !== 'error');
@@ -807,8 +807,10 @@
   watch(
     bills,
     (items) => {
-      for (const bill of items)
+      for (const bill of items) {
+        if (scheduleStatus[bill.id]?.state === 'saving') continue;
         billMeetingSelection[bill.id] = bill.meetings.map((meeting) => meeting.id);
+      }
     },
     { immediate: true },
   );
@@ -826,23 +828,39 @@
       .join('、');
   }
 
-  function sameMeetingSelection(bill: Bill) {
-    const selected = billMeetingSelection[bill.id] ?? [];
-    return (
-      selected.length === bill.meetings.length &&
-      selected.every((id) => bill.meetings.some((meeting) => meeting.id === id))
-    );
-  }
+  async function scheduleBill(bill: Bill, meetingId: number, event: Event) {
+    const previousIds = bill.meetings.map((meeting) => meeting.id);
+    const checked = (event.target as HTMLInputElement).checked;
+    const meetingIds = checked
+      ? [...(billMeetingSelection[bill.id] ?? previousIds), meetingId]
+      : (billMeetingSelection[bill.id] ?? previousIds).filter((id) => id !== meetingId);
+    billMeetingSelection[bill.id] = meetingIds;
+    notice.value = '';
+    errorMessage.value = '';
+    scheduleStatus[bill.id] = { state: 'saving', message: '儲存中…' };
 
-  async function scheduleBill(bill: Bill) {
-    const meetingIds = billMeetingSelection[bill.id] ?? [];
-    const result = await requestJson<Bill>(`/api/proposals/${bill.id}/meeting`, 'PUT', {
-      meetingIds,
-    });
-    if (!result) return;
+    try {
+      const response = await fetch(`/api/proposals/${bill.id}/meeting`, {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meetingIds }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || result?.statusMessage || '儲存失敗');
 
-    notice.value = meetingIds.length ? '已更新排案' : '已取消議案排程';
-    await refreshBills();
+      billsData.value = billsData.value?.map((item) =>
+        item.id === bill.id ? (result as Bill) : item,
+      );
+      scheduleStatus[bill.id] = { state: 'saved', message: '已儲存' };
+    } catch (error) {
+      billMeetingSelection[bill.id] = previousIds;
+      const message = error instanceof Error ? error.message : '請稍後再試';
+      scheduleStatus[bill.id] = {
+        state: 'error',
+        message: `儲存失敗：${message}`,
+      };
+    }
   }
 
   async function requestJson<T>(url: string, method: string, body?: unknown): Promise<T | null> {
@@ -1311,25 +1329,15 @@
     font-weight: 750;
   }
 
-  .schedule-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 1rem;
+  .schedule-option:has(input:disabled) {
+    cursor: wait;
+    opacity: 0.65;
   }
 
-  .schedule-save {
-    width: 100%;
-  }
-
-  .schedule-save:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-  }
-
-  @media (min-width: 640px) {
-    .schedule-save {
-      width: auto;
-    }
+  .schedule-status {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
   }
 
   @media (min-width: 768px) {
