@@ -182,5 +182,6 @@ The reference data admin is available only to secretariat accounts:
 ```
 
 The admin's `製作會議記錄` tab saves decisions for each proposal in a meeting through
-`GET/PUT /api/meetings/:id/minutes` and downloads a PDF. The PDF uses an embedded open-source
-Kai font until a licensed 標楷體 file is supplied.
+`GET/PUT /api/meetings/:id/minutes` and downloads a PDF. The PDF embeds the CNS11643
+`TW-Kai.ttf` 全字庫正楷體 font. Its two static asset parts are reassembled in the browser
+before PDF generation.

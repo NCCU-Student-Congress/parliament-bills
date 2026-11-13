@@ -4,8 +4,8 @@ import type { AgendaEntry, Meeting, MeetingDecision, Proposal } from '~~/shared/
 import { agendaLines } from '~~/shared/utils/agenda';
 import { formatTermLabel } from '~~/shared/utils/term';
 
-// Replace this file with the licensed 標楷體 TTF when it becomes available.
-const MINUTES_FONT_URL = '/fonts/LXGWWenKaiTC-Regular.ttf';
+// Byte-for-byte parts of TW-Kai.ttf, kept below the Cloudflare Pages per-asset limit.
+const MINUTES_FONT_PARTS = ['/fonts/TW-Kai-1.bin', '/fonts/TW-Kai-2.bin'];
 const PAGE_MARGIN = 48;
 const TITLE_SIZE = 16;
 const HEADING_SIZE = 14;
@@ -39,13 +39,24 @@ export async function createMeetingMinutesPdf(
   proposals: Proposal[],
   decisions: MeetingDecision[],
 ): Promise<Uint8Array> {
-  const response = await fetch(MINUTES_FONT_URL);
-  if (!response.ok) throw new Error('無法載入會議記錄字型');
+  const parts = await Promise.all(
+    MINUTES_FONT_PARTS.map(async (path) => {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error('無法載入會議記錄字型');
+      return new Uint8Array(await response.arrayBuffer());
+    }),
+  );
+  const fontBytes = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    fontBytes.set(part, offset);
+    offset += part.length;
+  }
 
   const document = await PDFDocument.create();
   document.registerFontkit(fontkit);
-  // pdf-lib's subsetting drops glyphs from this CJK font in rendered output.
-  const font = await document.embedFont(await response.arrayBuffer());
+  // Embed the full font: pdf-lib subsetting omitted CJK glyphs in rendered PDFs.
+  const font = await document.embedFont(fontBytes);
   document.setTitle(`${meeting.title} 會議記錄`);
   document.setLanguage('zh-TW');
 
