@@ -481,13 +481,16 @@
             </div>
 
             <div class="schedule-details">
-              <div>
-                <h4 class="schedule-label">目前會議</h4>
-                <ul v-if="bill.meetings.length" class="schedule-current">
-                  <li v-for="meeting in bill.meetings" :key="meeting.id">{{ meeting.title }}</li>
-                </ul>
-                <p v-else class="schedule-empty">尚未排入會議</p>
-              </div>
+              <dl class="schedule-people">
+                <div>
+                  <dt class="schedule-label">提案人</dt>
+                  <dd class="schedule-person">{{ bill.proposerName }}</dd>
+                </div>
+                <div>
+                  <dt class="schedule-label">連署人</dt>
+                  <dd class="schedule-person">{{ confirmedCosponsorNames(bill) || '無' }}</dd>
+                </div>
+              </dl>
 
               <div>
                 <h4 class="schedule-label">排入會議</h4>
@@ -636,6 +639,13 @@
     return meetings.value.filter(
       (meeting) => meeting.session === bill.session && meeting.committeeId === bill.committeeId,
     );
+  }
+
+  function confirmedCosponsorNames(bill: Bill) {
+    return bill.cosponsors
+      .filter((cosponsor) => cosponsor.status === 'confirmed' && cosponsor.userName)
+      .map((cosponsor) => cosponsor.userName)
+      .join('、');
   }
 
   function sameMeetingSelection(bill: Bill) {
@@ -1052,18 +1062,13 @@
     font-weight: 900;
   }
 
-  .schedule-current {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+  .schedule-people {
+    display: grid;
+    gap: 0.875rem;
   }
 
-  .schedule-current li {
-    max-width: 100%;
+  .schedule-person {
     overflow-wrap: anywhere;
-    border-radius: 6px;
-    background: #f5f5f7;
-    padding: 0.3rem 0.55rem;
     font-size: 0.875rem;
     font-weight: 700;
   }
