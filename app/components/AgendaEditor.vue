@@ -227,7 +227,12 @@
   });
 
   function insertEntry(index: number) {
-    entries.value.splice(index, 0, { kind: 'text', content: '', proposalId: null });
+    entries.value.splice(index, 0, {
+      kind: 'text',
+      content: '',
+      proposalId: null,
+      decisionKey: crypto.randomUUID(),
+    });
     entryKeys.value.splice(index, 0, nextKey++);
   }
   function addElectionText() {
@@ -239,7 +244,7 @@
       discussionIndex,
       0,
       { kind: 'heading', content: '選舉事項', proposalId: null },
-      { kind: 'text', content: '', proposalId: null },
+      { kind: 'text', content: '', proposalId: null, decisionKey: crypto.randomUUID() },
     );
     entries.value = normalizeAgenda(selectedMeeting.value!, proposals.value, entries.value);
     entryKeys.value = entries.value.map(() => nextKey++);

@@ -11,17 +11,23 @@ export default defineEventHandler(async (event) => {
 
   const { results = [] } = await db
     .prepare(
-      `SELECT kind, content, proposal_id FROM meeting_agenda_entries AS entry
+      `SELECT kind, content, proposal_id, decision_key FROM meeting_agenda_entries AS entry
        WHERE meeting_id = ? AND (proposal_id IS NULL OR EXISTS (
          SELECT 1 FROM proposal_meetings
          WHERE meeting_id = entry.meeting_id AND proposal_id = entry.proposal_id
        )) ORDER BY position`,
     )
     .bind(id)
-    .all<{ kind: AgendaEntry['kind']; content: string; proposal_id: number | null }>();
+    .all<{
+      kind: AgendaEntry['kind'];
+      content: string;
+      proposal_id: number | null;
+      decision_key: string | null;
+    }>();
   return results.map((row): AgendaEntry => ({
     kind: row.kind,
     content: row.content,
     proposalId: row.proposal_id,
+    ...(row.decision_key ? { decisionKey: row.decision_key } : {}),
   }));
 });

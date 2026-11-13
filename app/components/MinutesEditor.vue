@@ -1,7 +1,9 @@
 <template>
   <section class="rounded-lg border border-[#dcdce2] bg-white p-5 shadow-sm">
     <h2 class="text-xl font-bold text-[#12122b]">製作會議記錄</h2>
-    <p class="mt-1 text-sm text-gray-600">選擇會議後填寫每案決議，儲存後即可下載 PDF。</p>
+    <p class="mt-1 text-sm text-gray-600">
+      選擇會議後填寫議案與文字項目的決議，儲存後即可下載 PDF。
+    </p>
 
     <label class="mt-5 block font-semibold" for="minutes-meeting">
       會議
@@ -27,28 +29,39 @@
           selectedMeeting.location || '未設定地點'
         }}
       </p>
-      <div v-if="orderedProposals.length" class="space-y-4">
-        <article
-          v-for="item in orderedProposals"
-          :key="item.proposal.id"
-          class="rounded-lg border border-gray-200 p-4"
-        >
-          <h3 class="font-semibold text-[#12122b]">{{ item.title }}</h3>
-          <label class="mt-3 block" :for="`decision-${item.proposal.id}`">
-            <span class="mb-1 block text-sm font-semibold">決議</span>
+      <div v-if="hasDecisionItems" class="space-y-4">
+        <template v-for="item in orderedItems" :key="item.key">
+          <h3 v-if="item.kind === 'heading'" class="pt-3 text-lg font-bold text-[#12122b]">
+            {{ item.title }}
+          </h3>
+          <article v-else class="rounded-lg border border-gray-200 p-4">
+            <span class="text-xs font-semibold text-gray-600">
+              {{ item.kind === 'proposal' ? '議案' : '文字項目' }}
+            </span>
+            <h4
+              :id="`title-${item.key}`"
+              class="mt-1 whitespace-pre-wrap font-semibold text-[#12122b]"
+            >
+              {{ item.title }}
+            </h4>
+            <label class="mt-3 block" :for="`decision-${item.key}`">
+              <span class="mb-1 block text-sm font-semibold">決議</span>
+            </label>
             <textarea
-              :id="`decision-${item.proposal.id}`"
-              v-model="decisionDrafts[item.proposal.id]"
-              class="control min-h-28"
-              rows="4"
+              :id="`decision-${item.key}`"
+              v-model="decisionDrafts[item.key]"
+              v-auto-resize
+              :name="`decision-${item.key}`"
+              class="control decision-textarea"
+              rows="1"
               maxlength="10000"
-              aria-describedby="minutes-hint"
-              placeholder="請輸入此案決議；可暫時留白"
+              :aria-describedby="`title-${item.key} minutes-hint`"
+              placeholder="請輸入決議；可暫時留白"
             ></textarea>
-          </label>
-        </article>
+          </article>
+        </template>
       </div>
-      <p v-else class="rounded-lg bg-gray-50 p-5 text-gray-600">本場會議尚無已排入議案。</p>
+      <p v-else class="rounded-lg bg-gray-50 p-5 text-gray-600">本場會議尚無可填寫決議的項目。</p>
       <p id="minutes-hint" class="mt-3 text-sm text-gray-600">
         未填寫的決議在 PDF 中會顯示「尚未填寫」。
       </p>
@@ -81,6 +94,11 @@
   import type { AgendaEntry, Meeting, MeetingDecision, Proposal } from '~~/shared/types/bill';
   import { agendaLines, normalizeAgenda } from '~~/shared/utils/agenda';
 
+  type MinutesItem =
+    | { kind: 'heading'; key: string; title: string }
+    | { kind: 'proposal'; key: string; title: string; proposalId: number }
+    | { kind: 'text'; key: string; title: string; decisionKey: string };
+
   const props = defineProps<{ meetings: Meeting[] }>();
   const meetingId = ref(0);
   const selectedMeeting = computed(() =>
@@ -88,7 +106,7 @@
   );
   const proposals = ref<Proposal[]>([]);
   const entries = ref<AgendaEntry[]>([]);
-  const decisionDrafts = ref<Record<number, string>>({});
+  const decisionDrafts = ref<Record<string, string>>({});
   const savedSnapshot = ref('');
   const loading = ref(false);
   const saving = ref(false);
@@ -97,20 +115,52 @@
   const actionError = ref('');
   const saveNotice = ref('');
 
-  const orderedProposals = computed(() => {
-    const proposalMap = new Map(proposals.value.map((item) => [item.id, item]));
-    return agendaLines(entries.value, proposals.value).flatMap((line) => {
-      if (line.entry.kind !== 'proposal') return [];
-      const proposal = proposalMap.get(line.entry.proposalId ?? -1);
-      return proposal ? [{ proposal, title: line.text }] : [];
-    });
+  const orderedItems = computed<MinutesItem[]>(() => {
+    const items: MinutesItem[] = [];
+    for (const [index, line] of agendaLines(entries.value, proposals.value).entries()) {
+      if (line.entry.kind === 'heading') {
+        items.push({ kind: 'heading', key: `heading-${index}`, title: line.text });
+      } else if (line.entry.kind === 'proposal' && line.entry.proposalId !== null) {
+        items.push({
+          kind: 'proposal',
+          key: `proposal-${line.entry.proposalId}`,
+          title: line.text,
+          proposalId: line.entry.proposalId,
+        });
+      } else if (line.entry.kind === 'text' && line.entry.decisionKey) {
+        items.push({
+          kind: 'text',
+          key: `text-${line.entry.decisionKey}`,
+          title: line.text,
+          decisionKey: line.entry.decisionKey,
+        });
+      }
+    }
+    return items;
   });
-  const decisionPayload = computed<MeetingDecision[]>(() =>
-    proposals.value.map((proposal) => ({
-      proposalId: proposal.id,
-      decision: (decisionDrafts.value[proposal.id] ?? '').trim(),
-    })),
+  const hasDecisionItems = computed(() =>
+    orderedItems.value.some((item) => item.kind !== 'heading'),
   );
+  const decisionPayload = computed<MeetingDecision[]>(() =>
+    orderedItems.value.flatMap<MeetingDecision>((item) => {
+      if (item.kind === 'heading') return [];
+      const decision = (decisionDrafts.value[item.key] ?? '').trim();
+      return item.kind === 'proposal'
+        ? [{ proposalId: item.proposalId, decision }]
+        : [{ decisionKey: item.decisionKey, decision }];
+    }),
+  );
+
+  function resizeDecisionField(element: HTMLTextAreaElement) {
+    if (CSS.supports('field-sizing', 'content')) return;
+    element.style.height = 'auto';
+    element.style.height = `${element.scrollHeight}px`;
+  }
+
+  const vAutoResize = {
+    mounted: resizeDecisionField,
+    updated: resizeDecisionField,
+  };
   const dirty = computed(() =>
     Boolean(
       selectedMeeting.value &&
@@ -160,9 +210,21 @@
       if (cancelled) return;
       proposals.value = meetingProposals;
       entries.value = normalizeAgenda(selectedMeeting.value, meetingProposals, agenda);
-      const saved = new Map(decisions.map((item) => [item.proposalId, item.decision]));
+      if (entries.value.some((entry) => entry.kind === 'text' && !entry.decisionKey)) {
+        throw new Error('議程文字項目缺少識別碼，請重新儲存議程');
+      }
+      const saved = new Map(
+        decisions.map((item) => [
+          item.proposalId !== undefined
+            ? `proposal-${item.proposalId}`
+            : `text-${item.decisionKey}`,
+          item.decision,
+        ]),
+      );
       decisionDrafts.value = Object.fromEntries(
-        meetingProposals.map((proposal) => [proposal.id, saved.get(proposal.id) ?? '']),
+        orderedItems.value
+          .filter((item) => item.kind !== 'heading')
+          .map((item) => [item.key, saved.get(item.key) ?? '']),
       );
       savedSnapshot.value = JSON.stringify(decisionPayload.value);
     } catch (error) {
@@ -257,5 +319,10 @@
   .control:focus-visible {
     outline: 3px solid #e60012;
     outline-offset: 2px;
+  }
+  .decision-textarea {
+    field-sizing: content;
+    height: auto;
+    overflow-y: hidden;
   }
 </style>

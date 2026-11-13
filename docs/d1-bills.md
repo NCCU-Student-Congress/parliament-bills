@@ -181,7 +181,8 @@ The reference data admin is available only to secretariat accounts:
 /admin
 ```
 
-The admin's `製作會議記錄` tab saves decisions for each proposal in a meeting through
+The admin's `製作會議記錄` tab saves decisions for each proposal and agenda text item through
 `GET/PUT /api/meetings/:id/minutes` and downloads a PDF. The PDF embeds the CNS11643
 `TW-Kai.ttf` 全字庫正楷體 font. Its two static asset parts are reassembled in the browser
-before PDF generation.
+before PDF generation. Agenda text items have stable decision keys, so their decisions survive
+reordering and content edits.

@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
     .all<{ proposal_id: number }>();
   const scheduledIds = new Set(scheduled.map((row) => row.proposal_id));
   const usedIds = new Set<number>();
+  const usedDecisionKeys = new Set<string>();
   const entries: AgendaEntry[] = [];
   for (const item of body.entries) {
     if (!item || !['heading', 'text', 'proposal'].includes(item.kind)) {
@@ -45,7 +46,22 @@ export default defineEventHandler(async (event) => {
           statusMessage: '議程文字不可為空且不可超過 10000 字',
         });
       }
-      entries.push({ kind: item.kind, content: item.content.trim(), proposalId: null });
+      if (item.kind === 'text') {
+        if (
+          typeof item.decisionKey !== 'string' ||
+          !/^[a-zA-Z0-9-]{1,64}$/.test(item.decisionKey) ||
+          usedDecisionKeys.has(item.decisionKey)
+        ) {
+          throw createError({ statusCode: 400, statusMessage: '文字項目的識別碼無效或重複' });
+        }
+        usedDecisionKeys.add(item.decisionKey);
+      }
+      entries.push({
+        kind: item.kind,
+        content: item.content.trim(),
+        proposalId: null,
+        ...(item.kind === 'text' ? { decisionKey: item.decisionKey } : {}),
+      });
     }
   }
   if (usedIds.size !== scheduledIds.size) {
@@ -56,10 +72,18 @@ export default defineEventHandler(async (event) => {
     ...entries.map((entry, position) =>
       db
         .prepare(
-          'INSERT INTO meeting_agenda_entries (meeting_id, position, kind, content, proposal_id) VALUES (?, ?, ?, ?, ?)',
+          'INSERT INTO meeting_agenda_entries (meeting_id, position, kind, content, proposal_id, decision_key) VALUES (?, ?, ?, ?, ?, ?)',
         )
-        .bind(id, position, entry.kind, entry.content, entry.proposalId),
+        .bind(id, position, entry.kind, entry.content, entry.proposalId, entry.decisionKey ?? null),
     ),
+    db
+      .prepare(
+        `DELETE FROM meeting_text_decisions
+         WHERE meeting_id = ? AND decision_key NOT IN (
+           SELECT decision_key FROM meeting_agenda_entries WHERE meeting_id = ? AND kind = 'text'
+         )`,
+      )
+      .bind(id, id),
   ]);
   return entries;
 });

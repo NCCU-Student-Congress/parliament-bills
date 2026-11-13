@@ -61,12 +61,12 @@ export interface AgendaEntry {
   kind: 'heading' | 'text' | 'proposal';
   content: string;
   proposalId: number | null;
+  decisionKey?: string;
 }
 
-export interface MeetingDecision {
-  proposalId: number;
-  decision: string;
-}
+export type MeetingDecision =
+  | { proposalId: number; decisionKey?: never; decision: string }
+  | { proposalId?: never; decisionKey: string; decision: string };
 
 export interface ProposalMeeting {
   id: number;

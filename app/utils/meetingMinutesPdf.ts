@@ -129,7 +129,23 @@ export async function createMeetingMinutesPdf(
     center: true,
   });
 
-  const decisionMap = new Map(decisions.map((item) => [item.proposalId, item.decision]));
+  const proposalDecisions = new Map(
+    decisions
+      .filter((item) => item.proposalId !== undefined)
+      .map((item) => [item.proposalId!, item.decision]),
+  );
+  const textDecisions = new Map(
+    decisions
+      .filter((item) => item.decisionKey !== undefined)
+      .map((item) => [item.decisionKey!, item.decision]),
+  );
+  function drawDecision(decision: string | undefined, prefix: string) {
+    drawText(`決議：${decision || '尚未填寫'}`, {
+      indent: 12 + font.widthOfTextAtSize(prefix, BODY_SIZE),
+      hangingIndent: font.widthOfTextAtSize('決議：', BODY_SIZE),
+      gap: CASE_GAP,
+    });
+  }
   for (const line of agendaLines(entries, proposals)) {
     if (line.entry.kind === 'heading') {
       ensureSpace(50);
@@ -145,13 +161,15 @@ export async function createMeetingMinutesPdf(
         indent: 12,
         hangingIndent: font.widthOfTextAtSize(subjectLabel, BODY_SIZE),
       });
-      drawText(`決議：${decisionMap.get(line.entry.proposalId!) || '尚未填寫'}`, {
-        indent: 12 + font.widthOfTextAtSize(prefix, BODY_SIZE),
-        hangingIndent: font.widthOfTextAtSize('決議：', BODY_SIZE),
-        gap: CASE_GAP,
-      });
+      drawDecision(proposalDecisions.get(line.entry.proposalId!), prefix);
     } else {
-      drawText(line.text, { indent: 12, gap: 5 });
+      ensureSpace(52);
+      const prefix = line.text.match(/^([一二三四五六七八九十百千\d]+、)/)?.[1] ?? '';
+      drawText(line.text, {
+        indent: 12,
+        hangingIndent: font.widthOfTextAtSize(prefix, BODY_SIZE),
+      });
+      drawDecision(textDecisions.get(line.entry.decisionKey ?? ''), prefix);
     }
   }
 
