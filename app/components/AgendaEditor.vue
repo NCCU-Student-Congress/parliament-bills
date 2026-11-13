@@ -10,7 +10,7 @@
       >會議
       <select id="agenda-meeting" v-model.number="meetingId" class="control mt-2 w-full">
         <option :value="0">請選擇會議</option>
-        <option v-for="meeting in meetings" :key="meeting.id" :value="meeting.id">
+        <option v-for="meeting in meetingsInReverseOrder" :key="meeting.id" :value="meeting.id">
           {{ meeting.title }}（{{ meeting.meetingTypeName }}）
         </option>
       </select>
@@ -147,6 +147,7 @@
 
   const props = defineProps<{ meetings: Meeting[] }>();
   const meetingId = ref(0);
+  const meetingsInReverseOrder = computed(() => [...props.meetings].reverse());
   const selectedMeeting = computed(() =>
     props.meetings.find((meeting) => meeting.id === meetingId.value),
   );
