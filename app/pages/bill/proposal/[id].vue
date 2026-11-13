@@ -50,9 +50,19 @@
       <div
         class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none"
       >
-        <p class="mb-2 text-sm font-bold text-gray-600">
-          {{ formatTermLabel(bill.session) }} · {{ bill.committeeName }}
-        </p>
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <p class="min-w-0 text-sm font-bold text-gray-600">
+            {{ formatTermLabel(bill.session) }} · {{ bill.committeeName }}
+          </p>
+          <LoadingButton
+            type="button"
+            class="shrink-0 rounded border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            :loading="reloading"
+            @click="reloadLatest"
+          >
+            重新整理
+          </LoadingButton>
+        </div>
         <h1 class="text-2xl font-bold text-gray-900">{{ bill.subject }}</h1>
       </div>
 
@@ -361,6 +371,19 @@
   onMounted(() => {
     refreshSession();
   });
+
+  // Public reads come from a short-lived edge cache; this skips it so live meeting changes show at once.
+  const reloading = ref(false);
+  async function reloadLatest() {
+    reloading.value = true;
+    try {
+      bill.value = await $fetch<Bill>(`/api/proposals/${id.value}`, FRESH_FETCH_OPTIONS);
+    } catch (error) {
+      console.error('取得最新資料失敗:', error);
+    } finally {
+      reloading.value = false;
+    }
+  }
 
   const confirmedCosponsors = computed(() =>
     (bill.value?.cosponsors ?? []).map((cosponsor) => cosponsor.userName).filter(Boolean),

@@ -30,7 +30,17 @@
     </div>
     <template v-else>
       <header class="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <p class="mb-2 text-sm font-bold text-primary">{{ meeting.meetingTypeName }}</p>
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <p class="min-w-0 text-sm font-bold text-primary">{{ meeting.meetingTypeName }}</p>
+          <LoadingButton
+            type="button"
+            class="shrink-0 rounded border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            :loading="reloading"
+            @click="reloadLatest"
+          >
+            重新整理
+          </LoadingButton>
+        </div>
         <h1 class="mb-4 text-3xl font-bold text-gray-900">{{ meeting.title }}</h1>
         <dl class="grid gap-3 text-sm text-gray-700 sm:grid-cols-2">
           <div>
@@ -151,6 +161,25 @@
         (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
     );
   });
+  // Public reads come from a short-lived edge cache; this skips it so live meeting changes show at once.
+  const reloading = ref(false);
+  async function reloadLatest() {
+    reloading.value = true;
+    try {
+      const [meetings, bills, agenda] = await Promise.all([
+        $fetch(`/api/meetings/scheduled?session=${term}`, FRESH_FETCH_OPTIONS),
+        $fetch(`/api/meetings/${meetingId}/proposals`, FRESH_FETCH_OPTIONS),
+        $fetch(`/api/meetings/${meetingId}/agenda`, FRESH_FETCH_OPTIONS),
+      ]);
+      meetingsData.value = meetings;
+      billsData.value = bills;
+      agendaData.value = agenda;
+    } catch (error) {
+      console.error('取得最新資料失敗:', error);
+    } finally {
+      reloading.value = false;
+    }
+  }
   const copied = ref(false);
   async function copyAgenda() {
     try {
