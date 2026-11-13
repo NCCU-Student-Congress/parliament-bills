@@ -270,13 +270,6 @@
           複製連結
         </button>
         <button
-          type="button"
-          class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
-          @click="printPage"
-        >
-          列印
-        </button>
-        <button
           v-if="isSecretariat"
           type="button"
           :disabled="isDeleting"
@@ -564,11 +557,6 @@
       .catch(() => {
         alert('複製連結失敗，請手動複製。');
       });
-  }
-
-  function printPage() {
-    if (typeof window === 'undefined') return;
-    window.print();
   }
 </script>
 
