@@ -172,23 +172,35 @@ function validateMeetingTimes(meetingDate: string, proposalDeadlineAt: string): 
   const deadlineTime = Date.parse(proposalDeadlineAt);
 
   if (!Number.isFinite(meetingTime) || !Number.isFinite(deadlineTime)) {
-    throw createError({ statusCode: 400, message: '會議時間或提案截止時間格式不正確' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: '會議時間或提案截止時間格式不正確',
+    });
   }
 
   if (deadlineTime > meetingTime) {
-    throw createError({ statusCode: 400, message: '提案截止時間不可晚於會議時間' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: '提案截止時間不可晚於會議時間',
+    });
   }
 }
 
 function normalizeProposalDate(value: unknown): string {
   const date = cleanString(value);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw createError({ statusCode: 400, message: '提案日期格式不正確' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: '提案日期格式不正確',
+    });
   }
 
   const parsed = new Date(`${date}T00:00:00Z`);
   if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
-    throw createError({ statusCode: 400, message: '提案日期不正確' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '提案日期不正確' });
   }
 
   return date;
@@ -351,7 +363,7 @@ function rowToProposal(
 function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
-    throw createError({ statusCode: 400, message: '附件格式不正確' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '附件格式不正確' });
   }
 
   return value.map((item, index) => {
@@ -361,13 +373,21 @@ function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
       Array.isArray(item) ||
       Object.keys(item).some((key) => key !== 'name' && key !== 'url')
     ) {
-      throw createError({ statusCode: 400, message: `附件 ${index + 1} 格式不正確` });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: `附件 ${index + 1} 格式不正確`,
+      });
     }
 
     const name = cleanString(item.name);
     const url = normalizeAttachmentUrl(item.url);
     if (!name || !url) {
-      throw createError({ statusCode: 400, message: `附件 ${index + 1} 需要名稱與有效網址` });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: `附件 ${index + 1} 需要名稱與有效網址`,
+      });
     }
 
     return { name, url };
@@ -499,19 +519,23 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
   const subject = cleanString(input.subject);
 
   if (!session) {
-    throw createError({ statusCode: 400, message: '會期為必填欄位' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '會期為必填欄位' });
   }
 
   if (!proposerId) {
-    throw createError({ statusCode: 400, message: '提案人為必填欄位' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: '提案人為必填欄位',
+    });
   }
 
   if (!subject) {
-    throw createError({ statusCode: 400, message: '案由為必填欄位' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '案由為必填欄位' });
   }
 
   if (!isProposalType(proposalType)) {
-    throw createError({ statusCode: 400, message: '案型不正確' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '案型不正確' });
   }
 
   return {
@@ -537,15 +561,19 @@ function normalizeUserInput(input: UserInput): NormalizedUserInput {
     : [];
 
   if (!name) {
-    throw createError({ statusCode: 400, message: '姓名為必填欄位' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '姓名為必填欄位' });
   }
 
   if (!email) {
-    throw createError({ statusCode: 400, message: 'Email 為必填欄位' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: 'Email 為必填欄位',
+    });
   }
 
   if (!isPermissionRole(permissionRole)) {
-    throw createError({ statusCode: 400, message: '權限角色不正確' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '權限角色不正確' });
   }
 
   return {
@@ -563,7 +591,7 @@ export function createProposalRepository(db: D1Database) {
     }>();
 
     if (result?.meta?.changes === 0) {
-      throw createError({ statusCode: 404, message: notFoundMessage });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: notFoundMessage });
     }
 
     return { success: true };
@@ -573,7 +601,11 @@ export function createProposalRepository(db: D1Database) {
     const name = cleanString(input.name);
 
     if (!name) {
-      throw createError({ statusCode: 400, message: '委員會名稱為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '委員會名稱為必填欄位',
+      });
     }
 
     const row = await db
@@ -586,7 +618,11 @@ export function createProposalRepository(db: D1Database) {
       .first<CommitteeRow>();
 
     if (!row) {
-      throw createError({ statusCode: 500, message: '委員會寫入失敗' });
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Internal Server Error',
+        message: '委員會寫入失敗',
+      });
     }
 
     return rowToCommittee(row);
@@ -596,7 +632,11 @@ export function createProposalRepository(db: D1Database) {
     const name = cleanString(input.name);
 
     if (!name) {
-      throw createError({ statusCode: 400, message: '委員會名稱為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '委員會名稱為必填欄位',
+      });
     }
 
     const row = await db
@@ -611,7 +651,11 @@ export function createProposalRepository(db: D1Database) {
       .first<CommitteeRow>();
 
     if (!row) {
-      throw createError({ statusCode: 404, message: '找不到指定委員會' });
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Not Found',
+        message: '找不到指定委員會',
+      });
     }
 
     return rowToCommittee(row);
@@ -651,7 +695,11 @@ export function createProposalRepository(db: D1Database) {
       .first<SessionRow>();
 
     if (!row) {
-      throw createError({ statusCode: 500, message: '會期寫入失敗' });
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Internal Server Error',
+        message: '會期寫入失敗',
+      });
     }
 
     return rowToSession(row);
@@ -676,11 +724,15 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number; starts_at: string | null }>();
 
     if (!session) {
-      throw createError({ statusCode: 404, message: '找不到指定會期' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定會期' });
     }
 
     if (!session.starts_at || session.starts_at.slice(0, 10) <= getTaipeiDateString()) {
-      throw createError({ statusCode: 400, message: '僅允許刪除未來會期' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '僅允許刪除未來會期',
+      });
     }
 
     const references = await db
@@ -695,6 +747,7 @@ export function createProposalRepository(db: D1Database) {
     if ((references?.meeting_count ?? 0) > 0 || (references?.proposal_count ?? 0) > 0) {
       throw createError({
         statusCode: 409,
+        statusMessage: 'Conflict',
         message: '會期已有會議或議案資料，無法只刪除會期',
       });
     }
@@ -715,7 +768,11 @@ export function createProposalRepository(db: D1Database) {
       .first<UserRow>();
 
     if (!row) {
-      throw createError({ statusCode: 500, message: '人員寫入失敗' });
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Internal Server Error',
+        message: '人員寫入失敗',
+      });
     }
 
     return rowToUser(row);
@@ -723,7 +780,11 @@ export function createProposalRepository(db: D1Database) {
 
   const createUsers = async (inputs: UserInput[]) => {
     if (!Array.isArray(inputs) || inputs.length === 0) {
-      throw createError({ statusCode: 400, message: '至少需要一筆人員資料' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '至少需要一筆人員資料',
+      });
     }
 
     const normalizedUsers = inputs.map(normalizeUserInput);
@@ -740,6 +801,7 @@ export function createProposalRepository(db: D1Database) {
     if (duplicateInputEmails.size > 0) {
       throw createError({
         statusCode: 400,
+        statusMessage: 'Bad Request',
         message: `同批名單有重複 Email：${[...duplicateInputEmails].join('、')}`,
       });
     }
@@ -753,6 +815,7 @@ export function createProposalRepository(db: D1Database) {
     if (existingUsers.length > 0) {
       throw createError({
         statusCode: 409,
+        statusMessage: 'Conflict',
         message: `以下 Email 已存在：${existingUsers.map((user) => user.email).join('、')}`,
       });
     }
@@ -801,7 +864,7 @@ export function createProposalRepository(db: D1Database) {
       .first<UserRow>();
 
     if (!row) {
-      throw createError({ statusCode: 404, message: '找不到指定人員' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定人員' });
     }
 
     return rowToUser(row);
@@ -838,21 +901,37 @@ export function createProposalRepository(db: D1Database) {
     let meetingTypeName = '大會';
 
     if (!session) {
-      throw createError({ statusCode: 400, message: '會期為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '會期為必填欄位',
+      });
     }
 
     if (!meetingDate) {
-      throw createError({ statusCode: 400, message: '會議日期為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '會議日期為必填欄位',
+      });
     }
 
     if (!proposalDeadlineAt) {
-      throw createError({ statusCode: 400, message: '提案截止時間為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '提案截止時間為必填欄位',
+      });
     }
 
     validateMeetingTimes(meetingDate, proposalDeadlineAt);
 
     if (!title) {
-      throw createError({ statusCode: 400, message: '會議名稱為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '會議名稱為必填欄位',
+      });
     }
 
     if (committeeId) {
@@ -862,7 +941,11 @@ export function createProposalRepository(db: D1Database) {
         .first<{ name: string }>();
 
       if (!existingCommittee) {
-        throw createError({ statusCode: 400, message: '找不到指定委員會' });
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: '找不到指定委員會',
+        });
       }
       meetingTypeName = existingCommittee.name;
     }
@@ -873,7 +956,11 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number }>();
 
     if (!existingSession) {
-      throw createError({ statusCode: 400, message: '找不到指定會期' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '找不到指定會期',
+      });
     }
 
     const row = await db
@@ -903,7 +990,11 @@ export function createProposalRepository(db: D1Database) {
       .first<MeetingRow>();
 
     if (!row) {
-      throw createError({ statusCode: 500, message: '會議寫入失敗' });
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Internal Server Error',
+        message: '會議寫入失敗',
+      });
     }
 
     const [meeting] = (await getMeetings({ session })).filter(
@@ -932,21 +1023,37 @@ export function createProposalRepository(db: D1Database) {
     let selectedCommitteeName: string | null = null;
 
     if (!session) {
-      throw createError({ statusCode: 400, message: '會期為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '會期為必填欄位',
+      });
     }
 
     if (!meetingDate) {
-      throw createError({ statusCode: 400, message: '會議日期為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '會議日期為必填欄位',
+      });
     }
 
     if (!proposalDeadlineAt) {
-      throw createError({ statusCode: 400, message: '提案截止時間為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '提案截止時間為必填欄位',
+      });
     }
 
     validateMeetingTimes(meetingDate, proposalDeadlineAt);
 
     if (!title) {
-      throw createError({ statusCode: 400, message: '會議名稱為必填欄位' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '會議名稱為必填欄位',
+      });
     }
 
     if (committeeId) {
@@ -956,7 +1063,11 @@ export function createProposalRepository(db: D1Database) {
         .first<{ name: string }>();
 
       if (!existingCommittee) {
-        throw createError({ statusCode: 400, message: '找不到指定委員會' });
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: '找不到指定委員會',
+        });
       }
       selectedCommitteeName = existingCommittee.name;
     }
@@ -967,7 +1078,11 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number }>();
 
     if (!existingSession) {
-      throw createError({ statusCode: 400, message: '找不到指定會期' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '找不到指定會期',
+      });
     }
 
     const currentMeeting = await db
@@ -975,7 +1090,7 @@ export function createProposalRepository(db: D1Database) {
       .bind(id)
       .first<{ committee_id: number | null; meeting_type_name: string }>();
     if (!currentMeeting) {
-      throw createError({ statusCode: 404, message: '找不到指定會議' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定會議' });
     }
     const meetingTypeName =
       committeeId === currentMeeting.committee_id
@@ -993,7 +1108,11 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number }>();
 
     if (conflictingProposal) {
-      throw createError({ statusCode: 409, message: '會議已有不符合新會期或委員會的議案' });
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: '會議已有不符合新會期或委員會的議案',
+      });
     }
 
     const row = await db
@@ -1033,7 +1152,7 @@ export function createProposalRepository(db: D1Database) {
       .first<MeetingRow>();
 
     if (!row) {
-      throw createError({ statusCode: 404, message: '找不到指定會議' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定會議' });
     }
 
     const [meeting] = (await getMeetings({ session })).filter(
@@ -1047,7 +1166,12 @@ export function createProposalRepository(db: D1Database) {
       .prepare('SELECT 1 FROM proposal_meetings WHERE meeting_id = ? LIMIT 1')
       .bind(id)
       .first();
-    if (assigned) throw createError({ statusCode: 409, message: '會議已有排入議案，請先取消排案' });
+    if (assigned)
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: '會議已有排入議案，請先取消排案',
+      });
     return deleteById('meetings', id, '找不到指定會議');
   };
 
@@ -1179,7 +1303,11 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number }>();
 
     if (!existingSession) {
-      throw createError({ statusCode: 400, message: '找不到指定會期' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '找不到指定會期',
+      });
     }
 
     if (proposal.committeeId) {
@@ -1189,7 +1317,11 @@ export function createProposalRepository(db: D1Database) {
         .first<{ id: number }>();
 
       if (!existingCommittee) {
-        throw createError({ statusCode: 400, message: '找不到指定委員會' });
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: '找不到指定委員會',
+        });
       }
     }
 
@@ -1199,11 +1331,19 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number; permission_role: string }>();
 
     if (!proposer) {
-      throw createError({ statusCode: 400, message: '找不到指定提案人' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '找不到指定提案人',
+      });
     }
 
     if (!isPermissionRole(proposer.permission_role)) {
-      throw createError({ statusCode: 400, message: '提案人身份不正確' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '提案人身份不正確',
+      });
     }
 
     const inserted = await db
@@ -1231,7 +1371,11 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number }>();
 
     if (!inserted?.id) {
-      throw createError({ statusCode: 500, message: '議案寫入失敗' });
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Internal Server Error',
+        message: '議案寫入失敗',
+      });
     }
 
     if (proposal.attachments.length) {
@@ -1250,7 +1394,11 @@ export function createProposalRepository(db: D1Database) {
     const saved = await getBillById(inserted.id);
 
     if (!saved) {
-      throw createError({ statusCode: 500, message: '議案寫入後讀取失敗' });
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Internal Server Error',
+        message: '議案寫入後讀取失敗',
+      });
     }
 
     return saved;
@@ -1263,7 +1411,7 @@ export function createProposalRepository(db: D1Database) {
       .first<{ session: number; committee_id: number | null }>();
 
     if (!current) {
-      throw createError({ statusCode: 404, message: '找不到指定議案' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定議案' });
     }
 
     if (field === 'attachments') {
@@ -1280,7 +1428,11 @@ export function createProposalRepository(db: D1Database) {
 
       const updated = await getBillById(id);
       if (!updated) {
-        throw createError({ statusCode: 404, message: '找不到指定議案' });
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'Not Found',
+          message: '找不到指定議案',
+        });
       }
       return updated;
     }
@@ -1293,14 +1445,22 @@ export function createProposalRepository(db: D1Database) {
       case 'session': {
         const session = parseTermCode(value);
         if (!session) {
-          throw createError({ statusCode: 400, message: '無效的會期' });
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Bad Request',
+            message: '無效的會期',
+          });
         }
         const found = await db
           .prepare('SELECT id FROM sessions WHERE id = ?')
           .bind(session)
           .first();
         if (!found) {
-          throw createError({ statusCode: 400, message: '找不到指定會期' });
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Bad Request',
+            message: '找不到指定會期',
+          });
         }
         column = 'session';
         normalized = session;
@@ -1310,7 +1470,11 @@ export function createProposalRepository(db: D1Database) {
       case 'committeeId': {
         const committeeId = value === null ? null : toPositiveInteger(value);
         if (value !== null && !committeeId) {
-          throw createError({ statusCode: 400, message: '無效的委員會索引' });
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Bad Request',
+            message: '無效的委員會索引',
+          });
         }
         if (committeeId) {
           const found = await db
@@ -1318,7 +1482,11 @@ export function createProposalRepository(db: D1Database) {
             .bind(committeeId)
             .first();
           if (!found) {
-            throw createError({ statusCode: 400, message: '找不到指定委員會' });
+            throw createError({
+              statusCode: 400,
+              statusMessage: 'Bad Request',
+              message: '找不到指定委員會',
+            });
           }
         }
         column = 'committee_id';
@@ -1334,18 +1502,30 @@ export function createProposalRepository(db: D1Database) {
         column = 'subject';
         normalized = cleanString(value);
         if (!normalized) {
-          throw createError({ statusCode: 400, message: '案由不可為空白' });
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Bad Request',
+            message: '案由不可為空白',
+          });
         }
         break;
       case 'description':
         if (typeof value !== 'string') {
-          throw createError({ statusCode: 400, message: '說明格式不正確' });
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Bad Request',
+            message: '說明格式不正確',
+          });
         }
         column = 'description';
         normalized = value.trim();
         break;
       default:
-        throw createError({ statusCode: 400, message: '此欄位不可編輯' });
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: '此欄位不可編輯',
+        });
     }
 
     if (
@@ -1355,7 +1535,11 @@ export function createProposalRepository(db: D1Database) {
         .bind(id)
         .first())
     ) {
-      throw createError({ statusCode: 409, message: '請先到議案排案取消排入會議' });
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: '請先到議案排案取消排入會議',
+      });
     }
 
     const meetingGuard = changingAssignment
@@ -1373,13 +1557,14 @@ export function createProposalRepository(db: D1Database) {
       const proposal = await getBillById(id);
       throw createError({
         statusCode: proposal ? 409 : 404,
+        statusMessage: proposal ? 'Conflict' : 'Not Found',
         message: proposal ? '請先到議案排案取消排入會議' : '找不到指定議案',
       });
     }
 
     const proposal = await getBillById(id);
     if (!proposal) {
-      throw createError({ statusCode: 404, message: '找不到指定議案' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定議案' });
     }
     return proposal;
   };
@@ -1391,7 +1576,7 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number }>();
 
     if (!deleted) {
-      throw createError({ statusCode: 404, message: '找不到指定議案' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定議案' });
     }
 
     return { success: true };
@@ -1431,11 +1616,11 @@ export function createProposalRepository(db: D1Database) {
 
     const bill = await getBillById(id);
     if (!bill) {
-      throw createError({ statusCode: 404, message: '找不到指定議案' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定議案' });
     }
 
     if (bill.proposalType === 'report') {
-      throw createError({ statusCode: 403, message: '報告案不可連署' });
+      throw createError({ statusCode: 403, statusMessage: 'Forbidden', message: '報告案不可連署' });
     }
 
     if (
@@ -1447,14 +1632,26 @@ export function createProposalRepository(db: D1Database) {
     }
 
     if (bill.meetings.length) {
-      throw createError({ statusCode: 409, message: '議案已排入會議，無法連署' });
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: '議案已排入會議，無法連署',
+      });
     }
 
     if (bill.proposerId === userId) {
-      throw createError({ statusCode: 403, message: '不能連署自己的議案' });
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Forbidden',
+        message: '不能連署自己的議案',
+      });
     }
 
-    throw createError({ statusCode: 403, message: '沒有連署權限，請重新登入' });
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      message: '沒有連署權限，請重新登入',
+    });
   };
 
   const scheduleBill = async (id: number, meetingIds: unknown) => {
@@ -1464,11 +1661,15 @@ export function createProposalRepository(db: D1Database) {
       .first<{ id: number; committee_id: number | null; session: number }>();
 
     if (!proposal) {
-      throw createError({ statusCode: 404, message: '找不到指定議案' });
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定議案' });
     }
 
     if (!Array.isArray(meetingIds) || meetingIds.some((value) => !toPositiveInteger(value))) {
-      throw createError({ statusCode: 400, message: '無效的會議索引' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '無效的會議索引',
+      });
     }
     const targetMeetingIds = [
       ...new Set(meetingIds.map((value) => toPositiveInteger(value) as number)),
@@ -1481,10 +1682,18 @@ export function createProposalRepository(db: D1Database) {
         .first<{ committee_id: number | null; session: number }>();
 
       if (!meeting) {
-        throw createError({ statusCode: 400, message: '找不到指定會議' });
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: '找不到指定會議',
+        });
       }
       if (meeting.committee_id !== proposal.committee_id || meeting.session !== proposal.session) {
-        throw createError({ statusCode: 400, message: '會議與委員會或會期不相符' });
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: '會議與委員會或會期不相符',
+        });
       }
     }
 

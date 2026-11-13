@@ -3,7 +3,11 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event);
   if (body && Object.prototype.hasOwnProperty.call(body, 'cosponsorIds')) {
-    throw createError({ statusCode: 400, message: '連署須由議員本人於連署頁操作' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: '連署須由議員本人於連署頁操作',
+    });
   }
   const billService = useBillService(event);
   const bill = await billService.saveBill({ ...body, proposerId: session.userId });

@@ -108,7 +108,11 @@
   const term = parseTermCode(route.params.term);
   const meetingId = Number(route.params.id);
   if (!term || !Number.isInteger(meetingId) || meetingId <= 0) {
-    throw createError({ statusCode: 404, message: '會議參數欠缺或格式錯誤' });
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: '會議參數欠缺或格式錯誤',
+    });
   }
   const termLabel = formatTermLabel(term);
   const {

@@ -16,6 +16,7 @@
   if (!term || !id || isNaN(id)) {
     throw createError({
       statusCode: 404,
+      statusMessage: 'Not Found',
       message: '議案參數欠缺或非數值',
     });
   }
@@ -25,6 +26,7 @@
       if (error.status === 404 || error.statusCode === 404) {
         throw createError({
           statusCode: 404,
+          statusMessage: 'Not Found',
           message: '找不到該議案',
         });
       }

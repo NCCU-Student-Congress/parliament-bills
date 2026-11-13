@@ -4,7 +4,11 @@ export default defineEventHandler(async (event) => {
   const proposer = users.find((user) => user.id === session.userId);
 
   if (!proposer) {
-    throw createError({ statusCode: 401, message: '找不到登入者資料，請重新登入' });
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: '找不到登入者資料，請重新登入',
+    });
   }
 
   return {

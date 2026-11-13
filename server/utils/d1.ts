@@ -29,6 +29,7 @@ export function useD1Database(event: H3Event): D1Database {
   if (!db) {
     throw createError({
       statusCode: 500,
+      statusMessage: 'Internal Server Error',
       message: `D1 binding "${D1_BINDING_NAME}" is not configured.`,
     });
   }

@@ -12,7 +12,11 @@ export default defineEventHandler(async (event) => {
   } else if (query.term) {
     const termNumber = parseTermCode(query.term);
     if (!termNumber) {
-      throw createError({ statusCode: 400, message: '無效的會期參數' });
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: '無效的會期參數',
+      });
     }
     results = await billService.getBillsByTerm(termNumber);
   }

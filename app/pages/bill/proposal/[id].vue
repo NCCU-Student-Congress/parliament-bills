@@ -322,6 +322,7 @@
   if (!id.value || isNaN(id.value)) {
     throw createError({
       statusCode: 404,
+      statusMessage: 'Not Found',
       message: '議案參數欠缺或非數值',
     });
   }

@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'));
 
   if (!Number.isInteger(id) || id <= 0) {
-    throw createError({ statusCode: 400, message: '無效的議案索引' });
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '無效的議案索引' });
   }
 
   return useBillService(event).cosignBill(id, session.userId);

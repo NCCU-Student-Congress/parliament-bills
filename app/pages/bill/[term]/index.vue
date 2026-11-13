@@ -63,7 +63,11 @@
   const route = useRoute();
   const term = parseTermCode(route.params.term);
   if (!term) {
-    throw createError({ statusCode: 404, message: '會期參數欠缺或格式錯誤' });
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: '會期參數欠缺或格式錯誤',
+    });
   }
   const termLabel = formatTermLabel(term);
   const {
