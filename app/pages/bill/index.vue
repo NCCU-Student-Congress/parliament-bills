@@ -25,9 +25,10 @@
       class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
     >
       <NuxtLink
-        v-for="session in scheduledSessions"
+        v-for="(session, index) in scheduledSessions"
         :key="session.id"
         :to="`/bill/${session.id}`"
+        :prefetch="index === 0"
         class="rounded-lg bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
       >
         <p class="mb-2 text-sm font-semibold text-primary">
@@ -51,7 +52,7 @@
   const [
     { data: meetingsData, pending, error },
     { data: sessionsData, pending: sessionsPending, error: sessionsError },
-  ] = await Promise.all([useFetch('/api/meetings/scheduled'), useSessions()]);
+  ] = await Promise.all([usePrefetchableFetch('/api/meetings/scheduled'), useSessions()]);
   const scheduledSessions = computed(() => {
     const ids = new Set((meetingsData.value ?? []).map((meeting) => meeting.session));
     return (sessionsData.value ?? []).filter((session) => ids.has(session.id));

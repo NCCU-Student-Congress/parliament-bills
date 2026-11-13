@@ -73,7 +73,10 @@
   const [
     { data: meetingsData, pending: meetingsPending, error: meetingsError },
     { data: sessionsData },
-  ] = await Promise.all([useFetch(`/api/meetings/scheduled?session=${term}`), useSessions()]);
+  ] = await Promise.all([
+    usePrefetchableFetch(`/api/meetings/scheduled?session=${term}`),
+    useSessions(),
+  ]);
 
   const isOutOfRange = computed(
     () =>

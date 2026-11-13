@@ -352,7 +352,7 @@
     { data: sessionsData },
     { data: committeesData },
   ] = await Promise.all([
-    useFetch<Bill>(`/api/proposals/${id.value}`),
+    usePrefetchableFetch<Bill>(`/api/proposals/${id.value}`),
     useFetch<{ role?: string }>('/api/secretariat/session'),
     useSessions(),
     useCommittees(),

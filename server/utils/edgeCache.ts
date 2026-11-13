@@ -42,8 +42,10 @@ function getCacheKey(event: H3Event) {
 }
 
 export function markRecentWrite(event: H3Event) {
-  setCookie(event, RECENT_WRITE_COOKIE, '1', {
-    httpOnly: true,
+  // A new value per write lets the browser drop data it prefetched before this write. It holds no
+  // secret, so the page may read it.
+  setCookie(event, RECENT_WRITE_COOKIE, Date.now().toString(36), {
+    httpOnly: false,
     sameSite: 'lax',
     secure: getRequestURL(event).protocol === 'https:',
     // A slower reader can store a copy fetched just before the write; outlast that copy too.

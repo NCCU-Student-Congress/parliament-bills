@@ -138,9 +138,9 @@
     { data: billsData, pending: billsPending, error: billsError },
     { data: agendaData, pending: agendaPending, error: agendaError },
   ] = await Promise.all([
-    useFetch(`/api/meetings/scheduled?session=${term}`),
-    useFetch(`/api/meetings/${meetingId}/proposals`),
-    useFetch(`/api/meetings/${meetingId}/agenda`),
+    usePrefetchableFetch(`/api/meetings/scheduled?session=${term}`),
+    usePrefetchableFetch(`/api/meetings/${meetingId}/proposals`),
+    usePrefetchableFetch(`/api/meetings/${meetingId}/agenda`),
   ]);
   const meeting = computed(() => (meetingsData.value ?? []).find((item) => item.id === meetingId));
   const meetingBills = computed(() => billsData.value ?? []);
