@@ -178,7 +178,9 @@
 
         if (
           filters.value.meeting &&
-          !(bill.meetingTitle || '').toLowerCase().includes(filters.value.meeting.toLowerCase())
+          !bill.meetings.some((meeting) =>
+            meeting.title.toLowerCase().includes(filters.value.meeting.toLowerCase()),
+          )
         ) {
           return false;
         }
@@ -189,7 +191,7 @@
             bill.subject,
             bill.description,
             bill.committeeName,
-            bill.meetingTitle,
+            ...bill.meetings.map((meeting) => meeting.title),
             bill.proposerName,
             ...(bill.cosponsors ?? []).map((cosponsor) => cosponsor.userName),
           ]

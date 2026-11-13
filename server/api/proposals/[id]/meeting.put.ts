@@ -7,9 +7,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event);
-  if (!body || !Object.prototype.hasOwnProperty.call(body, 'meetingId')) {
+  if (!body || !Object.prototype.hasOwnProperty.call(body, 'meetingIds')) {
     throw createError({ statusCode: 400, statusMessage: '請提供會議索引' });
   }
 
-  return useBillService(event).scheduleBill(id, body.meetingId);
+  return useBillService(event).scheduleBill(id, body.meetingIds);
 });

@@ -160,7 +160,7 @@
       });
       bills.value = (bills.value ?? [])
         .map((bill) => (bill.id === id ? updated : bill))
-        .filter((bill) => bill.meetingId === null);
+        .filter((bill) => bill.meetings.length === 0);
     } catch (error) {
       const response = error as { data?: { message?: string; statusMessage?: string } };
       errorMessage.value =

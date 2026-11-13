@@ -165,7 +165,7 @@ It loads the current proposer from the protected `GET /api/proposals/form-data` 
 `POST /api/bills` rejects `cosponsorIds`; each legislator must cosign from `/cosign` themselves.
 Cosigning is idempotent, and the UI shows `已連署` after signing. There is no self-service withdrawal.
 
-`PUT /api/proposals/:id/meeting` accepts `{ meetingId: number | null }`. Use `null` to clear an assignment.
+`PUT /api/proposals/:id/meeting` accepts `{ meetingIds: number[] }`. Use an empty array to clear all assignments. Each meeting must match the proposal's session and committee. The proposal response includes its assigned `meetings` array.
 
 The protected write UI is:
 

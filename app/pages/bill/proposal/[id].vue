@@ -174,7 +174,7 @@
                 </div>
                 <div v-else>
                   {{
-                    getField(field.key) || (field.key === 'meetingTitle' ? '尚未排入會議' : '無')
+                    getField(field.key) || (field.key === 'meetingTitles' ? '尚未排入會議' : '無')
                   }}
                 </div>
               </td>
@@ -210,12 +210,12 @@
                     :disabled="
                       isSaving ||
                       editingField !== null ||
-                      (bill.meetingId !== null &&
+                      (bill.meetings.length > 0 &&
                         (field.editable === 'session' || field.editable === 'committeeId'))
                     "
                     :aria-label="`編輯${field.label}`"
                     :title="
-                      bill.meetingId !== null &&
+                      bill.meetings.length > 0 &&
                       (field.editable === 'session' || field.editable === 'committeeId')
                         ? '請先到議案排案取消排入會議'
                         : undefined
@@ -344,9 +344,9 @@
     { label: '提案日期', key: 'proposedAtLabel', editable: 'proposedAt' },
     { label: '提案人', key: 'proposerName' },
     { label: '連署人', key: 'cosponsors' },
-    { label: '排入會議', key: 'meetingTitle' },
-    { label: '會議日期', key: 'meetingDateLabel' },
-    { label: '提案截止', key: 'proposalDeadlineLabel' },
+    { label: '排入會議', key: 'meetingTitles' },
+    { label: '會議日期', key: 'meetingDates' },
+    { label: '提案截止', key: 'proposalDeadlines' },
     { label: '案由', key: 'subject', editable: 'subject', multiline: true },
     { label: '說明', key: 'description', editable: 'description', multiline: true },
     { label: '附件', key: 'attachments', editable: 'attachments' },
@@ -396,8 +396,14 @@
     if (fieldName === 'proposalTypeLabel') return proposalTypeLabels[bill.value.proposalType];
     if (fieldName === 'sessionLabel') return formatTermLabel(bill.value.session);
     if (fieldName === 'proposedAtLabel') return formatDate(bill.value.proposedAt);
-    if (fieldName === 'meetingDateLabel') return formatDateTime(bill.value.meetingDate);
-    if (fieldName === 'proposalDeadlineLabel') return formatDateTime(bill.value.proposalDeadlineAt);
+    if (fieldName === 'meetingTitles')
+      return bill.value.meetings.map((meeting) => meeting.title).join('、');
+    if (fieldName === 'meetingDates')
+      return bill.value.meetings.map((meeting) => formatDateTime(meeting.meetingDate)).join('、');
+    if (fieldName === 'proposalDeadlines')
+      return bill.value.meetings
+        .map((meeting) => formatDateTime(meeting.proposalDeadlineAt))
+        .join('、');
     return (bill.value as unknown as Record<string, unknown>)[fieldName];
   }
 
@@ -407,7 +413,7 @@
 
   function startEditing(field: ProposalEditableField | undefined) {
     if (!bill.value || !field || !isSecretariat.value || editingField.value !== null) return;
-    if (bill.value.meetingId !== null && (field === 'session' || field === 'committeeId')) return;
+    if (bill.value.meetings.length > 0 && (field === 'session' || field === 'committeeId')) return;
 
     actionError.value = '';
     editingField.value = field;

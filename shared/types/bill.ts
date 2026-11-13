@@ -52,6 +52,14 @@ export interface Meeting {
   updatedAt?: string;
 }
 
+export interface ProposalMeeting {
+  id: number;
+  title: string;
+  meetingDate: string;
+  proposalDeadlineAt: string;
+  location: string;
+}
+
 export interface ProposalAttachment {
   id?: number;
   proposalId?: number;
@@ -90,10 +98,7 @@ export interface Proposal {
   proposerId: number;
   proposerName: string;
   proposerEmail: string;
-  meetingId: number | null;
-  meetingTitle: string | null;
-  meetingDate: string | null;
-  proposalDeadlineAt: string | null;
+  meetings: ProposalMeeting[];
   subject: string;
   description: string;
   attachments: ProposalAttachment[];

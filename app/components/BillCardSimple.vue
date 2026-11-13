@@ -5,7 +5,8 @@
         {{ bill.subject }}
       </p>
       <p class="mb-4 text-sm font-bold text-[#5a5a70]">
-        {{ bill.committeeName }} · {{ bill.meetingTitle || '尚未排入會議' }}
+        {{ bill.committeeName }} ·
+        {{ bill.meetings.map((meeting) => meeting.title).join('、') || '尚未排入會議' }}
       </p>
       <ProposalTypePill :proposal-type="bill.proposalType" class="mb-3" />
       <div class="text-sm font-semibold leading-relaxed text-[#12122b]">

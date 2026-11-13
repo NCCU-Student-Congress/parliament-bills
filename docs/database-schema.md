@@ -81,11 +81,20 @@ Stores submitted proposals. There is no draft state.
 - `session`
 - `proposed_at`
 - `proposer_id`
-- `meeting_id` (nullable until the secretariat assigns a meeting)
 - `subject`
 - `description`
 - `created_at`
 - `updated_at`
+
+### `proposal_meetings`
+
+Links a proposal to zero or more meetings in the same session and committee. Scheduling is managed by the secretariat.
+
+- `proposal_id`
+- `meeting_id`
+- `created_at`
+
+The proposal and meeting IDs form a composite primary key. A meeting with assigned proposals must be unscheduled before deletion.
 
 ### `proposal_attachments`
 

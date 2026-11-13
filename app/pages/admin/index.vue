@@ -473,26 +473,31 @@
                   </NuxtLink>
                 </td>
                 <td>{{ formatSession(bill.session) }}／{{ bill.committeeName }}</td>
-                <td>{{ bill.meetingTitle || '尚未排入會議' }}</td>
                 <td>
-                  <select v-model="billMeetingSelection[bill.id]" class="control">
-                    <option value="">尚未排入會議</option>
-                    <option
+                  {{ bill.meetings.map((meeting) => meeting.title).join('、') || '尚未排入會議' }}
+                </td>
+                <td>
+                  <div class="flex flex-col gap-2">
+                    <label
                       v-for="meeting in matchingMeetings(bill)"
                       :key="meeting.id"
-                      :value="String(meeting.id)"
+                      class="flex items-start gap-2"
                     >
+                      <input
+                        v-model="billMeetingSelection[bill.id]"
+                        type="checkbox"
+                        :value="meeting.id"
+                      />
                       {{ meeting.title }}（{{ formatDateTime(meeting.meetingDate) }}）
-                    </option>
-                  </select>
+                    </label>
+                    <span v-if="!matchingMeetings(bill).length">沒有可排入的會議</span>
+                  </div>
                 </td>
                 <td>
                   <button
                     class="text-button"
                     type="button"
-                    :disabled="
-                      isSubmitting || billMeetingSelection[bill.id] === String(bill.meetingId ?? '')
-                    "
+                    :disabled="isSubmitting || sameMeetingSelection(bill)"
                     @click="scheduleBill(bill)"
                   >
                     儲存
@@ -532,7 +537,7 @@
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
   const editingMeetingId = ref<number | null>(null);
-  const billMeetingSelection = reactive<Record<number, string>>({});
+  const billMeetingSelection = reactive<Record<number, number[]>>({});
 
   const committeeForm = reactive({ name: '' });
 
@@ -592,13 +597,16 @@
   const meetings = computed(() => meetingsData.value ?? []);
   const bills = computed(() => billsData.value ?? []);
   const sortedBills = computed(() =>
-    [...bills.value].sort((a, b) => Number(Boolean(a.meetingId)) - Number(Boolean(b.meetingId))),
+    [...bills.value].sort(
+      (a, b) => Number(Boolean(a.meetings.length)) - Number(Boolean(b.meetings.length)),
+    ),
   );
 
   watch(
     bills,
     (items) => {
-      for (const bill of items) billMeetingSelection[bill.id] = String(bill.meetingId ?? '');
+      for (const bill of items)
+        billMeetingSelection[bill.id] = bill.meetings.map((meeting) => meeting.id);
     },
     { immediate: true },
   );
@@ -609,14 +617,22 @@
     );
   }
 
+  function sameMeetingSelection(bill: Bill) {
+    const selected = billMeetingSelection[bill.id] ?? [];
+    return (
+      selected.length === bill.meetings.length &&
+      selected.every((id) => bill.meetings.some((meeting) => meeting.id === id))
+    );
+  }
+
   async function scheduleBill(bill: Bill) {
-    const meetingId = billMeetingSelection[bill.id];
+    const meetingIds = billMeetingSelection[bill.id] ?? [];
     const result = await requestJson<Bill>(`/api/proposals/${bill.id}/meeting`, 'PUT', {
-      meetingId: meetingId ? Number(meetingId) : null,
+      meetingIds,
     });
     if (!result) return;
 
-    notice.value = meetingId ? '已排入會議' : '已取消議案排程';
+    notice.value = meetingIds.length ? '已更新排案' : '已取消議案排程';
     await refreshBills();
   }
 

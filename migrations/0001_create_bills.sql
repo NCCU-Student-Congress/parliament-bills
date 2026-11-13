@@ -72,22 +72,31 @@ CREATE TABLE IF NOT EXISTS proposals (
   session INTEGER NOT NULL,
   proposed_at TEXT NOT NULL,
   proposer_id INTEGER NOT NULL,
-  meeting_id INTEGER,
   subject TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (committee_id) REFERENCES committees (id) ON DELETE SET NULL,
   FOREIGN KEY (session) REFERENCES sessions (id) ON DELETE RESTRICT,
-  FOREIGN KEY (proposer_id) REFERENCES users (id) ON DELETE RESTRICT,
-  FOREIGN KEY (meeting_id) REFERENCES meetings (id) ON DELETE RESTRICT
+  FOREIGN KEY (proposer_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS proposals_committee_session_idx ON proposals (committee_id, session);
 CREATE INDEX IF NOT EXISTS proposals_session_idx ON proposals (session);
 CREATE INDEX IF NOT EXISTS proposals_proposed_at_idx ON proposals (proposed_at);
 CREATE INDEX IF NOT EXISTS proposals_proposer_id_idx ON proposals (proposer_id);
-CREATE INDEX IF NOT EXISTS proposals_meeting_id_idx ON proposals (meeting_id);
+
+CREATE TABLE IF NOT EXISTS proposal_meetings (
+  proposal_id INTEGER NOT NULL,
+  meeting_id INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (proposal_id, meeting_id),
+  FOREIGN KEY (proposal_id) REFERENCES proposals (id) ON DELETE CASCADE,
+  FOREIGN KEY (meeting_id) REFERENCES meetings (id) ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS proposal_meetings_meeting_id_idx
+  ON proposal_meetings (meeting_id);
 
 CREATE TABLE IF NOT EXISTS proposal_attachments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

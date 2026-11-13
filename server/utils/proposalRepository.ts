@@ -2,6 +2,7 @@ import { createError } from 'h3';
 import type {
   Committee,
   Meeting,
+  ProposalMeeting,
   Proposal,
   ProposalAttachment,
   ProposalAttachmentInput,
@@ -67,10 +68,6 @@ interface ProposalRow {
   proposer_id: number;
   proposer_name: string;
   proposer_email: string;
-  meeting_id: number | null;
-  meeting_title: string | null;
-  meeting_date: string | null;
-  proposal_deadline_at: string | null;
   subject: string;
   description: string;
   created_at: string;
@@ -83,6 +80,15 @@ interface AttachmentRow {
   name: string;
   url: string;
   created_at: string;
+}
+
+interface ProposalMeetingRow {
+  proposal_id: number;
+  id: number;
+  title: string;
+  meeting_date: string;
+  proposal_deadline_at: string;
+  location: string;
 }
 
 interface CosponsorRow {
@@ -135,10 +141,6 @@ const PROPOSAL_COLUMNS = `
   proposals.proposer_id,
   proposers.name AS proposer_name,
   proposers.email AS proposer_email,
-  proposals.meeting_id,
-  meetings.title AS meeting_title,
-  meetings.meeting_date,
-  meetings.proposal_deadline_at,
   proposals.subject,
   proposals.description,
   proposals.created_at,
@@ -318,6 +320,7 @@ function rowToProposal(
   row: ProposalRow,
   attachments: ProposalAttachment[],
   cosponsors: ProposalCosponsor[],
+  meetings: ProposalMeeting[],
 ): Proposal {
   return {
     id: row.id,
@@ -329,10 +332,7 @@ function rowToProposal(
     proposerId: row.proposer_id,
     proposerName: row.proposer_name,
     proposerEmail: row.proposer_email,
-    meetingId: row.meeting_id,
-    meetingTitle: row.meeting_title,
-    meetingDate: row.meeting_date,
-    proposalDeadlineAt: row.proposal_deadline_at,
+    meetings,
     subject: row.subject,
     description: row.description,
     attachments,
@@ -435,13 +435,53 @@ async function getCosponsorsByProposalId(
   return map;
 }
 
+async function getMeetingsByProposalId(
+  db: D1Database,
+  proposalIds: number[],
+): Promise<Map<number, ProposalMeeting[]>> {
+  if (!proposalIds.length) return new Map();
+
+  const placeholders = proposalIds.map(() => '?').join(', ');
+  const { results = [] } = await db
+    .prepare(
+      `SELECT proposal_meetings.proposal_id, meetings.id, meetings.title,
+              meetings.meeting_date, meetings.proposal_deadline_at, meetings.location
+       FROM proposal_meetings
+       INNER JOIN meetings ON meetings.id = proposal_meetings.meeting_id
+       WHERE proposal_meetings.proposal_id IN (${placeholders})
+       ORDER BY meetings.meeting_date ASC, meetings.id ASC`,
+    )
+    .bind(...proposalIds)
+    .all<ProposalMeetingRow>();
+
+  const map = new Map<number, ProposalMeeting[]>();
+  for (const row of results) {
+    const current = map.get(row.proposal_id) ?? [];
+    current.push({
+      id: row.id,
+      title: row.title,
+      meetingDate: row.meeting_date,
+      proposalDeadlineAt: row.proposal_deadline_at,
+      location: row.location,
+    });
+    map.set(row.proposal_id, current);
+  }
+  return map;
+}
+
 async function rowsToProposals(db: D1Database, rows: ProposalRow[]): Promise<Proposal[]> {
   const proposalIds = rows.map((row) => row.id);
   const attachments = await getAttachmentsByProposalId(db, proposalIds);
   const cosponsors = await getCosponsorsByProposalId(db, proposalIds);
+  const meetings = await getMeetingsByProposalId(db, proposalIds);
 
   return rows.map((row) =>
-    rowToProposal(row, attachments.get(row.id) ?? [], cosponsors.get(row.id) ?? []),
+    rowToProposal(
+      row,
+      attachments.get(row.id) ?? [],
+      cosponsors.get(row.id) ?? [],
+      meetings.get(row.id) ?? [],
+    ),
   );
 }
 
@@ -920,8 +960,9 @@ export function createProposalRepository(db: D1Database) {
 
     const conflictingProposal = await db
       .prepare(
-        `SELECT id FROM proposals
-         WHERE meeting_id = ? AND (session != ? OR committee_id IS NOT ?)
+        `SELECT proposals.id FROM proposals
+         INNER JOIN proposal_meetings ON proposal_meetings.proposal_id = proposals.id
+         WHERE proposal_meetings.meeting_id = ? AND (proposals.session != ? OR proposals.committee_id IS NOT ?)
          LIMIT 1`,
       )
       .bind(id, session, committeeId)
@@ -966,7 +1007,15 @@ export function createProposalRepository(db: D1Database) {
     return meeting ?? rowToMeeting(row);
   };
 
-  const deleteMeeting = (id: number) => deleteById('meetings', id, '找不到指定會議');
+  const deleteMeeting = async (id: number) => {
+    const assigned = await db
+      .prepare('SELECT 1 FROM proposal_meetings WHERE meeting_id = ? LIMIT 1')
+      .bind(id)
+      .first();
+    if (assigned)
+      throw createError({ statusCode: 409, statusMessage: '會議已有排入議案，請先取消排案' });
+    return deleteById('meetings', id, '找不到指定會議');
+  };
 
   const getMeetings = async (filters: { committeeId?: number; session?: number } = {}) => {
     const where: string[] = [];
@@ -1012,7 +1061,6 @@ export function createProposalRepository(db: D1Database) {
        FROM proposals
        LEFT JOIN committees ON committees.id = proposals.committee_id
        INNER JOIN users AS proposers ON proposers.id = proposals.proposer_id
-       LEFT JOIN meetings ON meetings.id = proposals.meeting_id
        ${whereClause}
        ORDER BY proposals.proposed_at DESC, proposals.id DESC`,
     );
@@ -1024,7 +1072,9 @@ export function createProposalRepository(db: D1Database) {
 
   const getAllBills = () => getProposals();
   const getSignableBills = () =>
-    getProposals("WHERE proposals.meeting_id IS NULL AND proposals.proposal_type <> 'report'");
+    getProposals(
+      "WHERE NOT EXISTS (SELECT 1 FROM proposal_meetings WHERE proposal_id = proposals.id) AND proposals.proposal_type <> 'report'",
+    );
 
   const getLatestTermBills = async () => {
     const row = await db
@@ -1150,9 +1200,9 @@ export function createProposalRepository(db: D1Database) {
 
   const updateBill = async (id: number, field: string, value: unknown) => {
     const current = await db
-      .prepare('SELECT session, committee_id, meeting_id FROM proposals WHERE id = ?')
+      .prepare('SELECT session, committee_id FROM proposals WHERE id = ?')
       .bind(id)
-      .first<{ session: number; committee_id: number | null; meeting_id: number | null }>();
+      .first<{ session: number; committee_id: number | null }>();
 
     if (!current) {
       throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
@@ -1240,11 +1290,19 @@ export function createProposalRepository(db: D1Database) {
         throw createError({ statusCode: 400, statusMessage: '此欄位不可編輯' });
     }
 
-    if (changingAssignment && current.meeting_id !== null) {
+    if (
+      changingAssignment &&
+      (await db
+        .prepare('SELECT 1 FROM proposal_meetings WHERE proposal_id = ? LIMIT 1')
+        .bind(id)
+        .first())
+    ) {
       throw createError({ statusCode: 409, statusMessage: '請先到議案排案取消排入會議' });
     }
 
-    const meetingGuard = changingAssignment ? ' AND meeting_id IS NULL' : '';
+    const meetingGuard = changingAssignment
+      ? ' AND NOT EXISTS (SELECT 1 FROM proposal_meetings WHERE proposal_id = proposals.id)'
+      : '';
     const updated = await db
       .prepare(
         `UPDATE proposals SET ${column} = ?, updated_at = CURRENT_TIMESTAMP
@@ -1290,7 +1348,7 @@ export function createProposalRepository(db: D1Database) {
          FROM proposals
          INNER JOIN users ON users.id = ?
          WHERE proposals.id = ?
-           AND proposals.meeting_id IS NULL
+           AND NOT EXISTS (SELECT 1 FROM proposal_meetings WHERE proposal_id = proposals.id)
            AND proposals.proposal_type <> 'report'
            AND proposals.proposer_id <> users.id
            AND users.permission_role = 'legislator'
@@ -1305,7 +1363,7 @@ export function createProposalRepository(db: D1Database) {
            AND EXISTS (
              SELECT 1 FROM proposals
              WHERE proposals.id = excluded.proposal_id
-               AND proposals.meeting_id IS NULL
+               AND NOT EXISTS (SELECT 1 FROM proposal_meetings WHERE proposal_id = proposals.id)
                AND proposals.proposal_type <> 'report'
                AND proposals.proposer_id <> excluded.user_id
            )`,
@@ -1330,7 +1388,7 @@ export function createProposalRepository(db: D1Database) {
       return bill;
     }
 
-    if (bill.meetingId !== null) {
+    if (bill.meetings.length) {
       throw createError({ statusCode: 409, statusMessage: '議案已排入會議，無法連署' });
     }
 
@@ -1341,7 +1399,7 @@ export function createProposalRepository(db: D1Database) {
     throw createError({ statusCode: 403, statusMessage: '沒有連署權限，請重新登入' });
   };
 
-  const scheduleBill = async (id: number, meetingId: unknown) => {
+  const scheduleBill = async (id: number, meetingIds: unknown) => {
     const proposal = await db
       .prepare('SELECT id, committee_id, session FROM proposals WHERE id = ?')
       .bind(id)
@@ -1351,12 +1409,14 @@ export function createProposalRepository(db: D1Database) {
       throw createError({ statusCode: 404, statusMessage: '找不到指定議案' });
     }
 
-    const targetMeetingId = meetingId === null ? null : toPositiveInteger(meetingId);
-    if (meetingId !== null && !targetMeetingId) {
+    if (!Array.isArray(meetingIds) || meetingIds.some((value) => !toPositiveInteger(value))) {
       throw createError({ statusCode: 400, statusMessage: '無效的會議索引' });
     }
+    const targetMeetingIds = [
+      ...new Set(meetingIds.map((value) => toPositiveInteger(value) as number)),
+    ];
 
-    if (targetMeetingId) {
+    for (const targetMeetingId of targetMeetingIds) {
       const meeting = await db
         .prepare('SELECT committee_id, session FROM meetings WHERE id = ?')
         .bind(targetMeetingId)
@@ -1370,10 +1430,15 @@ export function createProposalRepository(db: D1Database) {
       }
     }
 
-    await db
-      .prepare('UPDATE proposals SET meeting_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .bind(targetMeetingId, id)
-      .run();
+    await db.batch([
+      db.prepare('DELETE FROM proposal_meetings WHERE proposal_id = ?').bind(id),
+      ...targetMeetingIds.map((meetingId) =>
+        db
+          .prepare('INSERT INTO proposal_meetings (proposal_id, meeting_id) VALUES (?, ?)')
+          .bind(id, meetingId),
+      ),
+      db.prepare('UPDATE proposals SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(id),
+    ]);
 
     return getBillById(id);
   };
