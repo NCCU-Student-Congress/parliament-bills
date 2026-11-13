@@ -4,15 +4,15 @@ export default defineEventHandler(async (event) => {
   await requireRole(event, ['secretariat_admin']);
   const id = Number(getRouterParam(event, 'id'));
   if (!Number.isInteger(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: '無效的會議索引' });
+    throw createError({ statusCode: 400, message: '無效的會議索引' });
   }
   const db = useD1Database(event);
   const meeting = await db.prepare('SELECT id FROM meetings WHERE id = ?').bind(id).first();
-  if (!meeting) throw createError({ statusCode: 404, statusMessage: '找不到指定會議' });
+  if (!meeting) throw createError({ statusCode: 404, message: '找不到指定會議' });
 
   const body = await readBody(event);
   if (!Array.isArray(body?.decisions) || body.decisions.length > 500) {
-    throw createError({ statusCode: 400, statusMessage: '無效的決議內容' });
+    throw createError({ statusCode: 400, message: '無效的決議內容' });
   }
   const { results: scheduled = [] } = await db
     .prepare('SELECT proposal_id FROM proposal_meetings WHERE meeting_id = ?')
@@ -31,26 +31,26 @@ export default defineEventHandler(async (event) => {
   const decisions: MeetingDecision[] = [];
   for (const item of body.decisions) {
     if (!item || typeof item.decision !== 'string' || item.decision.length > 10000) {
-      throw createError({ statusCode: 400, statusMessage: '無效的決議內容' });
+      throw createError({ statusCode: 400, message: '無效的決議內容' });
     }
     if (Number.isInteger(item.proposalId) && item.decisionKey === undefined) {
       if (!scheduledIds.has(item.proposalId) || usedIds.has(item.proposalId)) {
-        throw createError({ statusCode: 400, statusMessage: '決議須對應已排入的議案且不可重複' });
+        throw createError({ statusCode: 400, message: '決議須對應已排入的議案且不可重複' });
       }
       usedIds.add(item.proposalId);
       decisions.push({ proposalId: item.proposalId, decision: item.decision.trim() });
     } else if (typeof item.decisionKey === 'string' && item.proposalId === undefined) {
       if (!textKeys.has(item.decisionKey) || usedKeys.has(item.decisionKey)) {
-        throw createError({ statusCode: 400, statusMessage: '決議須對應現有文字項目且不可重複' });
+        throw createError({ statusCode: 400, message: '決議須對應現有文字項目且不可重複' });
       }
       usedKeys.add(item.decisionKey);
       decisions.push({ decisionKey: item.decisionKey, decision: item.decision.trim() });
     } else {
-      throw createError({ statusCode: 400, statusMessage: '決議須對應議案或文字項目' });
+      throw createError({ statusCode: 400, message: '決議須對應議案或文字項目' });
     }
   }
   if (usedIds.size !== scheduledIds.size || usedKeys.size !== textKeys.size) {
-    throw createError({ statusCode: 409, statusMessage: '議程已變動，請重新載入會議' });
+    throw createError({ statusCode: 409, message: '議程已變動，請重新載入會議' });
   }
   if (decisions.length) {
     await db.batch(

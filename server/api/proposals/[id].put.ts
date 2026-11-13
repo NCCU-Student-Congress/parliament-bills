@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
 
   const id = Number(getRouterParam(event, 'id'));
   if (!Number.isInteger(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: '無效的議案索引' });
+    throw createError({ statusCode: 400, message: '無效的議案索引' });
   }
 
   const body = await readBody(event);
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     !Object.prototype.hasOwnProperty.call(body, 'value') ||
     Object.keys(body).some((key) => key !== 'field' && key !== 'value')
   ) {
-    throw createError({ statusCode: 400, statusMessage: '請提供要修改的欄位與內容' });
+    throw createError({ statusCode: 400, message: '請提供要修改的欄位與內容' });
   }
 
   return useBillService(event).updateBill(id, body.field, body.value);

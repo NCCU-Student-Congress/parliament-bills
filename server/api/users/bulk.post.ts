@@ -6,7 +6,7 @@ function parseBulkUsers(value: unknown) {
   const source = typeof value === 'string' ? value.trim() : '';
 
   if (!source) {
-    throw createError({ statusCode: 400, statusMessage: '請輸入批次名單' });
+    throw createError({ statusCode: 400, message: '請輸入批次名單' });
   }
 
   const users: Array<{ name: string; email: string }> = [];
@@ -19,7 +19,7 @@ function parseBulkUsers(value: unknown) {
     if (!match) {
       throw createError({
         statusCode: 400,
-        statusMessage: '批次名單格式不正確，請使用「姓名<email>,姓名<email>」',
+        message: '批次名單格式不正確，請使用「姓名<email>,姓名<email>」',
       });
     }
 

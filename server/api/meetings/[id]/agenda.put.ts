@@ -4,15 +4,15 @@ export default defineEventHandler(async (event) => {
   await requireRole(event, ['secretariat_admin']);
   const id = Number(getRouterParam(event, 'id'));
   if (!Number.isInteger(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: '無效的會議索引' });
+    throw createError({ statusCode: 400, message: '無效的會議索引' });
   }
   const db = useD1Database(event);
   const meeting = await db.prepare('SELECT id FROM meetings WHERE id = ?').bind(id).first();
-  if (!meeting) throw createError({ statusCode: 404, statusMessage: '找不到指定會議' });
+  if (!meeting) throw createError({ statusCode: 404, message: '找不到指定會議' });
 
   const body = await readBody(event);
   if (!Array.isArray(body?.entries) || body.entries.length > 500) {
-    throw createError({ statusCode: 400, statusMessage: '無效的議程內容' });
+    throw createError({ statusCode: 400, message: '無效的議程內容' });
   }
   const { results: scheduled = [] } = await db
     .prepare('SELECT proposal_id FROM proposal_meetings WHERE meeting_id = ?')
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const entries: AgendaEntry[] = [];
   for (const item of body.entries) {
     if (!item || !['heading', 'text', 'proposal'].includes(item.kind)) {
-      throw createError({ statusCode: 400, statusMessage: '無效的議程項目' });
+      throw createError({ statusCode: 400, message: '無效的議程項目' });
     }
     if (item.kind === 'proposal') {
       if (
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
       ) {
         throw createError({
           statusCode: 400,
-          statusMessage: '議程中的議案必須已排入此會議且不可重複',
+          message: '議程中的議案必須已排入此會議且不可重複',
         });
       }
       usedIds.add(item.proposalId);
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
       if (typeof item.content !== 'string' || !item.content.trim() || item.content.length > 10000) {
         throw createError({
           statusCode: 400,
-          statusMessage: '議程文字不可為空且不可超過 10000 字',
+          message: '議程文字不可為空且不可超過 10000 字',
         });
       }
       if (item.kind === 'text') {
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
           !/^[a-zA-Z0-9-]{1,64}$/.test(item.decisionKey) ||
           usedDecisionKeys.has(item.decisionKey)
         ) {
-          throw createError({ statusCode: 400, statusMessage: '文字項目的識別碼無效或重複' });
+          throw createError({ statusCode: 400, message: '文字項目的識別碼無效或重複' });
         }
         usedDecisionKeys.add(item.decisionKey);
       }
@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
     }
   }
   if (usedIds.size !== scheduledIds.size) {
-    throw createError({ statusCode: 400, statusMessage: '議程必須包含所有已排入的議案' });
+    throw createError({ statusCode: 400, message: '議程必須包含所有已排入的議案' });
   }
   await db.batch([
     db.prepare('DELETE FROM meeting_agenda_entries WHERE meeting_id = ?').bind(id),

@@ -13,7 +13,7 @@
   if (!id || isNaN(id)) {
     throw createError({
       statusCode: 404,
-      statusMessage: '議案參數欠缺或非數值',
+      message: '議案參數欠缺或非數值',
     });
   }
 

@@ -29,7 +29,7 @@ export function useD1Database(event: H3Event): D1Database {
   if (!db) {
     throw createError({
       statusCode: 500,
-      statusMessage: `D1 binding "${D1_BINDING_NAME}" is not configured.`,
+      message: `D1 binding "${D1_BINDING_NAME}" is not configured.`,
     });
   }
 

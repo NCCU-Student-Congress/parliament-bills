@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     if (!currentSession?.id) {
       throw createError({
         statusCode: 500,
-        statusMessage: `No session covers current date ${today}`,
+        message: `No session covers current date ${today}`,
       });
     }
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     if (totalBills === null || thisTermBills === null) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Failed to count proposal statistics',
+        message: 'Failed to count proposal statistics',
       });
     }
 
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching bill statistics:', error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to fetch bill statistics',
+      message: 'Failed to fetch bill statistics',
       data: null,
     });
   }
