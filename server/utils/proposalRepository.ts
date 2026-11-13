@@ -9,6 +9,7 @@ import type {
   ProposalCosponsor,
   ProposalInput,
   ProposalType,
+  ScheduledMeeting,
   Session,
   User,
 } from '../../shared/types/bill';
@@ -49,6 +50,7 @@ interface MeetingRow {
   id: number;
   committee_id: number | null;
   committee_name?: string | null;
+  meeting_type_name: string;
   session: number;
   meeting_date: string;
   proposal_deadline_at: string;
@@ -279,6 +281,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
     id: row.id,
     committeeId: row.committee_id,
     committeeName: row.committee_name ?? '無（大會）',
+    meetingTypeName: row.meeting_type_name,
     session: row.session,
     meetingDate: row.meeting_date,
     proposalDeadlineAt: row.proposal_deadline_at,
@@ -829,6 +832,7 @@ export function createProposalRepository(db: D1Database) {
     const proposalDeadlineAt = normalizeDateTime(input.proposalDeadlineAt, '');
     const title = cleanString(input.title);
     const location = cleanString(input.location);
+    let meetingTypeName = '大會';
 
     if (!session) {
       throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
@@ -850,13 +854,14 @@ export function createProposalRepository(db: D1Database) {
 
     if (committeeId) {
       const existingCommittee = await db
-        .prepare('SELECT id FROM committees WHERE id = ?')
+        .prepare('SELECT name FROM committees WHERE id = ?')
         .bind(committeeId)
-        .first<{ id: number }>();
+        .first<{ name: string }>();
 
       if (!existingCommittee) {
         throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
       }
+      meetingTypeName = existingCommittee.name;
     }
 
     const existingSession = await db
@@ -872,15 +877,17 @@ export function createProposalRepository(db: D1Database) {
       .prepare(
         `INSERT INTO meetings (
            committee_id,
+           meeting_type_name,
            session,
            meeting_date,
            proposal_deadline_at,
            title,
            location
-         ) VALUES (?, ?, ?, ?, ?, ?)
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)
          RETURNING
            id,
            committee_id,
+           meeting_type_name,
            session,
            meeting_date,
            proposal_deadline_at,
@@ -889,7 +896,7 @@ export function createProposalRepository(db: D1Database) {
            created_at,
            updated_at`,
       )
-      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title, location)
+      .bind(committeeId, meetingTypeName, session, meetingDate, proposalDeadlineAt, title, location)
       .first<MeetingRow>();
 
     if (!row) {
@@ -919,6 +926,7 @@ export function createProposalRepository(db: D1Database) {
     const proposalDeadlineAt = normalizeDateTime(input.proposalDeadlineAt, '');
     const title = cleanString(input.title);
     const location = cleanString(input.location);
+    let selectedCommitteeName: string | null = null;
 
     if (!session) {
       throw createError({ statusCode: 400, statusMessage: '會期為必填欄位' });
@@ -940,13 +948,14 @@ export function createProposalRepository(db: D1Database) {
 
     if (committeeId) {
       const existingCommittee = await db
-        .prepare('SELECT id FROM committees WHERE id = ?')
+        .prepare('SELECT name FROM committees WHERE id = ?')
         .bind(committeeId)
-        .first<{ id: number }>();
+        .first<{ name: string }>();
 
       if (!existingCommittee) {
         throw createError({ statusCode: 400, statusMessage: '找不到指定委員會' });
       }
+      selectedCommitteeName = existingCommittee.name;
     }
 
     const existingSession = await db
@@ -957,6 +966,18 @@ export function createProposalRepository(db: D1Database) {
     if (!existingSession) {
       throw createError({ statusCode: 400, statusMessage: '找不到指定會期' });
     }
+
+    const currentMeeting = await db
+      .prepare('SELECT committee_id, meeting_type_name FROM meetings WHERE id = ?')
+      .bind(id)
+      .first<{ committee_id: number | null; meeting_type_name: string }>();
+    if (!currentMeeting) {
+      throw createError({ statusCode: 404, statusMessage: '找不到指定會議' });
+    }
+    const meetingTypeName =
+      committeeId === currentMeeting.committee_id
+        ? currentMeeting.meeting_type_name
+        : (selectedCommitteeName ?? '大會');
 
     const conflictingProposal = await db
       .prepare(
@@ -976,6 +997,7 @@ export function createProposalRepository(db: D1Database) {
       .prepare(
         `UPDATE meetings
          SET committee_id = ?,
+             meeting_type_name = ?,
              session = ?,
              meeting_date = ?,
              proposal_deadline_at = ?,
@@ -986,6 +1008,7 @@ export function createProposalRepository(db: D1Database) {
          RETURNING
            id,
            committee_id,
+           meeting_type_name,
            session,
            meeting_date,
            proposal_deadline_at,
@@ -994,7 +1017,16 @@ export function createProposalRepository(db: D1Database) {
            created_at,
            updated_at`,
       )
-      .bind(committeeId, session, meetingDate, proposalDeadlineAt, title, location, id)
+      .bind(
+        committeeId,
+        meetingTypeName,
+        session,
+        meetingDate,
+        proposalDeadlineAt,
+        title,
+        location,
+        id,
+      )
       .first<MeetingRow>();
 
     if (!row) {
@@ -1036,6 +1068,7 @@ export function createProposalRepository(db: D1Database) {
          meetings.id,
          meetings.committee_id,
          committees.name AS committee_name,
+         meetings.meeting_type_name,
          meetings.session,
          meetings.meeting_date,
          meetings.proposal_deadline_at,
@@ -1053,6 +1086,21 @@ export function createProposalRepository(db: D1Database) {
     const { results = [] } = await prepared.all<MeetingRow>();
 
     return results.map(rowToMeeting);
+  };
+
+  const getScheduledMeetings = async (session?: number): Promise<ScheduledMeeting[]> => {
+    const meetings = await getMeetings(session ? { session } : {});
+    const { results = [] } = await db
+      .prepare(
+        `SELECT proposal_meetings.meeting_id, COUNT(*) AS proposal_count
+         FROM proposal_meetings
+         GROUP BY proposal_meetings.meeting_id`,
+      )
+      .all<{ meeting_id: number; proposal_count: number }>();
+    const counts = new Map(results.map((row) => [row.meeting_id, row.proposal_count]));
+    return meetings
+      .filter((meeting) => counts.has(meeting.id))
+      .map((meeting) => ({ ...meeting, proposalCount: counts.get(meeting.id) ?? 0 }));
   };
 
   const getProposals = async (whereClause = '', values: (string | number)[] = []) => {
@@ -1098,6 +1146,16 @@ export function createProposalRepository(db: D1Database) {
 
   const getBillsByTerm = (targetTerm: number) =>
     getProposals('WHERE proposals.session = ?', [targetTerm]);
+
+  const getBillsByMeeting = (meetingId: number) =>
+    getProposals(
+      `WHERE EXISTS (
+         SELECT 1 FROM proposal_meetings
+         WHERE proposal_meetings.proposal_id = proposals.id
+           AND proposal_meetings.meeting_id = ?
+       )`,
+      [meetingId],
+    );
 
   const getBillById = async (targetId: number) => {
     const proposals = await getProposals('WHERE proposals.id = ?', [targetId]);
@@ -1460,11 +1518,13 @@ export function createProposalRepository(db: D1Database) {
     updateMeeting,
     deleteMeeting,
     getMeetings,
+    getScheduledMeetings,
     getAllBills,
     getSignableBills,
     getLatestTermBills,
     getPastTermBills,
     getBillsByTerm,
+    getBillsByMeeting,
     getBillById,
     getBillByTermAndId,
     saveBill,

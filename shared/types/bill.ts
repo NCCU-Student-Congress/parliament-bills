@@ -43,6 +43,7 @@ export interface Meeting {
   id: number;
   committeeId: number | null;
   committeeName?: string;
+  meetingTypeName: string;
   session: number;
   meetingDate: string;
   proposalDeadlineAt: string;
@@ -50,6 +51,10 @@ export interface Meeting {
   location: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ScheduledMeeting extends Meeting {
+  proposalCount: number;
 }
 
 export interface ProposalMeeting {

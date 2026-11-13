@@ -60,6 +60,7 @@ Stores meetings that the secretariat can assign proposals to.
 
 - `id`
 - `committee_id`
+- `meeting_type_name` (the meeting's original committee name, or `大會`)
 - `session`
 - `meeting_date`
 - `proposal_deadline_at`
@@ -70,6 +71,7 @@ Stores meetings that the secretariat can assign proposals to.
 
 Proposal deadlines live here. Proposals do not store their own deadline or deadline snapshot.
 `session` references `sessions.id`.
+The meeting type name is saved when a meeting is created. Renaming or deleting the committee does not change the historical meeting type.
 
 ### `proposals`
 
