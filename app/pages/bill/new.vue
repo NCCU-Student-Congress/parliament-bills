@@ -73,15 +73,56 @@
         </label>
       </div>
 
-      <label class="block">
-        <span class="mb-1 block text-sm font-medium text-gray-700">案由</span>
-        <textarea v-model="form.subject" rows="3" required class="form-textarea"></textarea>
-      </label>
+      <p id="cosponsor-count-help" class="text-sm text-gray-500">
+        按鈕會在游標處插入標記；送出後顯示為當下已確認的連署人數。
+      </p>
 
-      <label class="block">
-        <span class="mb-1 block text-sm font-medium text-gray-700">說明</span>
-        <textarea v-model="form.description" rows="7" class="form-textarea"></textarea>
-      </label>
+      <div>
+        <label for="proposal-subject" class="mb-1 block text-sm font-medium text-gray-700"
+          >案由</label
+        >
+        <textarea
+          id="proposal-subject"
+          ref="subjectInput"
+          v-model="form.subject"
+          name="subject"
+          rows="3"
+          required
+          aria-describedby="cosponsor-count-help"
+          class="form-textarea"
+          @focus="lastFocusedField = 'subject'"
+        ></textarea>
+        <button
+          type="button"
+          class="mt-2 rounded-lg border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white"
+          @click="insertCosponsorCount('subject')"
+        >
+          在案由插入連署人數
+        </button>
+      </div>
+
+      <div>
+        <label for="proposal-description" class="mb-1 block text-sm font-medium text-gray-700"
+          >說明</label
+        >
+        <textarea
+          id="proposal-description"
+          ref="descriptionInput"
+          v-model="form.description"
+          name="description"
+          rows="7"
+          aria-describedby="cosponsor-count-help"
+          class="form-textarea"
+          @focus="lastFocusedField = 'description'"
+        ></textarea>
+        <button
+          type="button"
+          class="mt-2 rounded-lg border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white"
+          @click="insertCosponsorCount('description')"
+        >
+          在說明插入連署人數
+        </button>
+      </div>
 
       <section aria-labelledby="attachments-heading" class="space-y-3">
         <div>
@@ -179,9 +220,10 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, reactive, ref } from 'vue';
+  import { computed, nextTick, reactive, ref } from 'vue';
   import { parseTermCode, getCurrentTerm } from '~~/shared/utils/term';
   import { normalizeAttachmentUrl } from '~~/shared/utils/attachment';
+  import { COSPONSOR_COUNT_TOKEN } from '~~/shared/utils/proposalText';
   import type {
     Bill,
     Committee,
@@ -230,6 +272,21 @@
     subject: '',
     description: '',
   });
+  const subjectInput = ref<HTMLTextAreaElement | null>(null);
+  const descriptionInput = ref<HTMLTextAreaElement | null>(null);
+  const lastFocusedField = ref<'subject' | 'description' | null>(null);
+
+  async function insertCosponsorCount(field: 'subject' | 'description') {
+    const input = field === 'subject' ? subjectInput.value : descriptionInput.value;
+    if (!input) return;
+    const start = lastFocusedField.value === field ? input.selectionStart : form[field].length;
+    const end = lastFocusedField.value === field ? input.selectionEnd : start;
+    form[field] = form[field].slice(0, start) + COSPONSOR_COUNT_TOKEN + form[field].slice(end);
+    await nextTick();
+    input.focus();
+    const cursor = start + COSPONSOR_COUNT_TOKEN.length;
+    input.setSelectionRange(cursor, cursor);
+  }
 
   const attachmentRows = ref<AttachmentRowInput[]>([{ id: 0, name: '', url: '' }]);
   const attachmentErrors = ref<Record<number, string>>({});

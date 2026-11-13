@@ -18,6 +18,7 @@ import type { PermissionRole } from '../../shared/types/auth';
 import { isPermissionRole } from '../../shared/types/auth';
 import { getCurrentTerm, getEarliestTerm, parseTermCode } from '../../shared/utils/term';
 import { normalizeAttachmentUrl } from '../../shared/utils/attachment';
+import { renderProposalText } from '../../shared/utils/proposalText';
 import type { D1Database } from './d1';
 
 interface CommitteeRow {
@@ -336,8 +337,10 @@ function rowToProposal(
     proposerName: row.proposer_name,
     proposerEmail: row.proposer_email,
     meetings,
-    subject: row.subject,
-    description: row.description,
+    subject: renderProposalText(row.subject, cosponsors),
+    description: renderProposalText(row.description, cosponsors),
+    subjectTemplate: row.subject,
+    descriptionTemplate: row.description,
     attachments,
     cosponsors,
     createdAt: row.created_at,

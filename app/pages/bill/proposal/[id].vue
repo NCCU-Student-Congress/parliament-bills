@@ -453,7 +453,8 @@
         break;
       case 'subject':
       case 'description':
-        draftValue.value = bill.value[field];
+        draftValue.value =
+          field === 'subject' ? bill.value.subjectTemplate : bill.value.descriptionTemplate;
         break;
       case 'attachments':
         attachmentDraft.value = bill.value.attachments.map((attachment, index) => ({

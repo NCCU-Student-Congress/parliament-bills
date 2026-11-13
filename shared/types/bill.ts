@@ -112,6 +112,8 @@ export interface Proposal {
   meetings: ProposalMeeting[];
   subject: string;
   description: string;
+  subjectTemplate: string;
+  descriptionTemplate: string;
   attachments: ProposalAttachment[];
   cosponsors: ProposalCosponsor[];
   createdAt: string;
