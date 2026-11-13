@@ -41,7 +41,15 @@
             重新整理
           </LoadingButton>
         </div>
-        <h1 class="mb-4 text-3xl font-bold text-gray-900">{{ meeting.title }}</h1>
+        <h1 class="mb-4 text-3xl font-bold text-gray-900">
+          <template v-if="meetingTitleParts"
+            ><span class="inline-block whitespace-nowrap">{{ meetingTitleParts.term }}</span
+            ><wbr /><span class="inline-block whitespace-nowrap">{{
+              meetingTitleParts.rest
+            }}</span></template
+          >
+          <template v-else>{{ meeting.title }}</template>
+        </h1>
         <dl class="grid gap-3 text-sm text-gray-700 sm:grid-cols-2">
           <div>
             <dt class="inline font-semibold">會議時間：</dt>
@@ -78,18 +86,27 @@
         </div>
         <div class="space-y-1 leading-8 text-gray-900">
           <div
-            v-for="(line, index) in agendaLinesForMeeting"
+            v-for="(line, index) in agendaDisplayLines"
             :key="index"
             :class="line.entry.kind === 'heading' ? 'pt-3 font-bold first:pt-0' : 'pl-4'"
           >
             <NuxtLink
               v-if="line.entry.kind === 'proposal'"
               :to="`/bill/proposal/${line.entry.proposalId}`"
-              class="rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary hover:bg-gray-100"
+              class="block rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary hover:bg-gray-100"
+              :class="{ 'agenda-numbered-line': line.prefix }"
             >
-              {{ line.text }}
+              <span v-if="line.prefix">{{ line.prefix }}</span>
+              <span>{{ line.content }}</span>
             </NuxtLink>
-            <span v-else class="whitespace-pre-wrap">{{ line.text }}</span>
+            <span
+              v-else
+              class="whitespace-pre-wrap"
+              :class="{ 'agenda-numbered-line': line.prefix }"
+            >
+              <span v-if="line.prefix">{{ line.prefix }}</span>
+              <span>{{ line.content }}</span>
+            </span>
           </div>
         </div>
       </section>
@@ -143,12 +160,26 @@
     usePrefetchableFetch(`/api/meetings/${meetingId}/agenda`),
   ]);
   const meeting = computed(() => (meetingsData.value ?? []).find((item) => item.id === meetingId));
+  const meetingTitleParts = computed(() => {
+    const match = meeting.value?.title.match(/^(.*?會期)(.+)$/);
+    return match ? { term: match[1], rest: match[2] } : null;
+  });
   const meetingBills = computed(() => billsData.value ?? []);
   const displayAgendaEntries = computed(() =>
     meeting.value ? normalizeAgenda(meeting.value, meetingBills.value, agendaData.value ?? []) : [],
   );
   const agendaLinesForMeeting = computed(() =>
     agendaLines(displayAgendaEntries.value, meetingBills.value),
+  );
+  const agendaDisplayLines = computed(() =>
+    agendaLinesForMeeting.value.map((line) => {
+      const match = line.text.match(/^([壹貳參肆伍陸柒捌玖拾一二三四五六七八九十百千\d]+、)(.*)$/);
+      return {
+        ...line,
+        prefix: match?.[1] ?? '',
+        content: match?.[2] ?? line.text,
+      };
+    }),
   );
   const orderedMeetingBills = computed(() => {
     const order = new Map(
@@ -238,3 +269,10 @@
 
   useHead(() => ({ title: `${meeting.value?.title || '會議'} - 議案查詢` }));
 </script>
+
+<style scoped>
+  .agenda-numbered-line {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+</style>
