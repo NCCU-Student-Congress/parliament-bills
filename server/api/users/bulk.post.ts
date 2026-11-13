@@ -24,8 +24,8 @@ function parseBulkUsers(value: unknown) {
     }
 
     users.push({
-      name: match[1].trim(),
-      email: match[2].trim(),
+      name: match[1]!.trim(),
+      email: match[2]!.trim(),
     });
     cursor = bulkUserPattern.lastIndex;
   }

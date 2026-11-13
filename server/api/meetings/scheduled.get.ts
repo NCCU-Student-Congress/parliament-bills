@@ -6,5 +6,5 @@ export default defineEventHandler(async (event) => {
   if (query.session !== undefined && !session) {
     throw createError({ statusCode: 400, statusMessage: '無效的會期參數' });
   }
-  return useBillService(event).getScheduledMeetings(session);
+  return useBillService(event).getScheduledMeetings(session ?? undefined);
 });

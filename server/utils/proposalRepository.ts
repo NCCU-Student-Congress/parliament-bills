@@ -644,7 +644,7 @@ export function createProposalRepository(db: D1Database) {
          VALUES (?, ?, ?, ?)
          RETURNING id, title, starts_at, ends_at, created_at, updated_at`,
       )
-      .bind(id, defaults.title, defaults.startsAt, defaults.endsAt)
+      .bind(id, defaults.title, defaults.startsAt ?? null, defaults.endsAt ?? null)
       .first<SessionRow>();
 
     if (!row) {

@@ -7,7 +7,10 @@ export default defineEventHandler(async (event) => {
 
   const billService = useBillService(event);
   return billService.getMeetings({
-    committeeId: Number.isInteger(committeeId) && committeeId > 0 ? committeeId : undefined,
+    committeeId:
+      typeof committeeId === 'number' && Number.isInteger(committeeId) && committeeId > 0
+        ? committeeId
+        : undefined,
     session: session ?? undefined,
   });
 });

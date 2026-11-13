@@ -18,10 +18,10 @@
         <li v-if="bill">/</li>
         <li v-if="bill?.meetings.length">
           <NuxtLink
-            :to="`/bill/${bill.session}/meetings/${bill.meetings[0].id}`"
+            :to="`/bill/${bill.session}/meetings/${bill.meetings[0]?.id}`"
             class="hover:text-primary"
           >
-            {{ bill.meetings[0].title }}
+            {{ bill.meetings[0]?.title }}
           </NuxtLink>
         </li>
         <li v-if="bill?.meetings.length">/</li>
@@ -255,7 +255,7 @@
         <NuxtLink
           :to="
             bill.meetings.length
-              ? `/bill/${bill.session}/meetings/${bill.meetings[0].id}`
+              ? `/bill/${bill.session}/meetings/${bill.meetings[0]?.id}`
               : `/bill/${bill.session}`
           "
           class="inline-flex items-center rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
+    "typecheck": "nuxi typecheck",
     "dev": "TMPDIR=/tmp wrangler d1 migrations apply DB --local --persist-to .wrangler/state && TMPDIR=/tmp nuxt dev",
     "dev:pages": "pnpm run dev",
     "dev-mac": "pnpm run dev",
@@ -20,13 +21,15 @@
     "@heroicons/vue": "^2.2.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "nuxt": "^4.4.7",
-    "vue": "^3.5.17",
-    "vue-router": "^4.5.1"
+    "vue": "^3.5.38",
+    "vue-router": "^5.1.0"
   },
   "devDependencies": {
     "@types/papaparse": "^5.5.2",
     "nuxi": "^3.25.1",
     "prettier": "^3.9.4",
+    "typescript": "6.0.3",
+    "vue-tsc": "3.3.14",
     "wrangler": "^4.68.1"
   },
   "packageManager": "pnpm@11.9.0"
