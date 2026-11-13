@@ -7,10 +7,6 @@ database_name = "parliament-bills"
 database_id = "4cff2eda-305f-4299-8c7d-93ff6969e19a"
 migrations_dir = "migrations"
 
-# Run the Worker near D1 when that is faster; each request makes several D1 round trips.
-[placement]
-mode = "smart"
-
 [vars]
 # Public Turnstile site key for the secretariat login form. TURNSTILE_SECRET is a Worker secret.
 NUXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAF_n0y8PHsY2ArVJ"
