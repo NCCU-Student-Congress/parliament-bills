@@ -1,5 +1,7 @@
 name = "parliament-bills"
 compatibility_date = "2026-02-26"
+workers_dev = false
+preview_urls = false
 
 [placement]
 region = "gcp:asia-east1"
