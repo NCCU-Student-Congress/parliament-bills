@@ -63,6 +63,11 @@ export interface AgendaEntry {
   proposalId: number | null;
 }
 
+export interface MeetingDecision {
+  proposalId: number;
+  decision: string;
+}
+
 export interface ProposalMeeting {
   id: number;
   title: string;
