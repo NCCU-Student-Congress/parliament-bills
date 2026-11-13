@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-7xl py-8 sm:px-4">
+  <div class="mx-auto max-w-7xl pb-8 sm:px-4 sm:py-8">
     <div
       class="mb-8 flex flex-col gap-4 border-b border-[#dcdce2] pb-5 md:flex-row md:items-end md:justify-between"
     >
@@ -118,11 +118,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="session in sessions" :key="session.id">
-                <td>{{ session.id }}</td>
-                <td>{{ session.title }}</td>
-                <td>{{ formatRange(session.startsAt, session.endsAt) }}</td>
-                <td>
+              <tr v-for="session in sessions" :key="session.id" class="data-row">
+                <td data-label="代碼">{{ session.id }}</td>
+                <td data-label="名稱">{{ session.title }}</td>
+                <td data-label="期間">{{ formatRange(session.startsAt, session.endsAt) }}</td>
+                <td data-label="操作">
                   <button
                     v-if="isFutureSession(session)"
                     class="icon-action danger"
@@ -184,9 +184,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="committee in committees" :key="committee.id">
-                <td>{{ committee.name }}</td>
-                <td>
+              <tr v-for="committee in committees" :key="committee.id" class="data-row">
+                <td data-label="名稱">{{ committee.name }}</td>
+                <td data-label="操作">
                   <div class="row-actions">
                     <button
                       class="icon-action"
@@ -344,12 +344,14 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users" :key="user.id">
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.permissionRole === 'secretariat_admin' ? '秘書處' : '議員' }}</td>
-                <td>{{ getCommitteeNames(user.committeeIds) }}</td>
-                <td>
+              <tr v-for="user in users" :key="user.id" class="data-row">
+                <td data-label="姓名">{{ user.name }}</td>
+                <td data-label="Email">{{ user.email }}</td>
+                <td data-label="權限">
+                  {{ user.permissionRole === 'secretariat_admin' ? '秘書處' : '議員' }}
+                </td>
+                <td data-label="委員會">{{ getCommitteeNames(user.committeeIds) }}</td>
+                <td data-label="操作">
                   <div class="row-actions">
                     <button
                       class="icon-action"
@@ -509,14 +511,14 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="meeting in meetings" :key="meeting.id">
-                <td>{{ meeting.title }}</td>
-                <td>{{ meeting.meetingTypeName }}</td>
-                <td>{{ formatSession(meeting.session) }}</td>
-                <td>{{ formatDate(meeting.meetingDate) }}</td>
-                <td>{{ meeting.location || '未設定' }}</td>
-                <td>{{ formatDateTime(meeting.proposalDeadlineAt) }}</td>
-                <td>
+              <tr v-for="meeting in meetings" :key="meeting.id" class="data-row">
+                <td data-label="會議">{{ meeting.title }}</td>
+                <td data-label="委員會">{{ meeting.meetingTypeName }}</td>
+                <td data-label="會期">{{ formatSession(meeting.session) }}</td>
+                <td data-label="日期">{{ formatDate(meeting.meetingDate) }}</td>
+                <td data-label="地點">{{ meeting.location || '未設定' }}</td>
+                <td data-label="截止">{{ formatDateTime(meeting.proposalDeadlineAt) }}</td>
+                <td data-label="操作">
                   <div class="row-actions">
                     <button
                       class="icon-action"
@@ -1213,6 +1215,7 @@
   }
 
   .admin-section {
+    min-width: 0;
     border: 1px solid #dcdce2;
     border-radius: 8px;
     background: #fff;
@@ -1569,5 +1572,101 @@
   .loading-cell {
     padding: 1.5rem 0;
     text-align: center;
+  }
+
+  @media (max-width: 639px) {
+    .admin-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      overflow: visible;
+    }
+
+    .admin-tab {
+      min-width: 0;
+      min-height: 2.75rem;
+      padding: 0.55rem 0.35rem;
+      text-align: center;
+    }
+
+    .admin-tab:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .admin-section {
+      padding: 1rem;
+    }
+
+    .control {
+      font-size: 1rem;
+    }
+
+    .table-wrap {
+      overflow: visible;
+    }
+
+    .admin-table,
+    .admin-table tbody,
+    .admin-table tr {
+      display: block;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .admin-table thead {
+      display: none;
+    }
+
+    .admin-table .data-row {
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      border: 1px solid #dcdce2;
+      border-radius: 8px;
+    }
+
+    .admin-table .data-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .admin-table .data-row td {
+      display: grid;
+      grid-template-columns: 4.5rem minmax(0, 1fr);
+      gap: 0.5rem;
+      align-items: start;
+      padding: 0.65rem 0.75rem;
+      overflow-wrap: anywhere;
+    }
+
+    .admin-table .data-row td:last-child {
+      border-bottom: 0;
+    }
+
+    .admin-table .data-row td:first-child {
+      background: #f5f5f7;
+      font-weight: 850;
+    }
+
+    .admin-table .data-row td::before {
+      content: attr(data-label);
+      color: #5a5a70;
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .admin-table .data-row td[data-label='操作'] {
+      align-items: center;
+    }
+
+    .admin-table .data-row td[data-label='操作']:empty {
+      display: none;
+    }
+
+    .admin-table .row-actions {
+      gap: 0.5rem;
+    }
+
+    .admin-table tbody tr:not(.data-row) td {
+      display: block;
+      border: 0;
+    }
   }
 </style>
