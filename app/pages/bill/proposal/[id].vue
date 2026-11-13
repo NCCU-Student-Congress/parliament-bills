@@ -16,6 +16,15 @@
           </NuxtLink>
         </li>
         <li v-if="bill">/</li>
+        <li v-if="bill?.meetings.length">
+          <NuxtLink
+            :to="`/bill/${bill.session}/meetings/${bill.meetings[0].id}`"
+            class="hover:text-primary"
+          >
+            {{ bill.meetings[0].title }}
+          </NuxtLink>
+        </li>
+        <li v-if="bill?.meetings.length">/</li>
         <li class="text-gray-900">議案詳情</li>
       </ol>
     </nav>
@@ -169,6 +178,17 @@
                 <div v-else-if="field.key === 'cosponsors'">
                   {{ confirmedCosponsors.length ? confirmedCosponsors.join('、') : '無' }}
                 </div>
+                <div v-else-if="field.key === 'meetingTitles'" class="space-y-1">
+                  <NuxtLink
+                    v-for="meeting in bill.meetings"
+                    :key="meeting.id"
+                    :to="`/bill/${bill.session}/meetings/${meeting.id}`"
+                    class="block text-primary hover:underline"
+                  >
+                    {{ meeting.title }}
+                  </NuxtLink>
+                  <span v-if="!bill.meetings.length">尚未排入會議</span>
+                </div>
                 <div v-else-if="field.multiline" class="whitespace-pre-wrap">
                   {{ getField(field.key) || '無' }}
                 </div>
@@ -233,10 +253,14 @@
 
       <div class="flex flex-wrap gap-4 print:hidden">
         <NuxtLink
-          :to="`/bill/${bill.session}`"
+          :to="
+            bill.meetings.length
+              ? `/bill/${bill.session}/meetings/${bill.meetings[0].id}`
+              : `/bill/${bill.session}`
+          "
           class="inline-flex items-center rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
         >
-          返回議案清單
+          {{ bill.meetings.length ? '返回會議議案' : '返回會期會議' }}
         </NuxtLink>
         <button
           type="button"

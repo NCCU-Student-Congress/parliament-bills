@@ -420,7 +420,7 @@
             <tbody>
               <tr v-for="meeting in meetings" :key="meeting.id">
                 <td>{{ meeting.title }}</td>
-                <td>{{ meeting.committeeName || getCommitteeName(meeting.committeeId) }}</td>
+                <td>{{ meeting.meetingTypeName }}</td>
                 <td>{{ formatSession(meeting.session) }}</td>
                 <td>{{ formatDate(meeting.meetingDate) }}</td>
                 <td>{{ meeting.location || '未設定' }}</td>

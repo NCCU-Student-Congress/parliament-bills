@@ -167,6 +167,8 @@ Cosigning is idempotent, and the UI shows `已連署` after signing. There is no
 
 `PUT /api/proposals/:id/meeting` accepts `{ meetingIds: number[] }`. Use an empty array to clear all assignments. Each meeting must match the proposal's session and committee. The proposal response includes its assigned `meetings` array.
 
+The public query pages follow `/bill` → `/bill/:term` → `/bill/:term/meetings/:id` → proposal detail. `GET /api/meetings/scheduled` lists only meetings with assigned proposals and includes `proposalCount`; it accepts an optional `session` query. `GET /api/meetings/:id/proposals` returns the proposals assigned to one meeting.
+
 The protected write UI is:
 
 ```text

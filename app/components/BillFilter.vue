@@ -35,7 +35,7 @@
           />
         </div>
 
-        <div class="filter-group">
+        <div v-if="showCommittee" class="filter-group">
           <label class="filter-label"> 委員會 </label>
           <select v-model="localFilters.committeeId" class="filter-control">
             <option value="">全部委員會</option>
@@ -59,7 +59,7 @@
           />
         </div>
 
-        <div class="filter-group">
+        <div v-if="showMeeting" class="filter-group">
           <label class="filter-label"> 排入會議 </label>
           <input
             v-model="localFilters.meeting"
@@ -100,6 +100,14 @@
     committees: {
       type: Array,
       default: () => [],
+    },
+    showCommittee: {
+      type: Boolean,
+      default: true,
+    },
+    showMeeting: {
+      type: Boolean,
+      default: true,
     },
   });
 

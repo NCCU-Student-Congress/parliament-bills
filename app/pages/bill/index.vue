@@ -1,92 +1,65 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto max-w-6xl px-4 py-8">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">議案查詢</h1>
-      <p class="text-gray-600">點選會期，查看該會期學生議會議案資料</p>
+      <h1 class="mb-2 text-3xl font-bold text-gray-900">議案查詢</h1>
+      <p class="text-gray-600">點選會期，再選擇已排案的會議查看議案。</p>
       <NuxtLink
         to="/bill/new"
-        class="inline-flex items-center mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+        class="mt-4 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-600"
       >
         新增議案
       </NuxtLink>
     </div>
 
     <div
-      v-if="sessions.length"
+      v-if="error || sessionsError"
+      class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"
+    >
+      {{ error?.message || sessionsError?.message || '載入資料失敗' }}
+    </div>
+    <div v-else-if="pending || sessionsPending" class="py-12 text-center text-gray-600">
+      載入中...
+    </div>
+    <div
+      v-else-if="scheduledSessions.length"
       class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
     >
       <NuxtLink
-        v-for="session in sessions"
+        v-for="session in scheduledSessions"
         :key="session.id"
         :to="`/bill/${session.id}`"
-        class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+        class="rounded-lg bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
       >
-        <div class="p-6">
-          <div class="text-primary text-sm font-semibold mb-2">
-            {{ session.title || formatTermLabel(session.id) }}
-          </div>
-          <h2 class="text-xl font-bold text-gray-900">學生議會</h2>
-          <p class="text-gray-600 text-sm mt-2">點擊查看本會期議案</p>
-        </div>
-        <div
-          v-if="session.id === getCurrentTerm()"
-          class="bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg absolute top-0 right-0"
-        >
-          目前會期
-        </div>
+        <p class="mb-2 text-sm font-semibold text-primary">
+          {{ session.title || formatTermLabel(session.id) }}
+        </p>
+        <h2 class="text-xl font-bold text-gray-900">學生議會</h2>
+        <p class="mt-2 text-sm text-gray-600">查看本會期已排案的會議</p>
       </NuxtLink>
     </div>
-
-    <div v-else class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-700">
-      尚未建立會期資料。
-    </div>
-
-    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-      <div class="flex items-center">
-        <ExclamationTriangleIcon class="h-5 w-5 text-red-500 mr-2" />
-        <p class="text-red-700">{{ error.message || '載入資料失敗' }}</p>
-      </div>
-    </div>
-
-    <div v-if="pending" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      <span class="ml-2 text-gray-600">載入中...</span>
-    </div>
-
-    <div v-if="!pending && !error" class="mb-8"></div>
-
-    <div v-if="!pending && !error" class="space-y-6">
-      <div class="text-sm text-gray-600">最新 10 筆議案</div>
-
-      <div class="grid gap-4">
-        <BillCardSimple v-for="bill in newestBills" :key="bill.id" :bill="bill" />
-      </div>
+    <div v-else class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600">
+      尚無已排案的會議。
     </div>
   </div>
 </template>
 
 <script setup>
   import { computed } from 'vue';
-  import { formatTermLabel, getCurrentTerm } from '../../../shared/utils/term';
+  import { formatTermLabel } from '../../../shared/utils/term';
 
-  const { data: newestBills, pending, error } = await useFetch(`/api/bills?limit=10`);
-  const { data: sessionsData } = await useFetch('/api/sessions');
-  const sessions = computed(() => sessionsData.value ?? []);
+  const { data: meetingsData, pending, error } = await useFetch('/api/meetings/scheduled');
+  const {
+    data: sessionsData,
+    pending: sessionsPending,
+    error: sessionsError,
+  } = await useFetch('/api/sessions');
+  const scheduledSessions = computed(() => {
+    const ids = new Set((meetingsData.value ?? []).map((meeting) => meeting.session));
+    return (sessionsData.value ?? []).filter((session) => ids.has(session.id));
+  });
 
-  // SEO 設定
   definePageMeta({
     title: '議案查詢',
-    description: '查看' + ORG_DATA.nameZhFull + '歷屆議案資料。',
+    description: '查看' + ORG_DATA.nameZhFull + '歷屆已排案會議與議案資料。',
   });
 </script>
-
-<style scoped>
-  .container {
-    max-width: 1200px;
-  }
-
-  /* 確保 NuxtLink 的樣式能正常應用 */
-  .grid-cols-1 > a {
-    position: relative; /* 為了 "目前會期" 標籤的定位 */
-  }
-</style>

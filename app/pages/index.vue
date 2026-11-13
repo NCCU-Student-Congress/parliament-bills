@@ -36,9 +36,6 @@
             <p class="mt-2 text-3xl font-black">{{ stats.thisTermBills }}</p>
           </div>
         </div>
-        <div class="p-5 text-sm font-bold leading-relaxed text-white/80">
-          資料欄位維持既有格式，供議事查詢與內部作業使用。
-        </div>
       </aside>
     </section>
 
