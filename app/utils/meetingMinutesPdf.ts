@@ -140,7 +140,7 @@ export async function createMeetingMinutesPdf(
       .map((item) => [item.decisionKey!, item.decision]),
   );
   function drawDecision(decision: string | undefined, prefix: string) {
-    drawText(`決議：${decision || '尚未填寫'}`, {
+    drawText(`決議：${decision ?? ''}`, {
       indent: 12 + font.widthOfTextAtSize(prefix, BODY_SIZE),
       hangingIndent: font.widthOfTextAtSize('決議：', BODY_SIZE),
       gap: CASE_GAP,

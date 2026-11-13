@@ -63,7 +63,7 @@
       </div>
       <p v-else class="rounded-lg bg-gray-50 p-5 text-gray-600">本場會議尚無可填寫決議的項目。</p>
       <p id="minutes-hint" class="mt-3 text-sm text-gray-600">
-        未填寫的決議在 PDF 中會顯示「尚未填寫」。
+        未填寫的決議在 PDF 中會顯示「決議：」，冒號後留空。
       </p>
 
       <div class="mt-5 flex flex-wrap items-center gap-3">
@@ -79,10 +79,12 @@
           {{ downloading ? '製作 PDF 中...' : '下載 PDF' }}
         </button>
         <span v-if="dirty" class="text-sm text-amber-800">有未儲存的修改</span>
+        <Transition name="save-notice">
+          <span v-if="saveNotice && !dirty" role="status" class="text-sm text-green-700">
+            {{ saveNotice }}
+          </span>
+        </Transition>
       </div>
-      <p v-if="saveNotice" role="status" class="mt-3 text-sm text-green-700">
-        {{ saveNotice }}
-      </p>
       <p v-if="actionError" role="alert" class="mt-3 text-sm text-red-700">
         {{ actionError }}
       </p>
@@ -115,6 +117,13 @@
   const loadError = ref('');
   const actionError = ref('');
   const saveNotice = ref('');
+  let saveNoticeTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function clearSaveNotice() {
+    if (saveNoticeTimer) clearTimeout(saveNoticeTimer);
+    saveNoticeTimer = undefined;
+    saveNotice.value = '';
+  }
 
   const orderedItems = computed<MinutesItem[]>(() => {
     const items: MinutesItem[] = [];
@@ -166,7 +175,10 @@
   }
 
   onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload));
-  onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnload));
+  onBeforeUnmount(() => {
+    window.removeEventListener('beforeunload', warnBeforeUnload);
+    clearSaveNotice();
+  });
 
   function selectMeeting(event: Event) {
     const select = event.target as HTMLSelectElement;
@@ -185,7 +197,7 @@
     savedSnapshot.value = '';
     loadError.value = '';
     actionError.value = '';
-    saveNotice.value = '';
+    clearSaveNotice();
     loading.value = Boolean(id);
     if (!id || !selectedMeeting.value) return;
     let cancelled = false;
@@ -228,7 +240,7 @@
   async function saveDecisions() {
     if (!selectedMeeting.value || !dirty.value || saving.value) return;
     actionError.value = '';
-    saveNotice.value = '';
+    clearSaveNotice();
     saving.value = true;
     const id = meetingId.value;
     const decisions = decisionPayload.value;
@@ -240,6 +252,7 @@
       if (meetingId.value !== id) return;
       savedSnapshot.value = JSON.stringify(saved);
       saveNotice.value = '決議已儲存';
+      saveNoticeTimer = setTimeout(clearSaveNotice, 3000);
     } catch (error) {
       if (meetingId.value === id) {
         actionError.value = error instanceof Error ? error.message : '儲存失敗';
@@ -310,5 +323,13 @@
   .control:focus-visible {
     outline: 3px solid #e60012;
     outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .save-notice-leave-active {
+      transition: opacity 0.4s ease;
+    }
+    .save-notice-leave-to {
+      opacity: 0;
+    }
   }
 </style>
