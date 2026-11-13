@@ -1,9 +1,7 @@
 <template>
   <section class="rounded-lg border border-[#dcdce2] bg-white p-5 shadow-sm">
     <h2 class="text-xl font-bold text-[#12122b]">製作會議記錄</h2>
-    <p class="mt-1 text-sm text-gray-600">
-      選擇會議後填寫議案與文字項目的決議，儲存後即可下載 PDF。
-    </p>
+    <p class="mt-1 text-sm text-gray-600">選擇會議後填寫決議與散會時間，儲存後即可下載 PDF。</p>
 
     <label class="mt-5 block font-semibold" for="minutes-meeting">
       會議
@@ -29,11 +27,40 @@
           selectedMeeting.location || '未設定地點'
         }}
       </p>
-      <div v-if="hasDecisionItems" class="space-y-4">
+      <div class="space-y-4">
         <template v-for="item in orderedItems" :key="item.key">
-          <h3 v-if="item.kind === 'heading'" class="pt-3 text-lg font-bold text-[#12122b]">
-            {{ item.title }}
-          </h3>
+          <div v-if="item.kind === 'heading'" class="flex flex-wrap items-center gap-1 pt-3">
+            <h3 class="text-lg font-bold text-[#12122b]">{{ item.title }}</h3>
+            <div v-if="item.closing" class="flex items-center gap-1 whitespace-nowrap">
+              <span class="text-lg font-bold text-[#12122b]">（</span>
+              <label class="sr-only" for="minutes-closing-hour">散會小時</label>
+              <select
+                id="minutes-closing-hour"
+                v-model="closingHour"
+                name="closingHour"
+                class="control time-select"
+                :required="Boolean(closingMinute)"
+              >
+                <option value="">--</option>
+                <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
+              </select>
+              <span>時</span>
+              <label class="sr-only" for="minutes-closing-minute">散會分鐘</label>
+              <select
+                id="minutes-closing-minute"
+                v-model="closingMinute"
+                name="closingMinute"
+                class="control time-select"
+                :required="Boolean(closingHour)"
+              >
+                <option value="">--</option>
+                <option v-for="minute in minutes" :key="minute" :value="minute">
+                  {{ minute }}
+                </option>
+              </select>
+              <span>分）</span>
+            </div>
+          </div>
           <article v-else class="rounded-lg border border-gray-200 p-4">
             <span class="text-xs font-semibold text-gray-600">
               {{ item.kind === 'proposal' ? '議案' : '文字項目' }}
@@ -61,14 +88,16 @@
           </article>
         </template>
       </div>
-      <p v-else class="rounded-lg bg-gray-50 p-5 text-gray-600">本場會議尚無可填寫決議的項目。</p>
+      <p v-if="!hasDecisionItems" class="rounded-lg bg-gray-50 p-5 text-gray-600">
+        本場會議尚無可填寫決議的項目。
+      </p>
       <p id="minutes-hint" class="mt-3 text-sm text-gray-600">
         未填寫的決議在 PDF 中會顯示「決議：」，冒號後留空。
       </p>
 
       <div class="mt-5 flex flex-wrap items-center gap-3">
         <button class="btn btn-primary" type="submit" :disabled="saving || downloading || !dirty">
-          {{ saving ? '儲存中...' : '儲存決議' }}
+          {{ saving ? '儲存中...' : '儲存會議記錄' }}
         </button>
         <button
           class="btn btn-secondary"
@@ -93,12 +122,18 @@
 </template>
 
 <script setup lang="ts">
-  import type { AgendaEntry, Meeting, MeetingDecision, Proposal } from '~~/shared/types/bill';
+  import type {
+    AgendaEntry,
+    Meeting,
+    MeetingDecision,
+    MeetingMinutes,
+    Proposal,
+  } from '~~/shared/types/bill';
   import { agendaLines, normalizeAgenda } from '~~/shared/utils/agenda';
   import { vAutoResize } from '~/utils/autoResizeTextarea';
 
   type MinutesItem =
-    | { kind: 'heading'; key: string; title: string }
+    | { kind: 'heading'; key: string; title: string; closing: boolean }
     | { kind: 'proposal'; key: string; title: string; proposalId: number }
     | { kind: 'text'; key: string; title: string; decisionKey: string };
 
@@ -110,6 +145,10 @@
   const proposals = ref<Proposal[]>([]);
   const entries = ref<AgendaEntry[]>([]);
   const decisionDrafts = ref<Record<string, string>>({});
+  const closingHour = ref('');
+  const closingMinute = ref('');
+  const hours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'));
+  const minutes = Array.from({ length: 60 }, (_, minute) => String(minute).padStart(2, '0'));
   const savedSnapshot = ref('');
   const loading = ref(false);
   const saving = ref(false);
@@ -129,7 +168,12 @@
     const items: MinutesItem[] = [];
     for (const [index, line] of agendaLines(entries.value, proposals.value).entries()) {
       if (line.entry.kind === 'heading') {
-        items.push({ kind: 'heading', key: `heading-${index}`, title: line.text });
+        items.push({
+          kind: 'heading',
+          key: `heading-${index}`,
+          title: line.text,
+          closing: line.entry.content.endsWith('、散會'),
+        });
       } else if (line.entry.kind === 'proposal' && line.entry.proposalId !== null) {
         items.push({
           kind: 'proposal',
@@ -161,11 +205,16 @@
     }),
   );
 
+  const closingTime = computed(() =>
+    closingHour.value || closingMinute.value ? `${closingHour.value}:${closingMinute.value}` : '',
+  );
+  const currentSnapshot = computed(() =>
+    JSON.stringify({ decisions: decisionPayload.value, closingTime: closingTime.value }),
+  );
+
   const dirty = computed(() =>
     Boolean(
-      selectedMeeting.value &&
-      !loading.value &&
-      JSON.stringify(decisionPayload.value) !== savedSnapshot.value,
+      selectedMeeting.value && !loading.value && currentSnapshot.value !== savedSnapshot.value,
     ),
   );
 
@@ -183,7 +232,7 @@
   function selectMeeting(event: Event) {
     const select = event.target as HTMLSelectElement;
     const nextId = Number(select.value);
-    if (dirty.value && !window.confirm('決議尚未儲存，確定要切換會議嗎？')) {
+    if (dirty.value && !window.confirm('會議記錄尚未儲存，確定要切換會議嗎？')) {
       select.value = String(meetingId.value);
       return;
     }
@@ -194,6 +243,8 @@
     proposals.value = [];
     entries.value = [];
     decisionDrafts.value = {};
+    closingHour.value = '';
+    closingMinute.value = '';
     savedSnapshot.value = '';
     loadError.value = '';
     actionError.value = '';
@@ -205,10 +256,10 @@
       cancelled = true;
     });
     try {
-      const [meetingProposals, agenda, decisions] = await Promise.all([
+      const [meetingProposals, agenda, meetingMinutes] = await Promise.all([
         $fetch<Proposal[]>(`/api/meetings/${id}/proposals`),
         $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`),
-        $fetch<MeetingDecision[]>(`/api/meetings/${id}/minutes`),
+        $fetch<MeetingMinutes>(`/api/meetings/${id}/minutes`),
       ]);
       if (cancelled) return;
       proposals.value = meetingProposals;
@@ -217,7 +268,7 @@
         throw new Error('議程文字項目缺少識別碼，請重新儲存議程');
       }
       const saved = new Map(
-        decisions.map((item) => [
+        meetingMinutes.decisions.map((item) => [
           item.proposalId !== undefined
             ? `proposal-${item.proposalId}`
             : `text-${item.decisionKey}`,
@@ -229,7 +280,9 @@
           .filter((item) => item.kind !== 'heading')
           .map((item) => [item.key, saved.get(item.key) ?? '']),
       );
-      savedSnapshot.value = JSON.stringify(decisionPayload.value);
+      closingHour.value = meetingMinutes.closingTime.slice(0, 2);
+      closingMinute.value = meetingMinutes.closingTime.slice(3, 5);
+      savedSnapshot.value = currentSnapshot.value;
     } catch (error) {
       if (!cancelled) loadError.value = error instanceof Error ? error.message : '載入失敗';
     } finally {
@@ -244,14 +297,15 @@
     saving.value = true;
     const id = meetingId.value;
     const decisions = decisionPayload.value;
+    const submittedClosingTime = closingTime.value;
     try {
-      const saved = await $fetch<MeetingDecision[]>(`/api/meetings/${id}/minutes`, {
+      const saved = await $fetch<MeetingMinutes>(`/api/meetings/${id}/minutes`, {
         method: 'PUT',
-        body: { decisions },
+        body: { decisions, closingTime: submittedClosingTime },
       });
       if (meetingId.value !== id) return;
       savedSnapshot.value = JSON.stringify(saved);
-      saveNotice.value = '決議已儲存';
+      saveNotice.value = '會議記錄已儲存';
       saveNoticeTimer = setTimeout(clearSaveNotice, 3000);
     } catch (error) {
       if (meetingId.value === id) {
@@ -268,17 +322,18 @@
     downloading.value = true;
     try {
       const id = meetingId.value;
-      const [latestProposals, latestAgenda, latestDecisions] = await Promise.all([
+      const [latestProposals, latestAgenda, latestMinutes] = await Promise.all([
         $fetch<Proposal[]>(`/api/meetings/${id}/proposals`),
         $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`),
-        $fetch<MeetingDecision[]>(`/api/meetings/${id}/minutes`),
+        $fetch<MeetingMinutes>(`/api/meetings/${id}/minutes`),
       ]);
       const { createMeetingMinutesPdf } = await import('~/utils/meetingMinutesPdf');
       const bytes = await createMeetingMinutesPdf(
         selectedMeeting.value,
         normalizeAgenda(selectedMeeting.value, latestProposals, latestAgenda),
         latestProposals,
-        latestDecisions,
+        latestMinutes.decisions,
+        latestMinutes.closingTime,
       );
       const url = URL.createObjectURL(
         new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }),
@@ -323,6 +378,9 @@
   .control:focus-visible {
     outline: 3px solid #e60012;
     outline-offset: 2px;
+  }
+  .time-select {
+    width: auto;
   }
   @media (prefers-reduced-motion: no-preference) {
     .save-notice-leave-active {

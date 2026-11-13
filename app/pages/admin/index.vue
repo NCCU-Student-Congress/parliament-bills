@@ -635,7 +635,8 @@
 
   function confirmUnsavedMinutes() {
     return (
-      !minutesEditor.value?.hasUnsavedChanges() || window.confirm('決議尚未儲存，確定要離開嗎？')
+      !minutesEditor.value?.hasUnsavedChanges() ||
+      window.confirm('會議記錄尚未儲存，確定要離開嗎？')
     );
   }
 

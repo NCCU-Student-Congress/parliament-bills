@@ -1,4 +1,4 @@
-import type { MeetingDecision } from '~~/shared/types/bill';
+import type { MeetingDecision, MeetingMinutes } from '~~/shared/types/bill';
 
 export default defineEventHandler(async (event) => {
   await requireRole(event, ['secretariat_admin']);
@@ -14,6 +14,12 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   if (!Array.isArray(body?.decisions) || body.decisions.length > 500) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '無效的決議內容' });
+  }
+  if (
+    typeof body.closingTime !== 'string' ||
+    (body.closingTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(body.closingTime))
+  ) {
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '無效的散會時間' });
   }
   const { results: scheduled = [] } = await db
     .prepare('SELECT proposal_id FROM proposal_meetings WHERE meeting_id = ?')
@@ -73,26 +79,27 @@ export default defineEventHandler(async (event) => {
       message: '議程已變動，請重新載入會議',
     });
   }
-  if (decisions.length) {
-    await db.batch(
-      decisions.map((item) =>
-        item.proposalId !== undefined
-          ? db
-              .prepare(
-                `INSERT INTO meeting_proposal_decisions (meeting_id, proposal_id, decision)
+  await db.batch([
+    db
+      .prepare('UPDATE meetings SET closing_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(body.closingTime, id),
+    ...decisions.map((item) =>
+      item.proposalId !== undefined
+        ? db
+            .prepare(
+              `INSERT INTO meeting_proposal_decisions (meeting_id, proposal_id, decision)
                  VALUES (?, ?, ?)
                  ON CONFLICT(meeting_id, proposal_id) DO UPDATE SET
                    decision = excluded.decision, updated_at = CURRENT_TIMESTAMP`,
-              )
-              .bind(id, item.proposalId, item.decision)
-          : db
-              .prepare(
-                `UPDATE meeting_agenda_entries SET decision = ?
+            )
+            .bind(id, item.proposalId, item.decision)
+        : db
+            .prepare(
+              `UPDATE meeting_agenda_entries SET decision = ?
                  WHERE meeting_id = ? AND decision_key = ? AND kind = 'text'`,
-              )
-              .bind(item.decision, id, item.decisionKey),
-      ),
-    );
-  }
-  return decisions;
+            )
+            .bind(item.decision, id, item.decisionKey),
+    ),
+  ]);
+  return { decisions, closingTime: body.closingTime } satisfies MeetingMinutes;
 });

@@ -1,4 +1,4 @@
-import type { MeetingDecision } from '~~/shared/types/bill';
+import type { MeetingDecision, MeetingMinutes } from '~~/shared/types/bill';
 
 export default defineEventHandler(async (event) => {
   await requireRole(event, ['secretariat_admin']);
@@ -7,7 +7,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '無效的會議索引' });
   }
   const db = useD1Database(event);
-  const meeting = await db.prepare('SELECT id FROM meetings WHERE id = ?').bind(id).first();
+  const meeting = await db
+    .prepare('SELECT closing_time FROM meetings WHERE id = ?')
+    .bind(id)
+    .first<{ closing_time: string }>();
   if (!meeting)
     throw createError({ statusCode: 404, statusMessage: 'Not Found', message: '找不到指定會議' });
 
@@ -41,5 +44,5 @@ export default defineEventHandler(async (event) => {
       decision: row.decision,
     })),
   ];
-  return decisions;
+  return { decisions, closingTime: meeting.closing_time } satisfies MeetingMinutes;
 });

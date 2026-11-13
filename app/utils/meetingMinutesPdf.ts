@@ -44,6 +44,7 @@ export async function createMeetingMinutesPdf(
   entries: AgendaEntry[],
   proposals: Proposal[],
   decisions: MeetingDecision[],
+  closingTime: string,
 ): Promise<Uint8Array> {
   const parts = await Promise.all(
     MINUTES_FONT_PARTS.map(async (path) => {
@@ -150,7 +151,11 @@ export async function createMeetingMinutesPdf(
     if (line.entry.kind === 'heading') {
       ensureSpace(50);
       y -= 5;
-      drawText(line.text, { size: HEADING_SIZE, gap: 5 });
+      const closingLabel =
+        line.entry.content.endsWith('、散會') && closingTime
+          ? `（${closingTime.slice(0, 2)}時${closingTime.slice(3, 5)}分）`
+          : '';
+      drawText(`${line.text}${closingLabel}`, { size: HEADING_SIZE, gap: 5 });
     } else if (line.entry.kind === 'proposal') {
       ensureSpace(52);
       const match = line.text.match(/^([一二三四五六七八九十百千\d]+、)(.*)$/);

@@ -1,7 +1,8 @@
 # Database Schema
 
-The runtime database is Cloudflare D1. `migrations/0001_create_bills.sql` is the complete schema
-for a new, empty database. Earlier migrations and data are not supported.
+The runtime database is Cloudflare D1. `migrations/0001_create_bills.sql` is the baseline schema
+for a new, empty database. Apply subsequent migrations in order. Earlier migrations and data are not
+supported.
 
 ## People and access
 
@@ -38,6 +39,8 @@ for a new, empty database. Earlier migrations and data are not supported.
 - `meeting_proposal_decisions` stores decisions per meeting and proposal. They remain when a proposal
   is unscheduled and reappear if it returns to that meeting. Deleting the meeting or proposal removes
   its decisions.
+- `meetings.closing_time` stores the optional adjournment time as a local `HH:mm` value for the
+  meeting minutes PDF.
 
 Only secretariat admins can read or edit decisions. The public agenda hides proposal entries that
 are no longer scheduled for the meeting.

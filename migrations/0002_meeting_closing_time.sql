@@ -1,0 +1,1 @@
+ALTER TABLE meetings ADD COLUMN closing_time TEXT NOT NULL DEFAULT '';

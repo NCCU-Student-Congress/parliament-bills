@@ -68,6 +68,11 @@ export type MeetingDecision =
   | { proposalId: number; decisionKey?: never; decision: string }
   | { proposalId?: never; decisionKey: string; decision: string };
 
+export interface MeetingMinutes {
+  decisions: MeetingDecision[];
+  closingTime: string;
+}
+
 export interface ProposalMeeting {
   id: number;
   title: string;
