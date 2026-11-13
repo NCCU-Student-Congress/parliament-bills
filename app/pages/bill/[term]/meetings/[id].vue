@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto max-w-6xl px-4 py-8">
+  <div class="container mx-auto max-w-6xl py-8 sm:px-4">
     <nav class="mb-6 text-sm text-gray-600" aria-label="麵包屑">
       <NuxtLink to="/" class="hover:text-primary">首頁</NuxtLink>
       <span class="mx-2">/</span>

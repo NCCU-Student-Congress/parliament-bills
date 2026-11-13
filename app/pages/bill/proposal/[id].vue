@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto py-8 sm:px-4">
     <nav class="mb-6 print:hidden" aria-label="麵包屑">
       <ol class="breadcrumb-list text-sm text-gray-600">
         <li class="breadcrumb-item">

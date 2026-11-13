@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto max-w-6xl px-4 py-8">
+  <div class="container mx-auto max-w-6xl py-8 sm:px-4">
     <div class="mb-8">
       <h1 class="mb-2 text-3xl font-bold text-gray-900">議案查詢</h1>
       <p class="text-gray-600">點選會期，再選擇已排案的會議查看議案。</p>
