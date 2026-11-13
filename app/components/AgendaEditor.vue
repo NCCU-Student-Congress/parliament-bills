@@ -128,14 +128,12 @@
       </ol>
       <p class="sr-only" role="status">{{ reorderNotice }}</p>
       <div class="mt-6 flex items-center gap-3">
-        <button type="button" class="btn btn-primary" :disabled="saving" @click="queueSave()">
-          {{ saving ? '儲存中...' : '立即儲存' }}
-        </button>
         <NuxtLink
           :to="`/bill/${selectedMeeting.session}/meetings/${selectedMeeting.id}`"
           class="text-primary hover:underline"
           >查看會議頁</NuxtLink
         >
+        <span v-if="saving" class="text-sm text-gray-600">儲存中...</span>
       </div>
       <p v-if="saveNotice" role="status" class="mt-3 text-sm text-green-700">{{ saveNotice }}</p>
       <p v-if="saveError" role="alert" class="mt-3 text-sm text-red-700">{{ saveError }}</p>
