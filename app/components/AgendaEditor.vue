@@ -18,11 +18,26 @@
     <p v-if="loading" class="py-6 text-gray-600">載入議程中...</p>
     <p v-else-if="loadError" class="py-4 text-red-700">{{ loadError }}</p>
     <template v-else-if="selectedMeeting">
-      <p class="mb-4 text-sm text-gray-600">
-        已排入的議案會自動列入對應段落；議案僅能在同一段落排序，可在各段落下方插入文字。
-      </p>
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-gray-600">
+          已排入的議案會自動列入對應段落；議案僅能在同一段落排序。
+        </p>
+        <button
+          type="button"
+          class="rounded border px-3 py-1.5 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          :class="
+            showInsertActions
+              ? 'border-[#12122b] bg-[#12122b] text-white'
+              : 'border-gray-400 text-[#12122b]'
+          "
+          :aria-pressed="showInsertActions"
+          @click="showInsertActions = !showInsertActions"
+        >
+          插入文字項目
+        </button>
+      </div>
       <button
-        v-if="!hasElectionSection"
+        v-if="showInsertActions && !hasElectionSection"
         type="button"
         class="mb-4 rounded border border-gray-400 px-3 py-1.5 text-sm font-semibold"
         @click="addElectionText"
@@ -57,23 +72,28 @@
               ☰
             </span>
             <div class="min-w-0 flex-1">
-              <span class="mb-1 block text-xs font-semibold text-gray-500">{{
-                entry.kind === 'proposal'
-                  ? '議案'
-                  : entry.kind === 'heading'
-                    ? '段落標題'
-                    : '文字項目'
-              }}</span>
+              <label
+                v-if="entry.kind === 'text'"
+                class="mb-1 block text-xs font-semibold text-gray-500"
+                :for="`agenda-text-${entryKeys[index]}`"
+                >文字項目<span class="sr-only">，第 {{ index + 1 }} 項內容</span></label
+              >
+              <span
+                v-else-if="entry.kind === 'proposal'"
+                class="mb-1 block text-xs font-semibold text-gray-500"
+                >議案</span
+              >
               <p v-if="entry.kind === 'heading'" class="py-1 font-bold">{{ entry.content }}</p>
               <p v-else-if="entry.kind === 'proposal'" class="py-1 font-medium">
                 {{ proposalMap.get(entry.proposalId ?? -1)?.subject || '議案已移出會議' }}
               </p>
               <textarea
                 v-else
+                :id="`agenda-text-${entryKeys[index]}`"
                 v-model="entry.content"
-                rows="2"
-                class="control w-full"
-                :aria-label="`第 ${index + 1} 項內容`"
+                v-auto-resize
+                rows="1"
+                class="control agenda-textarea"
               />
             </div>
             <div v-if="entry.kind !== 'heading'" class="flex flex-col gap-1 text-sm">
@@ -105,11 +125,12 @@
             </div>
           </div>
           <button
+            v-if="showInsertActions"
             type="button"
             class="mt-2 text-sm text-primary hover:underline"
             @click="insertEntry(index + 1)"
           >
-            ＋在此處插入文字
+            ＋在此處插入文字<span class="sr-only">，第 {{ index + 1 }} 項後</span>
           </button>
         </li>
       </ol>
@@ -131,6 +152,7 @@
 <script setup lang="ts">
   import type { AgendaEntry, Meeting, Proposal } from '~~/shared/types/bill';
   import { normalizeAgenda } from '~~/shared/utils/agenda';
+  import { vAutoResize } from '~/utils/autoResizeTextarea';
 
   const props = defineProps<{ meetings: Meeting[] }>();
   const meetingId = ref(0);
@@ -147,6 +169,7 @@
   const loadError = ref('');
   const saveError = ref('');
   const saveNotice = ref('');
+  const showInsertActions = ref(false);
   const dragIndex = ref(-1);
   const dragOffsetY = ref(0);
   const dropSlot = ref(-1);
@@ -170,6 +193,7 @@
   );
 
   watch(meetingId, async (id, _oldId, onCleanup) => {
+    showInsertActions.value = false;
     clearTimeout(saveTimer);
     if (loadedMeetingId) void queueSave(loadedMeetingId);
     loadedMeetingId = 0;
@@ -446,6 +470,11 @@
   .control:focus {
     border-color: #e60012;
     outline: 3px solid rgba(230, 0, 18, 0.18);
+  }
+  .agenda-textarea {
+    field-sizing: content;
+    height: auto;
+    overflow-y: hidden;
   }
   .agenda-list {
     position: relative;

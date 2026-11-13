@@ -93,6 +93,7 @@
 <script setup lang="ts">
   import type { AgendaEntry, Meeting, MeetingDecision, Proposal } from '~~/shared/types/bill';
   import { agendaLines, normalizeAgenda } from '~~/shared/utils/agenda';
+  import { vAutoResize } from '~/utils/autoResizeTextarea';
 
   type MinutesItem =
     | { kind: 'heading'; key: string; title: string }
@@ -151,16 +152,6 @@
     }),
   );
 
-  function resizeDecisionField(element: HTMLTextAreaElement) {
-    if (CSS.supports('field-sizing', 'content')) return;
-    element.style.height = 'auto';
-    element.style.height = `${element.scrollHeight}px`;
-  }
-
-  const vAutoResize = {
-    mounted: resizeDecisionField,
-    updated: resizeDecisionField,
-  };
   const dirty = computed(() =>
     Boolean(
       selectedMeeting.value &&
