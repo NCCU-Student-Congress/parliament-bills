@@ -46,19 +46,24 @@
       </button>
       <ol
         ref="listRef"
-        class="agenda-list space-y-3"
-        :class="{ 'drop-at-end': dropSlot === entries.length && dragIndex >= 0 }"
+        class="agenda-list"
+        :class="{
+          'space-y-3': !showInsertActions,
+          'drop-at-end': dropSlot === entries.length && dragIndex >= 0,
+        }"
         aria-label="議程排序"
       >
         <li
           v-for="(entry, index) in entries"
           :key="entryKeys[index]"
           :data-entry-key="entryKeys[index]"
-          class="agenda-entry rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+          class="agenda-entry"
           :class="{ 'is-dragging': dragIndex === index, 'drop-before': dropSlot === index }"
           :style="dragIndex === index ? { transform: `translateY(${dragOffsetY}px)` } : undefined"
         >
-          <div class="flex items-start gap-3">
+          <div
+            class="agenda-card flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+          >
             <span
               v-if="entry.kind !== 'heading'"
               class="drag-handle pt-2 text-gray-500"
@@ -124,14 +129,15 @@
               </button>
             </div>
           </div>
-          <button
-            v-if="showInsertActions"
-            type="button"
-            class="mt-2 text-sm text-primary hover:underline"
-            @click="insertEntry(index + 1)"
-          >
-            ＋在此處插入文字<span class="sr-only">，第 {{ index + 1 }} 項後</span>
-          </button>
+          <div v-if="showInsertActions" class="flex justify-center py-3">
+            <button
+              type="button"
+              class="rounded border border-dashed border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-primary hover:border-primary hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              @click="insertEntry(index + 1)"
+            >
+              ＋在此處插入文字<span class="sr-only">，第 {{ index + 1 }} 項後</span>
+            </button>
+          </div>
         </li>
       </ol>
       <p class="sr-only" role="status">{{ reorderNotice }}</p>
@@ -484,6 +490,8 @@
   }
   .agenda-entry.is-dragging {
     z-index: 1;
+  }
+  .agenda-entry.is-dragging .agenda-card {
     box-shadow: 0 14px 28px rgba(0, 0, 36, 0.18);
   }
   .agenda-entry.drop-before::before,
