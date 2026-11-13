@@ -3,7 +3,7 @@
     <div class="mb-5">
       <h2 class="text-xl font-bold">設定議程</h2>
       <p class="mt-1 text-sm text-gray-600">
-        選擇會議後拖曳項目排序；可插入文字，儲存後會顯示在會議查詢。
+        選擇會議後拖曳項目排序或插入文字；修改後會自動儲存，並顯示在會議查詢。
       </p>
     </div>
     <label class="mb-5 block font-semibold" for="agenda-meeting"
@@ -116,8 +116,8 @@
         </li>
       </ol>
       <div class="mt-6 flex items-center gap-3">
-        <button type="button" class="btn btn-primary" :disabled="saving" @click="saveAgenda">
-          {{ saving ? '儲存中...' : '儲存議程' }}
+        <button type="button" class="btn btn-primary" :disabled="saving" @click="queueSave()">
+          {{ saving ? '儲存中...' : '立即儲存' }}
         </button>
         <NuxtLink
           :to="`/bill/${selectedMeeting.session}/meetings/${selectedMeeting.id}`"
@@ -150,6 +150,11 @@
   const saveError = ref('');
   const saveNotice = ref('');
   const dragIndex = ref(-1);
+  let loadedMeetingId = 0;
+  let savedSnapshot = '';
+  let queuedSnapshot = '';
+  let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  let saveQueue: Promise<void> = Promise.resolve();
   const proposalMap = computed(() => new Map(proposals.value.map((item) => [item.id, item])));
   const newProposals = computed(() =>
     proposals.value.filter((item) => !entries.value.some((entry) => entry.proposalId === item.id)),
@@ -159,19 +164,25 @@
   );
 
   watch(meetingId, async (id, _oldId, onCleanup) => {
+    clearTimeout(saveTimer);
+    if (loadedMeetingId) void queueSave(loadedMeetingId);
+    loadedMeetingId = 0;
+    saving.value = false;
     entries.value = [];
     entryKeys.value = [];
     proposals.value = [];
     loadError.value = '';
     saveError.value = '';
     saveNotice.value = '';
+    loading.value = Boolean(id);
     if (!id) return;
     let cancelled = false;
     onCleanup(() => {
       cancelled = true;
     });
-    loading.value = true;
     try {
+      await saveQueue;
+      if (cancelled) return;
       const [bills, agenda] = await Promise.all([
         $fetch<Proposal[]>(`/api/meetings/${id}/proposals`),
         $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`),
@@ -180,11 +191,32 @@
       proposals.value = bills;
       entries.value = normalizeAgenda(selectedMeeting.value!, bills, agenda);
       entryKeys.value = entries.value.map(() => nextKey++);
+      savedSnapshot = JSON.stringify(entries.value);
+      queuedSnapshot = savedSnapshot;
+      loadedMeetingId = id;
     } catch (error) {
       if (!cancelled) loadError.value = error instanceof Error ? error.message : '載入失敗';
     } finally {
       if (!cancelled) loading.value = false;
     }
+  });
+
+  watch(
+    entries,
+    () => {
+      if (!loadedMeetingId || meetingId.value !== loadedMeetingId) return;
+      clearTimeout(saveTimer);
+      if (JSON.stringify(entries.value) === queuedSnapshot) return;
+      saveNotice.value = '';
+      saveError.value = '';
+      saveTimer = setTimeout(() => void queueSave(), 800);
+    },
+    { deep: true },
+  );
+
+  onBeforeUnmount(() => {
+    clearTimeout(saveTimer);
+    if (loadedMeetingId) void queueSave(loadedMeetingId);
   });
 
   function insertEntry(index: number) {
@@ -259,28 +291,48 @@
     entryKeys.value.splice(to, 0, ...entryKeys.value.splice(from, 1));
     dragIndex.value = -1;
   }
-  async function saveAgenda() {
-    if (!meetingId.value) return;
+  function queueSave(id = loadedMeetingId): Promise<void> {
+    const meeting = props.meetings.find((item) => item.id === id);
+    if (!meeting || id !== loadedMeetingId) return saveQueue;
+    clearTimeout(saveTimer);
+    const draft = entries.value.map((entry) => ({ ...entry }));
+    const draftSnapshot = JSON.stringify(draft);
+    if (draftSnapshot === queuedSnapshot) return saveQueue;
     saveError.value = '';
     saveNotice.value = '';
-    if (entries.value.some((entry) => entry.kind !== 'proposal' && !entry.content.trim())) {
+    if (draft.some((entry) => entry.kind !== 'proposal' && !entry.content.trim())) {
       saveError.value = '請填寫或移除空白文字項目';
-      return;
+      return saveQueue;
     }
-    saving.value = true;
-    try {
-      entries.value = normalizeAgenda(selectedMeeting.value!, proposals.value, entries.value);
-      entryKeys.value = entries.value.map(() => nextKey++);
-      await $fetch(`/api/meetings/${meetingId.value}/agenda`, {
-        method: 'PUT',
-        body: { entries: entries.value },
-      });
-      saveNotice.value = '議程已儲存';
-    } catch (error) {
-      saveError.value = error instanceof Error ? error.message : '儲存失敗';
-    } finally {
-      saving.value = false;
-    }
+    const normalized = normalizeAgenda(meeting, proposals.value, draft);
+    queuedSnapshot = draftSnapshot;
+    saveQueue = saveQueue.then(async () => {
+      if (meetingId.value === id) saving.value = true;
+      try {
+        await $fetch(`/api/meetings/${id}/agenda`, {
+          method: 'PUT',
+          body: { entries: normalized },
+        });
+        if (meetingId.value !== id || loadedMeetingId !== id) return;
+        savedSnapshot = JSON.stringify(normalized);
+        if (queuedSnapshot === draftSnapshot) queuedSnapshot = savedSnapshot;
+        if (JSON.stringify(entries.value) !== draftSnapshot) return;
+        if (savedSnapshot !== draftSnapshot) {
+          entries.value = normalized;
+          entryKeys.value = entries.value.map(() => nextKey++);
+        }
+        saveError.value = '';
+        saveNotice.value = '議程已儲存';
+      } catch (error) {
+        if (meetingId.value === id && loadedMeetingId === id && queuedSnapshot === draftSnapshot) {
+          queuedSnapshot = savedSnapshot;
+          saveError.value = error instanceof Error ? error.message : '儲存失敗';
+        }
+      } finally {
+        if (meetingId.value === id) saving.value = false;
+      }
+    });
+    return saveQueue;
   }
 </script>
 
