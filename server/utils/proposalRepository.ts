@@ -1288,29 +1288,6 @@ export function createProposalRepository(db: D1Database) {
       "WHERE NOT EXISTS (SELECT 1 FROM proposal_meetings WHERE proposal_id = proposals.id) AND proposals.proposal_type <> 'report'",
     );
 
-  const getLatestTermBills = async () => {
-    const row = await db
-      .prepare('SELECT MAX(session) AS latest_session FROM proposals')
-      .first<{ latest_session: number | null }>();
-
-    return row?.latest_session
-      ? getProposals('WHERE proposals.session = ?', [row.latest_session])
-      : [];
-  };
-
-  const getPastTermBills = async () => {
-    const row = await db
-      .prepare('SELECT MAX(session) AS latest_session FROM proposals')
-      .first<{ latest_session: number | null }>();
-
-    return row?.latest_session
-      ? getProposals('WHERE proposals.session != ?', [row.latest_session])
-      : [];
-  };
-
-  const getBillsByTerm = (targetTerm: number) =>
-    getProposals('WHERE proposals.session = ?', [targetTerm]);
-
   const getBillsByMeeting = (meetingId: number) =>
     getProposals(
       `WHERE EXISTS (
@@ -1323,14 +1300,6 @@ export function createProposalRepository(db: D1Database) {
 
   const getBillById = async (targetId: number) => {
     const proposals = await getProposals('WHERE proposals.id = ?', [targetId]);
-    return proposals[0];
-  };
-
-  const getBillByTermAndId = async (targetTerm: number, targetId: number) => {
-    const proposals = await getProposals('WHERE proposals.session = ? AND proposals.id = ?', [
-      targetTerm,
-      targetId,
-    ]);
     return proposals[0];
   };
 
@@ -1752,12 +1721,8 @@ export function createProposalRepository(db: D1Database) {
     getScheduledMeetings,
     getAllBills,
     getSignableBills,
-    getLatestTermBills,
-    getPastTermBills,
-    getBillsByTerm,
     getBillsByMeeting,
     getBillById,
-    getBillByTermAndId,
     saveBill,
     updateBill,
     deleteBill,

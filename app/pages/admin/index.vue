@@ -749,7 +749,7 @@
   const { data: usersData, refresh: refreshUsers } = await useFetch<User[]>('/api/users');
   const { data: meetingsData, refresh: refreshMeetings } =
     await useFetch<Meeting[]>('/api/meetings');
-  const { data: billsData, refresh: refreshBills } = await useFetch<Bill[]>('/api/bills?type=all');
+  const { data: billsData, refresh: refreshBills } = await useFetch<Bill[]>('/api/bills');
 
   const sessions = computed(() => sessionsData.value ?? []);
   const committees = computed(() => committeesData.value ?? []);

@@ -31,13 +31,10 @@
 <style>
   :root {
     --sc-navy: #000024;
-    --sc-navy-dark: #000018;
     --sc-navy-light: #1c1c4a;
     --sc-accent: #e60012;
-    --sc-accent-light: #ff4d5a;
     --sc-page-bg: #f5f5f7;
     --sc-text: #12122b;
-    --sc-text-muted: #5a5a70;
     --sc-line: #dcdce2;
     --sc-surface: #ffffff;
     --sc-radius: 12px;
@@ -65,87 +62,6 @@
     background: transparent;
   }
 
-  .responsive-table,
-  .overflow-x-auto {
-    scrollbar-color: var(--sc-navy) var(--sc-line);
-  }
-
-  .responsive-table {
-    overflow-x: auto;
-  }
-
-  .responsive-table table {
-    min-width: 100%;
-    border: 1px solid var(--sc-line);
-    border-top: 3px solid var(--sc-navy);
-    background: var(--sc-surface);
-    border-collapse: collapse;
-  }
-
-  .responsive-table th {
-    padding: 0.75rem 1.5rem;
-    text-align: left;
-    color: var(--sc-text);
-    background: var(--sc-page-bg);
-    border-bottom: 1px solid var(--sc-line);
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  .responsive-table td {
-    padding: 1rem 1.5rem;
-    color: var(--sc-text);
-    border-bottom: 1px solid var(--sc-line);
-    font-size: 0.875rem;
-    white-space: nowrap;
-  }
-
-  .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-  }
-
-  .pagination button {
-    padding: 0.5rem 0.75rem;
-    color: var(--sc-text);
-    background: var(--sc-surface);
-    border: 1px solid var(--sc-line);
-    border-radius: 999px;
-    font-size: 0.875rem;
-    font-weight: 700;
-  }
-
-  .pagination button.active {
-    color: #fff;
-    background: var(--sc-navy);
-    border-color: var(--sc-navy);
-  }
-
-  .pagination button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-
-  .filter-form {
-    padding: 1.5rem;
-    background: var(--sc-surface);
-    border: 1px solid var(--sc-line);
-    border-radius: var(--sc-radius);
-  }
-
-  .filter-form label {
-    display: block;
-    color: var(--sc-text);
-    font-size: 0.875rem;
-    font-weight: 800;
-  }
-
-  .filter-form input,
-  .filter-form select,
   input,
   select,
   textarea {
@@ -191,78 +107,12 @@
     line-height: 1.45;
   }
 
-  .bill-card .bill-number {
-    color: var(--sc-text-muted);
-    font-size: 0.875rem;
-  }
-
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    color: var(--sc-text-muted);
-    font-size: 0.875rem;
-  }
-
-  .breadcrumb a,
   .text-primary {
     color: var(--sc-navy);
   }
 
-  .breadcrumb a:hover,
   .hover\:text-primary:hover {
     color: var(--sc-accent);
-  }
-
-  .breadcrumb span {
-    color: var(--sc-text-muted);
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .loading {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid var(--sc-line);
-    border-top-color: var(--sc-accent);
-    border-radius: 9999px;
-    animation: spin 1s linear infinite;
-  }
-
-  .error-message {
-    padding: 0.75rem 1rem;
-    color: #7f1d1d;
-    background: #fef2f2;
-    border: 2px solid #991b1b;
-  }
-
-  .success-message {
-    padding: 0.75rem 1rem;
-    color: #14532d;
-    background: #f0fdf4;
-    border: 2px solid #15803d;
-  }
-
-  .empty-state {
-    padding-block: 3rem;
-    text-align: center;
-  }
-
-  .empty-state h3 {
-    margin-bottom: 0.5rem;
-    color: var(--sc-text);
-    font-size: 1.125rem;
-    font-weight: 800;
-  }
-
-  .empty-state p {
-    color: var(--sc-text-muted);
   }
 
   .btn {
@@ -302,54 +152,8 @@
     background: var(--sc-page-bg);
   }
 
-  .btn-sm {
-    min-height: 2rem;
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-  }
-
-  .btn-lg {
-    min-height: 3rem;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-  }
-
-  .card {
-    background: var(--sc-surface);
-    border: 1px solid var(--sc-line);
-    border-radius: var(--sc-radius);
-    box-shadow: var(--sc-shadow);
-  }
-
-  .card-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--sc-line);
-  }
-
-  .card-body {
-    padding: 1.5rem;
-  }
-
-  .card-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--sc-line);
-  }
-
   @media (max-width: 640px) {
-    .responsive-table {
-      font-size: 0.875rem;
-    }
-
-    .responsive-table th,
-    .responsive-table td {
-      padding: 0.5rem 0.75rem;
-    }
-
     .bill-card {
-      padding: 1rem;
-    }
-
-    .filter-form {
       padding: 1rem;
     }
   }
