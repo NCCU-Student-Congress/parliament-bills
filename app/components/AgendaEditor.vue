@@ -98,7 +98,7 @@
                 v-model="entry.content"
                 v-auto-resize
                 rows="1"
-                class="control agenda-textarea"
+                class="control auto-resize-textarea"
               />
             </div>
             <div v-if="entry.kind !== 'heading'" class="flex flex-col gap-1 text-sm">
@@ -490,11 +490,6 @@
   .control:focus {
     border-color: #e60012;
     outline: 3px solid rgba(230, 0, 18, 0.18);
-  }
-  .agenda-textarea {
-    field-sizing: content;
-    height: auto;
-    overflow-y: hidden;
   }
   .agenda-list {
     position: relative;

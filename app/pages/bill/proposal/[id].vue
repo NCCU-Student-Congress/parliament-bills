@@ -115,9 +115,10 @@
                   <textarea
                     v-else-if="field.editable === 'subject' || field.editable === 'description'"
                     v-model="draftValue"
+                    v-auto-resize
                     :aria-label="field.label"
                     rows="1"
-                    class="edit-control resize-y"
+                    class="edit-control auto-resize-textarea"
                   ></textarea>
                   <template v-else-if="field.editable === 'attachments'">
                     <div
@@ -304,6 +305,7 @@
   import { proposalTypeLabels } from '~~/shared/types/bill';
   import { formatTermLabel } from '~~/shared/utils/term';
   import { normalizeAttachmentUrl } from '~~/shared/utils/attachment';
+  import { vAutoResize } from '~/utils/autoResizeTextarea';
 
   interface DisplayField {
     label: string;

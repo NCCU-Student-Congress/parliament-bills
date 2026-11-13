@@ -52,7 +52,7 @@
               v-model="decisionDrafts[item.key]"
               v-auto-resize
               :name="`decision-${item.key}`"
-              class="control decision-textarea"
+              class="control auto-resize-textarea"
               rows="1"
               maxlength="10000"
               :aria-describedby="`title-${item.key} minutes-hint`"
@@ -310,10 +310,5 @@
   .control:focus-visible {
     outline: 3px solid #e60012;
     outline-offset: 2px;
-  }
-  .decision-textarea {
-    field-sizing: content;
-    height: auto;
-    overflow-y: hidden;
   }
 </style>

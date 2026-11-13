@@ -259,9 +259,10 @@
             <span>批次名單</span>
             <textarea
               v-model="bulkUserForm.entries"
+              v-auto-resize
               required
-              rows="4"
-              class="control"
+              rows="1"
+              class="control auto-resize-textarea"
               placeholder="姓名<email>,姓名<email>"
             ></textarea>
           </label>
@@ -585,6 +586,7 @@
 </template>
 
 <script setup lang="ts">
+  import { vAutoResize } from '~/utils/autoResizeTextarea';
   import { computed, reactive, ref, watch } from 'vue';
   import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
   import type { Bill, Committee, Meeting, Session, User } from '~~/shared/types/bill';

@@ -85,11 +85,12 @@
           id="proposal-subject"
           ref="subjectInput"
           v-model="form.subject"
+          v-auto-resize
           name="subject"
-          rows="3"
+          rows="1"
           required
           aria-describedby="cosponsor-count-help"
-          class="form-textarea"
+          class="form-textarea auto-resize-textarea"
           @focus="lastFocusedField = 'subject'"
         ></textarea>
         <button
@@ -109,10 +110,11 @@
           id="proposal-description"
           ref="descriptionInput"
           v-model="form.description"
+          v-auto-resize
           name="description"
-          rows="7"
+          rows="1"
           aria-describedby="cosponsor-count-help"
-          class="form-textarea"
+          class="form-textarea auto-resize-textarea"
           @focus="lastFocusedField = 'description'"
         ></textarea>
         <button
@@ -224,6 +226,7 @@
   import { parseTermCode, getCurrentTerm } from '~~/shared/utils/term';
   import { normalizeAttachmentUrl } from '~~/shared/utils/attachment';
   import { COSPONSOR_COUNT_TOKEN } from '~~/shared/utils/proposalText';
+  import { vAutoResize } from '~/utils/autoResizeTextarea';
   import type {
     Bill,
     Committee,
