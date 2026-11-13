@@ -9,6 +9,16 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
   ssr: true, // 確保開啟 SSR
+  routeRules: {
+    '/**': {
+      headers: {
+        'Content-Security-Policy': "frame-ancestors 'none'",
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+      },
+    },
+  },
   nitro: {
     preset: 'cloudflare_module',
     cloudflare: {

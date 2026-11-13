@@ -56,7 +56,7 @@ pnpm dev
 
 啟動後開啟 <http://localhost:3000>。`pnpm dev` 會先將 `migrations/` 套用至 `.wrangler/state` 中的本機 Cloudflare D1 資料庫，再啟動 Nuxt；新建的本機資料庫沒有議案資料。
 
-若要登入後台，請先在 `.dev.vars` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
+若要登入後台，請先在 `.dev.vars` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結，並按下頁面上的登入按鈕。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
 
 正式部署時，Worker 的建置指令為 `pnpm run build`，部署指令為 `pnpm exec wrangler deploy`。D1 binding `DB` 定義在 `wrangler.toml`；`AUTH_SECRET` 與 `RESEND_API_KEY` 等機密值須設為 Worker secrets，`.dev.vars` 只供本機使用。可執行 `pnpm preview`，透過 Wrangler 在本機預覽建置成果（預設 <http://localhost:8787>）。GitHub 已連接的 Pages 專案不會自動轉成 Worker；需在 Cloudflare 建立 Worker Builds 的 Git 連線，並停用舊 Pages 的自動部署。
 

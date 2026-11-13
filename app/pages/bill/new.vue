@@ -85,6 +85,7 @@
           id="proposal-subject"
           ref="subjectInput"
           v-model="form.subject"
+          maxlength="500"
           v-auto-resize
           name="subject"
           rows="1"
@@ -110,6 +111,7 @@
           id="proposal-description"
           ref="descriptionInput"
           v-model="form.description"
+          maxlength="20000"
           v-auto-resize
           name="description"
           rows="1"
@@ -144,6 +146,7 @@
               >
               <input
                 v-model="attachment.name"
+                maxlength="200"
                 type="text"
                 class="form-input"
                 placeholder="例如：議案附件"
@@ -155,6 +158,7 @@
               >
               <input
                 v-model="attachment.url"
+                maxlength="2048"
                 type="text"
                 inputmode="url"
                 class="form-input"

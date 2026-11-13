@@ -130,7 +130,12 @@
                         <span class="mb-1 block text-xs font-medium"
                           >附件 {{ index + 1 }} 名稱</span
                         >
-                        <input v-model="attachment.name" type="text" class="edit-control" />
+                        <input
+                          v-model="attachment.name"
+                          type="text"
+                          maxlength="200"
+                          class="edit-control"
+                        />
                       </label>
                       <label class="block">
                         <span class="mb-1 block text-xs font-medium"
@@ -138,6 +143,7 @@
                         >
                         <input
                           v-model="attachment.url"
+                          maxlength="2048"
                           type="text"
                           inputmode="url"
                           class="edit-control"

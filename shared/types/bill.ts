@@ -98,7 +98,6 @@ export interface ProposalCosponsor {
   proposalId?: number;
   userId: number;
   userName?: string;
-  userEmail?: string;
   signedAt: string | null;
 }
 
@@ -111,7 +110,6 @@ export interface Proposal {
   proposedAt: string;
   proposerId: number;
   proposerName: string;
-  proposerEmail: string;
   meetings: ProposalMeeting[];
   subject: string;
   description: string;

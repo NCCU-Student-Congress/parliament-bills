@@ -1,7 +1,7 @@
-import { readAuthSession } from '../../utils/auth';
+import { readCurrentSession } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
-  const session = await readAuthSession(event);
+  const session = await readCurrentSession(event);
 
   if (!session) {
     return { authenticated: false };

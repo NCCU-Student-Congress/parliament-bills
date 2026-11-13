@@ -1,6 +1,8 @@
 import type { H3Event } from 'h3';
 import { createError, deleteCookie, getCookie, getRequestURL, setCookie } from 'h3';
 import type { PermissionRole } from '../../shared/types/auth';
+import { isPermissionRole } from '../../shared/types/auth';
+import { useD1Database } from './d1';
 
 const SESSION_COOKIE = 'secretariat_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
@@ -142,8 +144,30 @@ export function clearAuthSessionCookie(event: H3Event) {
   });
 }
 
-export async function requireRole(event: H3Event, roles: PermissionRole[]) {
+// The cookie only proves who logged in; the users row decides whether that person still has access.
+export async function readCurrentSession(event: H3Event): Promise<AuthSession | null> {
   const session = await readAuthSession(event);
+  if (!session) return null;
+
+  const user = await useD1Database(event)
+    .prepare('SELECT email, permission_role FROM users WHERE id = ? LIMIT 1')
+    .bind(session.userId)
+    .first<{ email: string; permission_role: string }>();
+
+  if (
+    !user ||
+    !isPermissionRole(user.permission_role) ||
+    user.email.toLowerCase() !== session.email.toLowerCase()
+  ) {
+    clearAuthSessionCookie(event);
+    return null;
+  }
+
+  return { ...session, email: user.email, role: user.permission_role };
+}
+
+export async function requireRole(event: H3Event, roles: PermissionRole[]) {
+  const session = await readCurrentSession(event);
 
   if (!session) {
     throw createError({
@@ -164,22 +188,31 @@ export async function requireRole(event: H3Event, roles: PermissionRole[]) {
   return session;
 }
 
-export function isAuthBypassEnabled(event: H3Event) {
-  const bypassValue =
-    getEnv(event, 'AUTH_BYPASS') ||
-    getEnv(event, 'auth_bypass') ||
-    getEnv(event, 'BYPASS') ||
-    getEnv(event, 'bypass');
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
-  if (!['1', 'true'].includes(bypassValue.toLowerCase())) return false;
-  return true;
+// The bypass only works on a local host, so a stray production setting cannot enable it.
+export function isAuthBypassEnabled(event: H3Event) {
+  if (!['1', 'true'].includes(getEnv(event, 'AUTH_BYPASS').toLowerCase())) return false;
+  return LOCAL_HOSTNAMES.has(getRequestURL(event).hostname);
 }
+
+const REDIRECT_BASE = 'http://redirect.invalid';
 
 export function getSafeRedirectPath(value: unknown, fallback = '/bill') {
   if (typeof value !== 'string') return fallback;
+  // Browsers read a backslash as "/" and drop tabs and newlines, so "/\host" would leave the site.
+  if (/[\\\u0000-\u001f\u007f]/.test(value)) return fallback;
   if (!value.startsWith('/') || value.startsWith('//')) return fallback;
-  if (value.startsWith('/api/')) return fallback;
-  return value;
+
+  let url: URL;
+  try {
+    url = new URL(value, REDIRECT_BASE);
+  } catch {
+    return fallback;
+  }
+
+  if (url.origin !== REDIRECT_BASE || url.pathname.startsWith('/api/')) return fallback;
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 export function createRandomToken() {

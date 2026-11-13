@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getQuery, sendRedirect } from 'h3';
+import { createError, defineEventHandler, readBody } from 'h3';
 import { isPermissionRole } from '../../../../shared/types/auth';
 import {
   createAuthToken,
@@ -25,8 +25,11 @@ interface D1RunResult {
   };
 }
 
+// Login links open a confirmation page that POSTs here, so link scanners that only GET the URL
+// cannot use up the token.
 export default defineEventHandler(async (event) => {
-  const token = getQuery(event).token;
+  const body = await readBody(event);
+  const token = body?.token;
 
   if (typeof token !== 'string' || !token) {
     throw createError({
@@ -93,12 +96,10 @@ export default defineEventHandler(async (event) => {
   });
   setAuthSessionCookie(event, authToken);
 
-  return sendRedirect(
-    event,
-    getSafeRedirectPath(
+  return {
+    redirect: getSafeRedirectPath(
       row.redirect_path,
       row.permission_role === 'secretariat_admin' ? '/admin' : '/bill',
     ),
-    302,
-  );
+  };
 });

@@ -1,13 +1,12 @@
 <!-- pages/secretariat/login.vue -->
 <script setup lang="ts">
   import { ref } from 'vue';
-  import { useRouter, useRoute } from 'vue-router';
+  import { useRoute } from 'vue-router';
 
   const email = ref('');
   const errorMessage = ref('');
   const successMessage = ref('');
   const isLoading = ref(false);
-  const router = useRouter();
   const route = useRoute();
 
   const handleLogin = async () => {
@@ -29,12 +28,6 @@
       });
 
       const data = await response.json();
-
-      if (response.ok && data.authenticated) {
-        sessionStorage.setItem('secretariat_authenticated', 'true');
-        router.push(data.redirect || route.query.redirect?.toString() || '/bill');
-        return;
-      }
 
       if (response.ok && data.sent) {
         successMessage.value = data.message || '登入連結已寄出，請檢查你的信箱。';

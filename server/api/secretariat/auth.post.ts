@@ -12,8 +12,16 @@ import { useD1Database } from '../../utils/d1';
 import { sendLoginEmail } from '../../utils/resend';
 
 const LOGIN_TOKEN_TTL_SECONDS = 60 * 10;
+const LOGIN_EMAIL_COOLDOWN_SECONDS = 60;
+const LOGIN_EMAILS_PER_HOUR = 5;
 const BYPASS_ADMIN_INPUT = 'admin';
 const DEFAULT_BYPASS_ADMIN_EMAIL = 'test@test.test';
+
+interface D1RunResult {
+  meta?: {
+    changes?: number;
+  };
+}
 
 interface UserRow {
   id: number;
@@ -41,9 +49,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useD1Database(event);
+  const isBypassLogin = email === BYPASS_ADMIN_INPUT && isAuthBypassEnabled(event);
   let targetEmail = email;
 
-  if (email === BYPASS_ADMIN_INPUT && isAuthBypassEnabled(event)) {
+  if (isBypassLogin) {
     targetEmail =
       normalizeEmail(getEnv(event, 'AUTH_BYPASS_ADMIN_EMAIL')) || DEFAULT_BYPASS_ADMIN_EMAIL;
 
@@ -87,18 +96,48 @@ export default defineEventHandler(async (event) => {
   const tokenHash = await hashToken(token);
   const expiresAt = getIsoDateAfterSeconds(LOGIN_TOKEN_TTL_SECONDS);
 
-  await db
-    .prepare(
-      `INSERT INTO auth_login_tokens (user_id, token_hash, redirect_path, expires_at)
-       VALUES (?, ?, ?, ?)`,
-    )
-    .bind(user.id, tokenHash, redirectPath, expiresAt)
-    .run();
+  // The limits are checked inside the INSERT so parallel requests cannot all pass them.
+  // Only tokens that expired over an hour ago are removed, so the hourly count stays intact.
+  const inserted = await db.batch<D1RunResult>([
+    db
+      .prepare('DELETE FROM auth_login_tokens WHERE expires_at < ?')
+      .bind(getIsoDateAfterSeconds(-60 * 60)),
+    db
+      .prepare(
+        `INSERT INTO auth_login_tokens (user_id, token_hash, redirect_path, expires_at)
+         SELECT ?, ?, ?, ?
+         WHERE ? OR (
+           NOT EXISTS (
+             SELECT 1 FROM auth_login_tokens
+             WHERE user_id = ? AND created_at > datetime('now', ?)
+           )
+           AND (
+             SELECT COUNT(*) FROM auth_login_tokens
+             WHERE user_id = ? AND created_at > datetime('now', '-1 hour')
+           ) < ?
+         )`,
+      )
+      .bind(
+        user.id,
+        tokenHash,
+        redirectPath,
+        expiresAt,
+        isBypassLogin ? 1 : 0,
+        user.id,
+        `-${LOGIN_EMAIL_COOLDOWN_SECONDS} seconds`,
+        user.id,
+        LOGIN_EMAILS_PER_HOUR,
+      ),
+  ]);
+
+  if (inserted[1]?.meta?.changes !== 1) {
+    return getGenericResponse();
+  }
 
   const origin = getRequestURL(event).origin;
-  const loginUrl = `${origin}/api/secretariat/auth/verify?token=${encodeURIComponent(token)}`;
+  const loginUrl = `${origin}/secretariat/verify?token=${encodeURIComponent(token)}`;
 
-  if (email === BYPASS_ADMIN_INPUT && isAuthBypassEnabled(event)) {
+  if (isBypassLogin) {
     console.info(`[auth] Bypass admin login link: ${loginUrl}`);
 
     return {

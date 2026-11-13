@@ -93,11 +93,26 @@ When `AUTH_BYPASS=true`, the server creates or updates a local `secretariat_admi
 `AUTH_BYPASS_ADMIN_EMAIL` and prints a one-time login link to the server terminal:
 
 ```text
-[auth] Bypass admin login link: http://localhost:3000/api/secretariat/auth/verify?token=...
+[auth] Bypass admin login link: http://localhost:3000/secretariat/verify?token=...
 ```
 
-Open that link in the browser to set the local `secretariat_session` cookie and continue to the
-requested page. Keep `AUTH_BYPASS=false` outside local development.
+Open that link in the browser and press the login button. The page POSTs the token to
+`/api/secretariat/auth/verify`, which sets the local `secretariat_session` cookie, and then
+continues to the requested page. Opening the link alone does not use up the token, so mail link
+scanners cannot consume it. The bypass only works when the request host is `localhost`,
+`127.0.0.1`, or `[::1]`. Keep `AUTH_BYPASS=false` outside local development anyway.
+
+Login requests are limited per user: a new link is issued at most once every 60 seconds and five
+times per hour. Requests over the limit get the same generic response and no email. Login tokens
+that expired more than an hour ago are deleted on the next login request.
+
+Every authenticated API request checks the `users` row behind the session cookie. Deleting a user,
+changing their email, or changing their role takes effect on their next request.
+
+Write requests to `/api/*` must come from the site's own host. The server rejects a request when its
+`Sec-Fetch-Site` header is present and is neither `same-origin` nor `none`, or when its `Origin`
+header is present and names another host. Requests without these headers, such as `curl` calls,
+carry no cookies from another site and are checked only by the normal session rules.
 
 ## API
 

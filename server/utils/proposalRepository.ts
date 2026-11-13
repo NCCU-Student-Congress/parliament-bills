@@ -69,7 +69,6 @@ interface ProposalRow {
   proposed_at: string;
   proposer_id: number;
   proposer_name: string;
-  proposer_email: string;
   subject: string;
   description: string;
   created_at: string;
@@ -97,7 +96,6 @@ interface CosponsorRow {
   proposal_id: number;
   user_id: number;
   user_name: string;
-  user_email: string;
   signed_at: string | null;
 }
 
@@ -135,12 +133,27 @@ const PROPOSAL_COLUMNS = `
   proposals.proposed_at,
   proposals.proposer_id,
   proposers.name AS proposer_name,
-  proposers.email AS proposer_email,
   proposals.subject,
   proposals.description,
   proposals.created_at,
   proposals.updated_at
 `;
+
+const MAX_SUBJECT_LENGTH = 500;
+const MAX_DESCRIPTION_LENGTH = 20000;
+const MAX_ATTACHMENTS = 20;
+const MAX_ATTACHMENT_NAME_LENGTH = 200;
+const MAX_ATTACHMENT_URL_LENGTH = 2048;
+
+function assertMaxLength(value: string, max: number, label: string): void {
+  if (value.length > max) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: `${label}不可超過 ${max} 字`,
+    });
+  }
+}
 
 function cleanString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -319,7 +332,6 @@ function rowToCosponsor(row: CosponsorRow): ProposalCosponsor {
     proposalId: row.proposal_id,
     userId: row.user_id,
     userName: row.user_name,
-    userEmail: row.user_email,
     signedAt: row.signed_at,
   };
 }
@@ -339,7 +351,6 @@ function rowToProposal(
     proposedAt: row.proposed_at,
     proposerId: row.proposer_id,
     proposerName: row.proposer_name,
-    proposerEmail: row.proposer_email,
     meetings,
     subject: renderProposalText(row.subject, cosponsors),
     description: renderProposalText(row.description, cosponsors),
@@ -356,6 +367,14 @@ function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '附件格式不正確' });
+  }
+
+  if (value.length > MAX_ATTACHMENTS) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: `附件不可超過 ${MAX_ATTACHMENTS} 個`,
+    });
   }
 
   const attachments = value.map((item, index) => {
@@ -381,6 +400,8 @@ function normalizeAttachments(value: unknown): ProposalAttachmentInput[] {
         message: `附件 ${index + 1} 需要名稱與有效網址`,
       });
     }
+    assertMaxLength(name, MAX_ATTACHMENT_NAME_LENGTH, `附件 ${index + 1} 名稱`);
+    assertMaxLength(url, MAX_ATTACHMENT_URL_LENGTH, `附件 ${index + 1} 網址`);
 
     return { name, url };
   });
@@ -434,7 +455,6 @@ async function getCosponsorsByProposalId(
          proposal_cosponsors.proposal_id,
          proposal_cosponsors.user_id,
          users.name AS user_name,
-         users.email AS user_email,
          proposal_cosponsors.signed_at
        FROM proposal_cosponsors
        INNER JOIN users ON users.id = proposal_cosponsors.user_id
@@ -527,18 +547,26 @@ function normalizeProposalInput(input: ProposalInput): NormalizedProposalInput {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '案由為必填欄位' });
   }
 
+  assertMaxLength(subject, MAX_SUBJECT_LENGTH, '案由');
+
   if (!isProposalType(proposalType)) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: '案型不正確' });
   }
+
+  const description = cleanString(input.description);
+  assertMaxLength(description, MAX_DESCRIPTION_LENGTH, '說明');
 
   return {
     proposalType,
     committeeId,
     session,
-    proposedAt: normalizeDateTime(input.proposedAt),
+    proposedAt:
+      input.proposedAt == null || input.proposedAt === ''
+        ? getTaipeiDateString()
+        : normalizeProposalDate(input.proposedAt),
     proposerId,
     subject,
-    description: cleanString(input.description),
+    description,
     attachments: normalizeAttachments(input.attachments),
   };
 }
@@ -1517,6 +1545,7 @@ export function createProposalRepository(db: D1Database) {
             message: '案由不可為空白',
           });
         }
+        assertMaxLength(normalized, MAX_SUBJECT_LENGTH, '案由');
         break;
       case 'description':
         if (typeof value !== 'string') {
@@ -1528,6 +1557,7 @@ export function createProposalRepository(db: D1Database) {
         }
         column = 'description';
         normalized = value.trim();
+        assertMaxLength(normalized, MAX_DESCRIPTION_LENGTH, '說明');
         break;
       default:
         throw createError({
