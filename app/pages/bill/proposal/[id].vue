@@ -206,6 +206,12 @@
                   </NuxtLink>
                   <span v-if="!bill.meetings.length">尚未排入會議</span>
                 </div>
+                <div v-else-if="field.key === 'description'" class="proposal-description">
+                  <p v-for="(paragraph, index) in descriptionParagraphs" :key="index">
+                    {{ paragraph }}
+                  </p>
+                  <span v-if="!descriptionParagraphs.length">無</span>
+                </div>
                 <div v-else-if="field.multiline" class="whitespace-pre-wrap">
                   {{ getField(field.key) || '無' }}
                 </div>
@@ -389,6 +395,12 @@
     (bill.value?.cosponsors ?? [])
       .map((cosponsor) => cosponsor.userName)
       .filter((name): name is string => Boolean(name)),
+  );
+  const descriptionParagraphs = computed(() =>
+    (bill.value?.description ?? '')
+      .replace(/\r\n?/g, '\n')
+      .split(/\n+/)
+      .filter((paragraph) => paragraph.trim()),
   );
 
   const displayFields: DisplayField[] = [
@@ -640,5 +652,18 @@
 
   .edit-control {
     @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
+  }
+
+  .proposal-description {
+    line-height: 1.75;
+    overflow-wrap: break-word;
+  }
+
+  .proposal-description > p + p {
+    margin-block-start: 0.75rem;
+  }
+
+  .proposal-description > p {
+    white-space: pre-wrap;
   }
 </style>
