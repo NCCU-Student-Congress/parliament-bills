@@ -24,7 +24,7 @@
         },
         body: JSON.stringify({
           email: email.value,
-          redirect: route.query.redirect?.toString() || '/secretariat',
+          redirect: route.query.redirect?.toString(),
         }),
       });
 
@@ -32,7 +32,7 @@
 
       if (response.ok && data.authenticated) {
         sessionStorage.setItem('secretariat_authenticated', 'true');
-        router.push(data.redirect || route.query.redirect?.toString() || '/secretariat');
+        router.push(data.redirect || route.query.redirect?.toString() || '/bill');
         return;
       }
 

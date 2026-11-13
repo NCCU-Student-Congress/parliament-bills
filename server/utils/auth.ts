@@ -175,10 +175,10 @@ export function isAuthBypassEnabled(event: H3Event) {
   return true;
 }
 
-export function getSafeRedirectPath(value: unknown) {
-  if (typeof value !== 'string') return '/secretariat';
-  if (!value.startsWith('/') || value.startsWith('//')) return '/secretariat';
-  if (value.startsWith('/api/')) return '/secretariat';
+export function getSafeRedirectPath(value: unknown, fallback = '/bill') {
+  if (typeof value !== 'string') return fallback;
+  if (!value.startsWith('/') || value.startsWith('//')) return fallback;
+  if (value.startsWith('/api/')) return fallback;
   return value;
 }
 

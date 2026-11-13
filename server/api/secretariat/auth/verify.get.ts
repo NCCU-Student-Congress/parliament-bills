@@ -95,5 +95,12 @@ export default defineEventHandler(async (event) => {
   });
   setAuthSessionCookie(event, authToken);
 
-  return sendRedirect(event, getSafeRedirectPath(row.redirect_path), 302);
+  return sendRedirect(
+    event,
+    getSafeRedirectPath(
+      row.redirect_path,
+      row.permission_role === 'secretariat_admin' ? '/admin' : '/bill',
+    ),
+    302,
+  );
 });

@@ -104,7 +104,19 @@ Stores the ordered agenda for each meeting. Each row is a fixed-section heading,
 proposal assigned to that meeting. Proposal rows reference `proposals.id`; the public agenda hides a
 proposal row when that proposal is no longer assigned to the meeting. The secretariat can reorder
 content entries and save the agenda. Meeting pages show the standard sections even before an agenda
-is saved; the election section is omitted when it has no content.
+is saved; newly scheduled proposals are added to their matching sections automatically, while
+existing ordering is preserved. The election section is omitted when it has no content.
+
+### `meeting_proposal_decisions`
+
+Stores one decision per meeting and proposal. Decisions remain stored when a proposal is unscheduled,
+and are shown again if it is assigned to the same meeting later. Deleting the meeting or proposal
+deletes its decisions. Only secretariat admins can read or edit decisions.
+
+- `meeting_id`
+- `proposal_id`
+- `decision`
+- `updated_at`
 
 ### `proposal_attachments`
 

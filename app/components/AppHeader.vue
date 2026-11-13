@@ -21,7 +21,6 @@
           <NuxtLink to="/cosign" class="nav-link"> 連署 </NuxtLink>
           <NuxtLink to="/bill/new" class="nav-link nav-link-accent"> 新增議案 </NuxtLink>
           <NuxtLink v-if="isSecretariat" to="/admin" class="nav-link"> 後台 </NuxtLink>
-          <NuxtLink to="/secretariat" class="nav-link"> 草擬系統 </NuxtLink>
           <a
             :href="EXTERNAL_LINKS.mainWebsite"
             target="_blank"
@@ -85,9 +84,6 @@
             後台
           </NuxtLink>
 
-          <NuxtLink to="/secretariat" class="mobile-nav-link" @click="closeMobileMenu">
-            草擬系統
-          </NuxtLink>
           <a
             :href="EXTERNAL_LINKS.mainWebsite"
             target="_blank"

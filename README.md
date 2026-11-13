@@ -20,10 +20,9 @@
   - 會期議案列表：可顯示特定會期的所有議案。
   - 單一議案顯示 (`/bill/proposal/:id`)：提供單一議案的完整資訊、附件連結，並支援列印排版。
   - 舊版議案網址 (`/bill/:term/:number`) 會在確認會期與議案相符後重新導向。
-- **秘書處文件草擬系統**
-  - 提供秘書處人員撰寫會議紀錄之輔助介面。
 - **後台資料管理**
   - 管理會期、委員會、人員、會議與提案資料，並由秘書處為議案安排會議及編排議程。
+  - 製作會議記錄：依議程填寫、儲存每案決議並下載 PDF。
 
 ### 開發中 / 中長期規劃功能
 
@@ -58,7 +57,7 @@ pnpm dev
 
 啟動後開啟 <http://localhost:3000>。`pnpm dev` 會先將 `migrations/` 套用至 `.wrangler/state` 中的本機 Cloudflare D1 資料庫，再啟動 Nuxt；新建的本機資料庫沒有議案資料。
 
-若要登入秘書處或後台，請先在 `.env` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
+若要登入後台，請先在 `.env` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
 
 後續由 agent 匯入舊站會議與議案時，請依照[會議資訊匯入規則](./docs/meeting-data-migration.md)處理來源、提案人與附件。
 

@@ -35,7 +35,6 @@ function getGenericResponse() {
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const email = normalizeEmail(body?.email);
-  const redirectPath = getSafeRedirectPath(body?.redirect);
 
   if (!email) {
     return getGenericResponse();
@@ -74,6 +73,10 @@ export default defineEventHandler(async (event) => {
   if (!user || !isPermissionRole(user.permission_role)) {
     return getGenericResponse();
   }
+  const redirectPath = getSafeRedirectPath(
+    body?.redirect,
+    user.permission_role === 'secretariat_admin' ? '/admin' : '/bill',
+  );
 
   const sessionUser = {
     id: user.id,

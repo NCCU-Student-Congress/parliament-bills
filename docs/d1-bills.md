@@ -87,7 +87,7 @@ When `AUTH_BYPASS=true`, the server creates or updates a local `secretariat_admi
 ```
 
 Open that link in the browser to set the local `secretariat_session` cookie and continue to the
-requested secretariat or admin page. Keep `AUTH_BYPASS=false` outside local development.
+requested page. Keep `AUTH_BYPASS=false` outside local development.
 
 ## API
 
@@ -180,3 +180,7 @@ The reference data admin is available only to secretariat accounts:
 ```text
 /admin
 ```
+
+The admin's `製作會議記錄` tab saves decisions for each proposal in a meeting through
+`GET/PUT /api/meetings/:id/minutes` and downloads a PDF. The PDF uses an embedded open-source
+Kai font until a licensed 標楷體 file is supplied.
