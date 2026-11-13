@@ -6,3 +6,8 @@ binding = "DB"
 database_name = "parliament-bills"
 database_id = "4cff2eda-305f-4299-8c7d-93ff6969e19a"
 migrations_dir = "migrations"
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+persist = true
