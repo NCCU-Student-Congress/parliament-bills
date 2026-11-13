@@ -141,6 +141,7 @@
   const mobileMenuOpen = ref(false);
   const isAuthenticated = ref(false);
   const isSecretariat = ref(false);
+  const sessionCheck = useSecretariatSessionCheck();
   const route = useRoute();
 
   const toggleMobileMenu = () => {
@@ -157,6 +158,7 @@
     }));
     isAuthenticated.value = Boolean(session.authenticated);
     isSecretariat.value = session.role === 'secretariat_admin';
+    sessionCheck.value = session.authenticated ? { session, checkedAt: Date.now() } : null;
   };
 
   const handleLogout = async () => {
@@ -211,13 +213,9 @@
     });
   });
 
-  watch(
-    () => route.fullPath,
-    () => {
-      closeMobileMenu();
-      refreshSession();
-    },
-  );
+  watch(() => route.fullPath, closeMobileMenu);
+  // Query-only changes, such as switching admin tabs, keep the same login state.
+  watch(() => route.path, refreshSession);
 </script>
 
 <style scoped>

@@ -135,7 +135,10 @@
                   </button>
                 </td>
               </tr>
-              <tr v-if="sessions.length === 0">
+              <tr v-if="sessionsLoading">
+                <td colspan="4" class="loading-cell"><LoadingSpinner /></td>
+              </tr>
+              <tr v-else-if="sessions.length === 0">
                 <td colspan="4" class="empty-cell">尚無會期</td>
               </tr>
             </tbody>
@@ -206,7 +209,10 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="committees.length === 0">
+              <tr v-if="committeesLoading">
+                <td colspan="2" class="loading-cell"><LoadingSpinner /></td>
+              </tr>
+              <tr v-else-if="committees.length === 0">
                 <td colspan="2" class="empty-cell">尚無委員會</td>
               </tr>
             </tbody>
@@ -250,7 +256,9 @@
                 />
                 {{ committee.name }}
               </label>
-              <span v-if="committees.length === 0" class="checkbox-empty">尚無委員會</span>
+              <span v-if="!committeesLoading && committees.length === 0" class="checkbox-empty"
+                >尚無委員會</span
+              >
             </div>
           </fieldset>
           <div class="form-actions">
@@ -306,7 +314,9 @@
                 />
                 {{ committee.name }}
               </label>
-              <span v-if="committees.length === 0" class="checkbox-empty">尚無委員會</span>
+              <span v-if="!committeesLoading && committees.length === 0" class="checkbox-empty"
+                >尚無委員會</span
+              >
             </div>
           </fieldset>
           <div class="form-actions md:col-span-2">
@@ -362,7 +372,10 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="users.length === 0">
+              <tr v-if="usersLoading">
+                <td colspan="5" class="loading-cell"><LoadingSpinner /></td>
+              </tr>
+              <tr v-else-if="users.length === 0">
                 <td colspan="5" class="empty-cell">尚無人員</td>
               </tr>
             </tbody>
@@ -526,7 +539,10 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="meetings.length === 0">
+              <tr v-if="meetingsLoading">
+                <td colspan="7" class="loading-cell"><LoadingSpinner /></td>
+              </tr>
+              <tr v-else-if="meetings.length === 0">
                 <td colspan="7" class="empty-cell">尚無會議</td>
               </tr>
             </tbody>
@@ -555,7 +571,8 @@
         <div class="section-head">
           <h2 class="section-title">議案排入會議</h2>
         </div>
-        <div v-if="sortedBills.length" class="schedule-list">
+        <div v-if="billsLoading" class="loading-cell"><LoadingSpinner /></div>
+        <div v-else-if="sortedBills.length" class="schedule-list">
           <article v-for="bill in sortedBills" :key="bill.id" class="schedule-card">
             <div class="schedule-card-head">
               <div class="min-w-0">
@@ -629,7 +646,7 @@
 <script setup lang="ts">
   import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
   import { vAutoResize } from '~/utils/autoResizeTextarea';
-  import { computed, reactive, ref, watch } from 'vue';
+  import { computed, reactive, ref, watch, type Ref } from 'vue';
   import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
   import type { Bill, Committee, Meeting, Session, User } from '~~/shared/types/bill';
   import { formatTermLabel } from '~~/shared/utils/term';
@@ -742,19 +759,39 @@
     );
   });
 
-  const [
-    { data: sessionsData, refresh: refreshSessions },
-    { data: committeesData, refresh: refreshCommittees },
-    { data: usersData, refresh: refreshUsers },
-    { data: meetingsData, refresh: refreshMeetings },
-    { data: billsData, refresh: refreshBills },
-  ] = await Promise.all([
-    useFetch<Session[]>('/api/sessions', FRESH_FETCH_OPTIONS),
-    useFetch<Committee[]>('/api/committees', FRESH_FETCH_OPTIONS),
-    useFetch<User[]>('/api/users'),
-    useFetch<Meeting[]>('/api/meetings', FRESH_FETCH_OPTIONS),
-    useFetch<Bill[]>('/api/bills', FRESH_FETCH_OPTIONS),
-  ]);
+  const {
+    data: sessionsData,
+    status: sessionsStatus,
+    refresh: refreshSessions,
+  } = useAdminFetch<Session[]>('/api/sessions');
+  const {
+    data: committeesData,
+    status: committeesStatus,
+    refresh: refreshCommittees,
+  } = useAdminFetch<Committee[]>('/api/committees');
+  const {
+    data: usersData,
+    status: usersStatus,
+    refresh: refreshUsers,
+  } = useAdminFetch<User[]>('/api/users');
+  const {
+    data: meetingsData,
+    status: meetingsStatus,
+    refresh: refreshMeetings,
+  } = useAdminFetch<Meeting[]>('/api/meetings');
+  const {
+    data: billsData,
+    status: billsStatus,
+    refresh: refreshBills,
+  } = useAdminFetch<Bill[]>('/api/bills');
+  // A card shows its spinner only until its first data arrives; background refreshes keep the rows.
+  const isFirstLoad = (data: Ref<unknown>, status: Ref<string>) =>
+    computed(() => data.value === undefined && status.value !== 'error');
+  const sessionsLoading = isFirstLoad(sessionsData, sessionsStatus);
+  const committeesLoading = isFirstLoad(committeesData, committeesStatus);
+  const usersLoading = isFirstLoad(usersData, usersStatus);
+  const meetingsLoading = isFirstLoad(meetingsData, meetingsStatus);
+  const billsLoading = isFirstLoad(billsData, billsStatus);
 
   const sessions = computed(() => sessionsData.value ?? []);
   const committees = computed(() => committeesData.value ?? []);
@@ -1515,6 +1552,11 @@
 
   .empty-cell {
     color: #5a5a70 !important;
+    text-align: center;
+  }
+
+  .loading-cell {
+    padding: 1.5rem 0;
     text-align: center;
   }
 </style>

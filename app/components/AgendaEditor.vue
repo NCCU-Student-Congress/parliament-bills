@@ -20,7 +20,7 @@
         </option>
       </select>
     </label>
-    <p v-if="loading" class="py-6 text-gray-600">載入議程中...</p>
+    <div v-if="loading" class="py-6 text-center"><LoadingSpinner /></div>
     <p v-else-if="loadError" class="py-4 text-red-700">{{ loadError }}</p>
     <template v-else-if="selectedMeeting">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">

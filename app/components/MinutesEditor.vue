@@ -19,7 +19,7 @@
       </select>
     </label>
 
-    <p v-if="loading" class="mt-5 text-gray-600">載入會議記錄中...</p>
+    <div v-if="loading" class="mt-5 py-6 text-center"><LoadingSpinner /></div>
     <p v-else-if="loadError" role="alert" class="mt-5 text-red-700">{{ loadError }}</p>
     <form v-else-if="selectedMeeting" class="mt-6" @submit.prevent="saveDecisions">
       <p class="mb-5 text-sm text-gray-600">
