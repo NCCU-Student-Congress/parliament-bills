@@ -1,14 +1,108 @@
 <!-- pages/secretariat/login.vue -->
 <script setup lang="ts">
-  import { ref } from 'vue';
+  import { onBeforeUnmount, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
   import { SITE_CONFIG } from '~/utils/constants.js';
+
+  interface TurnstileApi {
+    render: (container: HTMLElement, options: Record<string, unknown>) => string | undefined;
+    reset: (widgetId: string) => void;
+    remove: (widgetId: string) => void;
+  }
+
+  type TurnstileWindow = Window & { turnstile?: TurnstileApi };
+
+  const TURNSTILE_SCRIPT_URL =
+    'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+  const TURNSTILE_ACTION = 'login';
 
   const email = ref('');
   const errorMessage = ref('');
   const successMessage = ref('');
   const isLoading = ref(false);
   const route = useRoute();
+  const runtimeConfig = useRuntimeConfig();
+  const turnstileContainer = ref<HTMLElement | null>(null);
+  const turnstileToken = ref('');
+  let turnstileWidgetId: string | undefined;
+  let isUnmounted = false;
+
+  function loadTurnstile() {
+    const win = window as TurnstileWindow;
+    if (win.turnstile) return Promise.resolve(win.turnstile);
+
+    return new Promise<TurnstileApi>((resolve, reject) => {
+      let script = document.querySelector<HTMLScriptElement>(
+        `script[src="${TURNSTILE_SCRIPT_URL}"]`,
+      );
+
+      if (!script) {
+        script = document.createElement('script');
+        script.src = TURNSTILE_SCRIPT_URL;
+        script.async = true;
+        document.head.appendChild(script);
+      }
+
+      script.addEventListener(
+        'load',
+        () => (win.turnstile ? resolve(win.turnstile) : reject(new Error('Turnstile 未載入'))),
+        { once: true },
+      );
+      script.addEventListener(
+        'error',
+        () => {
+          // Remove the failed tag so the next visit to this page can try again.
+          script.remove();
+          reject(new Error('Turnstile 載入失敗'));
+        },
+        { once: true },
+      );
+    });
+  }
+
+  // Tokens are single-use, so get a fresh one after every request while the page stays open.
+  function resetTurnstile() {
+    turnstileToken.value = '';
+    if (turnstileWidgetId) (window as TurnstileWindow).turnstile?.reset(turnstileWidgetId);
+  }
+
+  onMounted(async () => {
+    const siteKey = runtimeConfig.public.turnstileSiteKey;
+
+    if (!siteKey) {
+      errorMessage.value = '尚未設定人機驗證，暫時無法寄送登入連結。';
+      return;
+    }
+
+    try {
+      const turnstile = await loadTurnstile();
+      if (isUnmounted || !turnstileContainer.value) return;
+
+      turnstileWidgetId = turnstile.render(turnstileContainer.value, {
+        sitekey: siteKey,
+        action: TURNSTILE_ACTION,
+        theme: 'light',
+        size: 'flexible',
+        callback: (token: string) => {
+          turnstileToken.value = token;
+        },
+        'expired-callback': () => {
+          turnstileToken.value = '';
+        },
+        'error-callback': () => {
+          turnstileToken.value = '';
+        },
+      });
+    } catch (error) {
+      console.error('人機驗證載入失敗:', error);
+      errorMessage.value = '人機驗證載入失敗，請重新整理頁面後再試。';
+    }
+  });
+
+  onBeforeUnmount(() => {
+    isUnmounted = true;
+    if (turnstileWidgetId) (window as TurnstileWindow).turnstile?.remove(turnstileWidgetId);
+  });
 
   const handleLogin = async () => {
     errorMessage.value = '';
@@ -25,6 +119,7 @@
         body: JSON.stringify({
           email: email.value,
           redirect: route.query.redirect?.toString(),
+          turnstileToken: turnstileToken.value,
         }),
       });
 
@@ -41,6 +136,7 @@
       errorMessage.value = '網路錯誤或伺服器無回應，請稍後再試。';
     } finally {
       isLoading.value = false;
+      resetTurnstile();
     }
   };
 </script>
@@ -71,6 +167,8 @@
             :disabled="isLoading"
           />
         </div>
+
+        <div ref="turnstileContainer" class="min-h-[65px]"></div>
 
         <LoadingButton
           type="submit"

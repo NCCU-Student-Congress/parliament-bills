@@ -58,7 +58,9 @@ pnpm dev
 
 若要登入後台，請先在 `.dev.vars` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結，並按下頁面上的登入按鈕。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
 
-正式部署時，Worker 的建置指令為 `pnpm run build`，部署指令為 `pnpm exec wrangler deploy`。D1 binding `DB` 定義在 `wrangler.toml`；`AUTH_SECRET` 與 `RESEND_API_KEY` 等機密值須設為 Worker secrets，`.dev.vars` 只供本機使用。可執行 `pnpm preview`，透過 Wrangler 在本機預覽建置成果（預設 <http://localhost:8787>）。GitHub 已連接的 Pages 專案不會自動轉成 Worker；需在 Cloudflare 建立 Worker Builds 的 Git 連線，並停用舊 Pages 的自動部署。
+登入頁使用 Cloudflare Turnstile 人機驗證，伺服器會先向 siteverify 驗證 token（須通過、action 為 `login`，且 hostname 符合 `TURNSTILE_HOSTNAMES`，未設定時則須與請求的 hostname 相同），才查詢資料庫或寄信。正式環境須將 Turnstile widget 的 secret key 設為 Worker secret `TURNSTILE_SECRET`；未設定時，登入請求會回傳錯誤。本機要測試登入表單時，可在 `.dev.vars` 填入 Cloudflare 的測試 secret（見 `.dev.vars.example`），伺服器只在 localhost 接受測試 secret 的結果。site key 由 `NUXT_PUBLIC_TURNSTILE_SITE_KEY` 提供：正式環境與 `pnpm preview` 使用 `wrangler.toml` 的 `[vars]`，`pnpm dev` 則使用測試 site key `1x00000000000000000000AA`。上述的 `admin` 本機登入不需通過 Turnstile。
+
+正式部署時，Worker 的建置指令為 `pnpm run build`，部署指令為 `pnpm exec wrangler deploy`。D1 binding `DB` 定義在 `wrangler.toml`；`AUTH_SECRET`、`RESEND_API_KEY` 與 `TURNSTILE_SECRET` 等機密值須設為 Worker secrets，`.dev.vars` 只供本機使用。可執行 `pnpm preview`，透過 Wrangler 在本機預覽建置成果（預設 <http://localhost:8787>）。GitHub 已連接的 Pages 專案不會自動轉成 Worker；需在 Cloudflare 建立 Worker Builds 的 Git 連線，並停用舊 Pages 的自動部署。
 
 後續由 agent 匯入舊站會議與議案時，請依照[會議資訊匯入規則](./docs/meeting-data-migration.md)處理來源、提案人與附件。
 

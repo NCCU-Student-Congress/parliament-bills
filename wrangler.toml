@@ -11,6 +11,10 @@ migrations_dir = "migrations"
 [placement]
 mode = "smart"
 
+[vars]
+# Public Turnstile site key for the secretariat login form. TURNSTILE_SECRET is a Worker secret.
+NUXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAF_n0y8PHsY2ArVJ"
+
 [observability.logs]
 enabled = true
 invocation_logs = true

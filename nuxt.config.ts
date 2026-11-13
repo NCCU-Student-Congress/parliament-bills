@@ -9,6 +9,13 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
   ssr: true, // 確保開啟 SSR
+  runtimeConfig: {
+    public: {
+      // Set by NUXT_PUBLIC_TURNSTILE_SITE_KEY (wrangler.toml [vars] in production). `nuxt dev` does
+      // not read Worker vars, so it falls back to Cloudflare's always-pass test site key.
+      turnstileSiteKey: process.env.NODE_ENV === 'development' ? '1x00000000000000000000AA' : '',
+    },
+  },
   routeRules: {
     '/**': {
       headers: {

@@ -10,12 +10,14 @@ import {
 } from '../../utils/auth';
 import { useD1Database } from '../../utils/d1';
 import { sendLoginEmail } from '../../utils/resend';
+import { verifyTurnstileToken } from '../../utils/turnstile';
 
 const LOGIN_TOKEN_TTL_SECONDS = 60 * 10;
 const LOGIN_EMAIL_COOLDOWN_SECONDS = 60;
 const LOGIN_EMAILS_PER_HOUR = 5;
 const BYPASS_ADMIN_INPUT = 'admin';
 const DEFAULT_BYPASS_ADMIN_EMAIL = 'test@test.test';
+const TURNSTILE_ACTION = 'login';
 
 interface D1RunResult {
   meta?: {
@@ -48,8 +50,14 @@ export default defineEventHandler(async (event) => {
     return getGenericResponse();
   }
 
-  const db = useD1Database(event);
   const isBypassLogin = email === BYPASS_ADMIN_INPUT && isAuthBypassEnabled(event);
+
+  // The local bypass never sends email, so it skips Turnstile; every other request must pass first.
+  if (!isBypassLogin) {
+    await verifyTurnstileToken(event, body?.turnstileToken, TURNSTILE_ACTION);
+  }
+
+  const db = useD1Database(event);
   let targetEmail = email;
 
   if (isBypassLogin) {

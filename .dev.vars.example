@@ -10,3 +10,15 @@ RESEND_FROM_NAME=政大學生議會議案系統
 # a magic link to the server terminal. Never set this in production.
 AUTH_BYPASS=false
 AUTH_BYPASS_ADMIN_EMAIL=test@test.test
+
+# Cloudflare Turnstile on the secretariat login form. Production must set the widget's real secret
+# as a Worker secret. To test the form locally, use Cloudflare's always-pass test secret
+# 1x0000000000000000000000000000000AA, which the server accepts only on localhost. The "admin"
+# bypass above skips Turnstile, so it works with this left empty.
+TURNSTILE_SECRET=
+# Optional comma-separated frontend hostnames allowed in siteverify results. Defaults to the host
+# that received the request. Never list localhost or 127.0.0.1 in production.
+TURNSTILE_HOSTNAMES=
+# `pnpm preview` uses the production site key from wrangler.toml [vars], and `pnpm dev` uses
+# Cloudflare's always-pass test site key. Uncomment to override the key under `pnpm preview`.
+# NUXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
