@@ -83,12 +83,6 @@ export default defineEventHandler(async (event) => {
     user.permission_role === 'secretariat_admin' ? '/admin' : '/bill',
   );
 
-  const sessionUser = {
-    id: user.id,
-    email: user.email,
-    role: user.permission_role,
-  };
-
   const token = createRandomToken();
   const tokenHash = await hashToken(token);
   const expiresAt = getIsoDateAfterSeconds(LOGIN_TOKEN_TTL_SECONDS);

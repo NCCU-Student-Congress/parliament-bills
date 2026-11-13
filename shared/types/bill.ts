@@ -138,7 +138,3 @@ export type ProposalEditableField =
   'session' | 'committeeId' | 'proposedAt' | 'subject' | 'description' | 'attachments';
 
 export type Bill = Proposal;
-
-export interface BillApiResponse {
-  bills: Bill[];
-}

@@ -25,7 +25,6 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
-    "@types/papaparse": "^5.5.2",
     "nuxi": "^3.25.1",
     "prettier": "^3.9.4",
     "typescript": "6.0.3",

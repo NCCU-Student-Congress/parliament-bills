@@ -46,6 +46,7 @@
 <script setup>
   import { computed } from 'vue';
   import { formatTermLabel } from '../../../shared/utils/term';
+  import { SITE_CONFIG } from '~/utils/constants.js';
 
   const { data: meetingsData, pending, error } = await useFetch('/api/meetings/scheduled');
   const {
@@ -60,6 +61,6 @@
 
   definePageMeta({
     title: '議案查詢',
-    description: '查看' + ORG_DATA.nameZhFull + '歷屆已排案會議與議案資料。',
+    description: '查看' + SITE_CONFIG.fullName + '歷屆已排案會議與議案資料。',
   });
 </script>

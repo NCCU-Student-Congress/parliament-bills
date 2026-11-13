@@ -22,26 +22,6 @@ export const getCurrentTerm = (date = new Date()): number => {
   return (year - 1999) * 10 + 1;
 };
 
-/**
- * 取得所有有效會期代碼陣列
- * 需求：有效資料自 25-2 會期起。
- */
-export const getValidTerms = (): number[] => {
-  const currentTerm = getCurrentTerm();
-  const validTerms: number[] = [];
-
-  for (
-    let term = EARLIEST_TERM;
-    getTermOrder(term) <= getTermOrder(currentTerm);
-    term = getNextTerm(term)
-  ) {
-    validTerms.push(term);
-  }
-
-  // 習慣上會將最新會期排在最前面 (降冪)
-  return validTerms.reverse();
-};
-
 // 取得最早有效會期代碼
 export const getEarliestTerm = (): number => {
   return EARLIEST_TERM;
@@ -81,20 +61,6 @@ export const parseTermCode = (value: unknown): number | null => {
 
 export const isValidTermCode = (term: number): boolean => {
   return Number.isInteger(term) && term >= EARLIEST_TERM && (term % 10 === 1 || term % 10 === 2);
-};
-
-const getNextTerm = (term: number): number => {
-  const congress = Math.floor(term / 10);
-  const session = term % 10;
-
-  return session === 1 ? congress * 10 + 2 : (congress + 1) * 10 + 1;
-};
-
-const getTermOrder = (term: number): number => {
-  const congress = Math.floor(term / 10);
-  const session = term % 10;
-
-  return congress * 2 + session;
 };
 
 const getTaipeiDateParts = (date: Date): { year: number; month: number } => {
