@@ -31,7 +31,7 @@
             rel="noopener noreferrer"
             class="nav-link"
           >
-            回到會網
+            前往會網
           </a>
           <button v-if="isAuthenticated" type="button" class="auth-link" @click="handleLogout">
             登出
@@ -123,7 +123,7 @@
               target="_blank"
               rel="noopener noreferrer"
               @click="closeMobileMenu"
-              >回到會網 <span aria-hidden="true">↗</span></a
+              >前往會網 <span aria-hidden="true">↗</span></a
             >
             <button v-if="isAuthenticated" type="button" @click="handleLogout">登出</button>
             <NuxtLink v-else to="/secretariat/login" @click="closeMobileMenu">登入</NuxtLink>
