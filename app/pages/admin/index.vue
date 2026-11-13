@@ -30,8 +30,11 @@
         :class="{ active: activeAdminTab === 'meetings' }"
         type="button"
         role="tab"
+        id="admin-tab-meetings"
+        :tabindex="activeAdminTab === 'meetings' ? 0 : -1"
         :aria-selected="activeAdminTab === 'meetings'"
-        @click="activeAdminTab = 'meetings'"
+        @click="setActiveAdminTab('meetings')"
+        @keydown="onTabKeydown"
       >
         會議控制台
       </button>
@@ -40,8 +43,11 @@
         :class="{ active: activeAdminTab === 'scheduling' }"
         type="button"
         role="tab"
+        id="admin-tab-scheduling"
+        :tabindex="activeAdminTab === 'scheduling' ? 0 : -1"
         :aria-selected="activeAdminTab === 'scheduling'"
-        @click="activeAdminTab = 'scheduling'"
+        @click="setActiveAdminTab('scheduling')"
+        @keydown="onTabKeydown"
       >
         議案排案
       </button>
@@ -50,24 +56,48 @@
         :class="{ active: activeAdminTab === 'agenda' }"
         type="button"
         role="tab"
+        id="admin-tab-agenda"
+        :tabindex="activeAdminTab === 'agenda' ? 0 : -1"
         :aria-selected="activeAdminTab === 'agenda'"
-        @click="activeAdminTab = 'agenda'"
+        @click="setActiveAdminTab('agenda')"
+        @keydown="onTabKeydown"
       >
         設定議程
+      </button>
+      <button
+        class="admin-tab"
+        :class="{ active: activeAdminTab === 'minutes' }"
+        type="button"
+        role="tab"
+        id="admin-tab-minutes"
+        :tabindex="activeAdminTab === 'minutes' ? 0 : -1"
+        :aria-selected="activeAdminTab === 'minutes'"
+        @click="setActiveAdminTab('minutes')"
+        @keydown="onTabKeydown"
+      >
+        製作會議記錄
       </button>
       <button
         class="admin-tab"
         :class="{ active: activeAdminTab === 'reference' }"
         type="button"
         role="tab"
+        id="admin-tab-reference"
+        :tabindex="activeAdminTab === 'reference' ? 0 : -1"
         :aria-selected="activeAdminTab === 'reference'"
-        @click="activeAdminTab = 'reference'"
+        @click="setActiveAdminTab('reference')"
+        @keydown="onTabKeydown"
       >
         基本資料
       </button>
     </div>
 
-    <div v-if="activeAdminTab === 'reference'" class="grid gap-6 xl:grid-cols-2">
+    <div
+      v-if="activeAdminTab === 'reference'"
+      role="tabpanel"
+      aria-labelledby="admin-tab-reference"
+      class="grid gap-6 xl:grid-cols-2"
+    >
       <section class="admin-section">
         <div class="section-head">
           <h2 class="section-title">會期</h2>
@@ -312,7 +342,12 @@
       </section>
     </div>
 
-    <div v-else-if="activeAdminTab === 'meetings'" class="w-full">
+    <div
+      v-else-if="activeAdminTab === 'meetings'"
+      role="tabpanel"
+      aria-labelledby="admin-tab-meetings"
+      class="w-full"
+    >
       <section class="admin-section">
         <div class="section-head">
           <h2 class="section-title">會議控制台</h2>
@@ -458,8 +493,22 @@
         </div>
       </section>
     </div>
-    <AgendaEditor v-else-if="activeAdminTab === 'agenda'" :meetings="meetings" class="w-full" />
-    <div v-else class="w-full">
+    <AgendaEditor
+      v-else-if="activeAdminTab === 'agenda'"
+      role="tabpanel"
+      aria-labelledby="admin-tab-agenda"
+      :meetings="meetings"
+      class="w-full"
+    />
+    <MinutesEditor
+      v-else-if="activeAdminTab === 'minutes'"
+      ref="minutesEditor"
+      role="tabpanel"
+      aria-labelledby="admin-tab-minutes"
+      :meetings="meetings"
+      class="w-full"
+    />
+    <div v-else role="tabpanel" aria-labelledby="admin-tab-scheduling" class="w-full">
       <section class="admin-section">
         <div class="section-head">
           <h2 class="section-title">議案排入會議</h2>
@@ -537,6 +586,7 @@
 
 <script setup lang="ts">
   import { computed, reactive, ref, watch } from 'vue';
+  import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
   import type { Bill, Committee, Meeting, Session, User } from '~~/shared/types/bill';
   import { formatTermLabel } from '~~/shared/utils/term';
 
@@ -546,18 +596,53 @@
   });
 
   type ResourceType = 'sessions' | 'committees' | 'users' | 'meetings';
-  type AdminTab = 'reference' | 'meetings' | 'scheduling' | 'agenda';
+  type AdminTab = 'reference' | 'meetings' | 'scheduling' | 'agenda' | 'minutes';
+  const tabOrder: AdminTab[] = ['meetings', 'scheduling', 'agenda', 'minutes', 'reference'];
 
   const notice = ref('');
   const errorMessage = ref('');
   const isSubmitting = ref(false);
-  const activeAdminTab = ref<AdminTab>(
-    useRoute().query.tab === 'scheduling'
-      ? 'scheduling'
-      : useRoute().query.tab === 'agenda'
-        ? 'agenda'
-        : 'meetings',
+  const route = useRoute();
+  const activeAdminTab = computed<AdminTab>(() =>
+    tabOrder.includes(route.query.tab as AdminTab) ? (route.query.tab as AdminTab) : 'meetings',
   );
+  const minutesEditor = ref<{ hasUnsavedChanges: () => boolean } | null>(null);
+
+  function setActiveAdminTab(tab: AdminTab) {
+    if (tab !== activeAdminTab.value) {
+      void navigateTo({ path: '/admin', query: { ...route.query, tab } });
+    }
+  }
+
+  function onTabKeydown(event: KeyboardEvent) {
+    const current = (event.currentTarget as HTMLElement).id.replace('admin-tab-', '') as AdminTab;
+    const index = tabOrder.indexOf(current);
+    let next = index;
+    if (event.key === 'ArrowRight') next = (index + 1) % tabOrder.length;
+    else if (event.key === 'ArrowLeft') next = (index - 1 + tabOrder.length) % tabOrder.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = tabOrder.length - 1;
+    else return;
+    event.preventDefault();
+    const tab = tabOrder[next];
+    if (!tab) return;
+    const button = document.getElementById(`admin-tab-${tab}`);
+    button?.focus();
+    button?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function confirmUnsavedMinutes() {
+    return (
+      !minutesEditor.value?.hasUnsavedChanges() || window.confirm('決議尚未儲存，確定要離開嗎？')
+    );
+  }
+
+  onBeforeRouteUpdate((to, from) => {
+    if (to.query.tab !== from.query.tab && !confirmUnsavedMinutes()) return false;
+  });
+  onBeforeRouteLeave(() => {
+    if (!confirmUnsavedMinutes()) return false;
+  });
   const editingCommitteeId = ref<number | null>(null);
   const editingUserId = ref<number | null>(null);
   const editingMeetingId = ref<number | null>(null);
@@ -959,18 +1044,19 @@
 
 <style scoped>
   .admin-tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
     gap: 0.35rem;
     margin-bottom: 1.25rem;
     border: 1px solid #dcdce2;
     border-radius: 8px;
     background: #f5f5f7;
     padding: 0.25rem;
+    overflow-x: auto;
   }
 
   .admin-tab {
-    min-width: 0;
+    position: relative;
+    flex: none;
     border-radius: 6px;
     padding: 0.55rem 0.9rem;
     color: #5a5a70;
@@ -988,10 +1074,21 @@
     box-shadow: 0 6px 18px rgba(0, 0, 36, 0.08);
   }
 
+  .admin-tab.active::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    border-bottom: 3px solid currentColor;
+  }
+
+  .admin-tab:focus-visible {
+    outline: 2px solid #e60012;
+    outline-offset: -2px;
+  }
+
   @media (min-width: 768px) {
     .admin-tabs {
-      display: flex;
-      flex-wrap: wrap;
+      justify-content: flex-start;
     }
 
     .admin-tab {

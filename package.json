@@ -20,7 +20,9 @@
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
+    "@pdf-lib/fontkit": "^1.1.1",
     "nuxt": "^4.4.7",
+    "pdf-lib": "^1.17.1",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
   },

@@ -24,3 +24,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## LXGW WenKai TC
+
+The meeting minutes PDF uses `LXGWWenKaiTC-Regular.ttf` from
+https://github.com/lxgw/LxgwWenkaiTC. Copyright 2022-2026 The LXGW WenKai
+Project Authors. Licensed under the SIL Open Font License, Version 1.1; the
+license text is included at `public/fonts/OFL-LXGWWenKaiTC.txt`.
