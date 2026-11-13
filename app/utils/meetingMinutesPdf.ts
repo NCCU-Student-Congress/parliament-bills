@@ -62,7 +62,10 @@ export async function createMeetingMinutesPdf(
     if (y - height < PAGE_MARGIN + 16) addPage();
   }
 
-  function drawText(text: string, options: { size?: number; indent?: number; gap?: number } = {}) {
+  function drawText(
+    text: string,
+    options: { size?: number; indent?: number; gap?: number; center?: boolean } = {},
+  ) {
     const size = options.size ?? BODY_SIZE;
     const indent = options.indent ?? 0;
     const lineHeight = size === BODY_SIZE ? BODY_LINE_HEIGHT : size + 9;
@@ -70,7 +73,9 @@ export async function createMeetingMinutesPdf(
       ensureSpace(lineHeight);
       if (line) {
         page.drawText(line, {
-          x: PAGE_MARGIN + indent,
+          x: options.center
+            ? (pageWidth - font.widthOfTextAtSize(line, size)) / 2
+            : PAGE_MARGIN + indent,
           y,
           size,
           font,
@@ -83,8 +88,11 @@ export async function createMeetingMinutesPdf(
   }
 
   addPage();
-  drawText(`${meeting.title} 會議記錄`, { size: 17, gap: 5 });
-  drawText(`${formatTermLabel(meeting.session)}　${meeting.meetingTypeName}`, { gap: 13 });
+  drawText(`${meeting.title} 會議記錄`, { size: 17, gap: 5, center: true });
+  drawText(`${formatTermLabel(meeting.session)}　${meeting.meetingTypeName}`, {
+    gap: 13,
+    center: true,
+  });
 
   const decisionMap = new Map(decisions.map((item) => [item.proposalId, item.decision]));
   for (const line of agendaLines(entries, proposals)) {
@@ -94,11 +102,12 @@ export async function createMeetingMinutesPdf(
       drawText(line.text, { size: 13, gap: 5 });
     } else if (line.entry.kind === 'proposal') {
       ensureSpace(52);
-      const match = line.text.match(/^([一二三四五六七八九十百]+、)(.*)$/);
-      const subject = match ? `${match[1]}案由：${match[2]}` : `案由：${line.text}`;
+      const match = line.text.match(/^([一二三四五六七八九十百千\d]+、)(.*)$/);
+      const prefix = match?.[1] ?? '';
+      const subject = match ? `${prefix}案由：${match[2]}` : `案由：${line.text}`;
       drawText(subject, { indent: 12 });
       drawText(`決議：${decisionMap.get(line.entry.proposalId!) || '尚未填寫'}`, {
-        indent: 12,
+        indent: 12 + font.widthOfTextAtSize(prefix, BODY_SIZE),
         gap: 9,
       });
     } else {
