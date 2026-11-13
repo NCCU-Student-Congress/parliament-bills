@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-10">
+  <div>
     <section class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <div
         class="rounded-xl border border-[#dcdce2] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,36,0.06)] sm:p-8"
@@ -39,54 +39,6 @@
       </aside>
     </section>
 
-    <section>
-      <div class="mb-4 flex items-end justify-between gap-4 border-b border-[#dcdce2] pb-3">
-        <div>
-          <p class="text-sm font-black text-[#e60012]">常用功能</p>
-          <h2 class="text-2xl font-black text-[#12122b]">服務入口</h2>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <NuxtLink to="/bill" class="home-module">
-          <span class="home-module-kicker">議案資料</span>
-          <strong>議案查詢</strong>
-          <span>查詢歷屆議案資料，支援多種篩選條件和分頁瀏覽。</span>
-        </NuxtLink>
-
-        <NuxtLink to="/secretariat" class="home-module">
-          <span class="home-module-kicker">秘書處</span>
-          <strong>文件草擬輔助</strong>
-          <span>供秘書處內部用以輔助草擬議事文件。</span>
-        </NuxtLink>
-
-        <NuxtLink v-if="isSecretariat" to="/admin" class="home-module">
-          <span class="home-module-kicker">管理</span>
-          <strong>後台資料管理</strong>
-          <span>建立會期、委員會、人員與會議，供提案流程使用。</span>
-        </NuxtLink>
-
-        <div class="home-module">
-          <span class="home-module-kicker">聯絡資訊</span>
-          <strong>聯絡我們</strong>
-          <a
-            :href="ORG_DATA.officeLocationUrl"
-            class="font-black text-primary underline underline-offset-4"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            辦公室：{{ ORG_DATA.office }}
-          </a>
-          <a
-            :href="`mailto:${ORG_DATA.email}`"
-            class="mt-auto font-black text-primary underline underline-offset-4"
-          >
-            {{ ORG_DATA.email }}
-          </a>
-        </div>
-      </div>
-    </section>
-
     <!-- 統計資訊 (維護中) -->
     <!-- <div class="mt-12 bg-gray-50 rounded-lg p-8">
       <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
@@ -113,9 +65,6 @@
 </template>
 
 <script setup>
-  const { data: session } = await useFetch('/api/secretariat/session');
-  const isSecretariat = computed(() => session.value?.role === 'secretariat_admin');
-
   // 設定頁面 meta 標籤
   useHead({
     title: SITE_CONFIG.name,
@@ -142,49 +91,5 @@
 
   import { formatTermLabel, getCurrentTerm } from '../../shared/utils/term.js';
 
-  import { ORG_DATA, SITE_CONFIG } from '~/utils/constants.js';
+  import { SITE_CONFIG } from '~/utils/constants.js';
 </script>
-
-<style scoped>
-  .home-module {
-    display: flex;
-    min-height: 14rem;
-    flex-direction: column;
-    gap: 0.75rem;
-    border: 1px solid #dcdce2;
-    border-radius: 12px;
-    background: #ffffff;
-    padding: 1.25rem;
-    box-shadow: 0 10px 40px rgba(0, 0, 36, 0.05);
-    transition:
-      transform 160ms ease,
-      box-shadow 160ms ease,
-      background-color 160ms ease;
-  }
-
-  .home-module:hover {
-    border-color: #000024;
-    box-shadow: 0 14px 34px rgba(0, 0, 36, 0.12);
-    transform: translateY(-3px);
-  }
-
-  .home-module-kicker {
-    color: #e60012;
-    font-size: 0.75rem;
-    font-weight: 900;
-  }
-
-  .home-module strong {
-    color: #12122b;
-    font-size: 1.35rem;
-    font-weight: 900;
-    line-height: 1.3;
-  }
-
-  .home-module span {
-    color: #5a5a70;
-    font-size: 0.95rem;
-    font-weight: 650;
-    line-height: 1.65;
-  }
-</style>
