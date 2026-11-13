@@ -381,10 +381,6 @@
     font: inherit;
     font-size: max(1rem, 1em);
   }
-  .control:focus-visible {
-    outline: 3px solid #e60012;
-    outline-offset: 2px;
-  }
   .time-select {
     width: auto;
   }

@@ -191,9 +191,4 @@
   .filter-control::placeholder {
     color: #5a5a70;
   }
-
-  .filter-control:focus {
-    border-color: #e60012;
-    outline: 3px solid rgba(230, 0, 18, 0.18);
-  }
 </style>

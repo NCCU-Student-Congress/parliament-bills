@@ -301,12 +301,6 @@
     color: #fff;
   }
 
-  .mobile-menu-button:focus-visible,
-  .mobile-menu-panel :is(a, button):focus-visible {
-    outline: 3px solid #e60012;
-    outline-offset: 3px;
-  }
-
   .mobile-menu-icon {
     display: flex;
     flex-direction: column;

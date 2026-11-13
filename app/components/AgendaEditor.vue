@@ -29,7 +29,7 @@
         </p>
         <button
           type="button"
-          class="rounded border px-3 py-1.5 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          class="rounded border px-3 py-1.5 text-sm font-semibold"
           :class="
             showInsertActions
               ? 'border-[#12122b] bg-[#12122b] text-white'
@@ -139,7 +139,7 @@
           <div v-if="showInsertActions" class="flex justify-center py-3">
             <button
               type="button"
-              class="rounded border border-dashed border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-primary hover:border-primary hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="rounded border border-dashed border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-primary hover:border-primary hover:bg-red-50"
               @click="insertEntry(index + 1)"
             >
               ＋在此處插入文字<span class="sr-only">，第 {{ index + 1 }} 項後</span>
@@ -524,10 +524,6 @@
     background: #fff;
     padding: 0.6rem 0.75rem;
     color: #12122b;
-  }
-  .control:focus {
-    border-color: #e60012;
-    outline: 3px solid rgba(230, 0, 18, 0.18);
   }
   .agenda-list {
     position: relative;

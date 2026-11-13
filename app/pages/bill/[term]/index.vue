@@ -37,7 +37,7 @@
             v-for="meeting in group.meetings"
             :key="meeting.id"
             :to="`/bill/${term}/meetings/${meeting.id}`"
-            class="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-primary hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            class="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-primary hover:shadow-md"
           >
             <h4 class="mb-3 text-lg font-bold text-gray-900">{{ meeting.title }}</h4>
             <p class="text-sm text-gray-600">{{ formatDateTime(meeting.meetingDate) }}</p>

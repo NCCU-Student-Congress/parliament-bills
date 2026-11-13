@@ -29,7 +29,7 @@
         :key="session.id"
         :to="`/bill/${session.id}`"
         :prefetch="index === 0"
-        class="rounded-lg bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        class="rounded-lg bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg"
       >
         <p class="mb-2 text-sm font-semibold text-primary">
           {{ session.title || formatTermLabel(session.id) }}

@@ -32,6 +32,7 @@
   :root {
     --sc-navy: #000024;
     --sc-navy-light: #1c1c4a;
+    --sc-focus-ring: var(--sc-navy);
     --sc-accent: #e60012;
     --sc-page-bg: #f5f5f7;
     --sc-text: #12122b;
@@ -72,12 +73,35 @@
     box-shadow: none;
   }
 
-  input:focus,
-  select:focus,
-  textarea:focus {
-    border-color: var(--sc-accent);
-    outline: 3px solid rgba(230, 0, 18, 0.18);
-    outline-offset: 0;
+  :where(
+    a[href],
+    button,
+    input,
+    select,
+    textarea,
+    [contenteditable='true'],
+    [tabindex='0']
+  ):focus-visible {
+    outline: 2px solid var(--sc-focus-ring);
+    outline-offset: 2px;
+  }
+
+  footer {
+    --sc-focus-ring: #fff;
+  }
+
+  @media (forced-colors: active) {
+    :where(
+      a[href],
+      button,
+      input,
+      select,
+      textarea,
+      [contenteditable='true'],
+      [tabindex='0']
+    ):focus-visible {
+      outline-color: Highlight;
+    }
   }
 
   .bill-card {

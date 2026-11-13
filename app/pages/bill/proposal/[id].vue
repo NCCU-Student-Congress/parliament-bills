@@ -660,13 +660,8 @@
     text-decoration: underline;
   }
 
-  .breadcrumb-item > a:focus-visible {
-    outline: 2px solid #e60012;
-    outline-offset: 2px;
-  }
-
   .edit-control {
-    @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
+    @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900;
   }
 
   .proposal-description {

@@ -1200,7 +1200,7 @@
   }
 
   .admin-tab:focus-visible {
-    outline: 2px solid #e60012;
+    outline: 2px solid var(--sc-focus-ring);
     outline-offset: -2px;
   }
 
@@ -1310,9 +1310,13 @@
     background: #f5f5f7;
   }
 
-  .schedule-option:focus-within {
-    outline: 2px solid #000024;
+  .schedule-option:has(input:focus-visible) {
+    outline: 2px solid var(--sc-focus-ring);
     outline-offset: 2px;
+  }
+
+  .schedule-option input:focus-visible {
+    outline: none;
   }
 
   .schedule-option input {
@@ -1420,11 +1424,6 @@
   .control:disabled {
     background: #f5f5f7;
     color: #5a5a70;
-  }
-
-  .control:focus {
-    border-color: #e60012;
-    outline: 3px solid rgba(230, 0, 18, 0.18);
   }
 
   .checkbox-list {
@@ -1539,10 +1538,11 @@
     background: #fff0f1;
   }
 
-  .icon-action:focus-visible,
-  .table-wrap:focus-visible {
-    outline: 2px solid #e60012;
-    outline-offset: 2px;
+  @media (forced-colors: active) {
+    .admin-tab:focus-visible,
+    .schedule-option:has(input:focus-visible) {
+      outline-color: Highlight;
+    }
   }
 
   @media (pointer: coarse) {

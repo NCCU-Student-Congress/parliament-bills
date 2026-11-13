@@ -93,7 +93,7 @@
             <NuxtLink
               v-if="line.entry.kind === 'proposal'"
               :to="`/bill/proposal/${line.entry.proposalId}`"
-              class="block rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary hover:bg-gray-100"
+              class="block rounded hover:bg-gray-100"
             >
               <AgendaHangingText :text="line.text" />
             </NuxtLink>
