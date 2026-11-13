@@ -16,7 +16,7 @@
         </div>
 
         <!-- 桌面版導覽選單 -->
-        <nav class="hidden items-center gap-1 md:flex">
+        <nav class="hidden items-center gap-1 xl:flex">
           <NuxtLink to="/bill" class="nav-link"> 議案查詢 </NuxtLink>
           <NuxtLink to="/cosign" class="nav-link"> 連署 </NuxtLink>
           <NuxtLink to="/bill/new" class="nav-link nav-link-accent"> 新增議案 </NuxtLink>
@@ -37,7 +37,7 @@
         </nav>
 
         <!-- 行動版選單按鈕 -->
-        <div class="flex items-center md:hidden">
+        <div class="flex items-center xl:hidden">
           <button
             @click="toggleMobileMenu"
             class="rounded-lg border border-[#dcdce2] bg-white p-2 text-primary transition-colors hover:bg-primary hover:text-white"
@@ -59,7 +59,7 @@
       <!-- 行動版選單 -->
       <div
         v-if="mobileMenuOpen"
-        class="absolute left-0 right-0 top-full border-b border-t border-[#dcdce2] bg-white px-4 py-4 shadow-lg md:hidden"
+        class="absolute left-0 right-0 top-full border-b border-t border-[#dcdce2] bg-white px-4 py-4 shadow-lg xl:hidden"
       >
         <nav class="flex flex-col gap-2">
           <NuxtLink to="/bill" class="mobile-nav-link" @click="closeMobileMenu">

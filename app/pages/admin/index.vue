@@ -464,63 +464,69 @@
         <div class="section-head">
           <h2 class="section-title">議案排入會議</h2>
         </div>
-        <div class="table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>議案</th>
-                <th>會期／委員會</th>
-                <th>目前會議</th>
-                <th>排入會議</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="bill in sortedBills" :key="bill.id">
-                <td>
-                  <ProposalTypePill :proposal-type="bill.proposalType" class="mr-2" />
-                  <NuxtLink :to="`/bill/proposal/${bill.id}`" class="text-button">
+        <div v-if="sortedBills.length" class="schedule-list">
+          <article v-for="bill in sortedBills" :key="bill.id" class="schedule-card">
+            <div class="schedule-card-head">
+              <div class="min-w-0">
+                <h3 class="schedule-title">
+                  <ProposalTypePill :proposal-type="bill.proposalType" class="shrink-0" />
+                  <NuxtLink :to="`/bill/proposal/${bill.id}`" class="text-button schedule-link">
                     {{ bill.subject }}
                   </NuxtLink>
-                </td>
-                <td>{{ formatSession(bill.session) }}／{{ bill.committeeName }}</td>
-                <td>
-                  {{ bill.meetings.map((meeting) => meeting.title).join('、') || '尚未排入會議' }}
-                </td>
-                <td>
-                  <div class="flex flex-col gap-2">
-                    <label
-                      v-for="meeting in matchingMeetings(bill)"
-                      :key="meeting.id"
-                      class="flex items-start gap-2"
-                    >
-                      <input
-                        v-model="billMeetingSelection[bill.id]"
-                        type="checkbox"
-                        :value="meeting.id"
-                      />
-                      {{ meeting.title }}（{{ formatDateTime(meeting.meetingDate) }}）
-                    </label>
-                    <span v-if="!matchingMeetings(bill).length">沒有可排入的會議</span>
-                  </div>
-                </td>
-                <td>
-                  <button
-                    class="text-button"
-                    type="button"
-                    :disabled="isSubmitting || sameMeetingSelection(bill)"
-                    @click="scheduleBill(bill)"
+                </h3>
+                <p class="schedule-meta">
+                  {{ formatSession(bill.session) }}／{{ bill.committeeName }}
+                </p>
+              </div>
+            </div>
+
+            <div class="schedule-details">
+              <div>
+                <h4 class="schedule-label">目前會議</h4>
+                <ul v-if="bill.meetings.length" class="schedule-current">
+                  <li v-for="meeting in bill.meetings" :key="meeting.id">{{ meeting.title }}</li>
+                </ul>
+                <p v-else class="schedule-empty">尚未排入會議</p>
+              </div>
+
+              <div>
+                <h4 class="schedule-label">排入會議</h4>
+                <div v-if="matchingMeetings(bill).length" class="schedule-options">
+                  <label
+                    v-for="meeting in matchingMeetings(bill)"
+                    :key="meeting.id"
+                    class="schedule-option"
                   >
-                    儲存
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="bills.length === 0">
-                <td colspan="5" class="empty-cell">尚無議案</td>
-              </tr>
-            </tbody>
-          </table>
+                    <input
+                      v-model="billMeetingSelection[bill.id]"
+                      type="checkbox"
+                      :value="meeting.id"
+                    />
+                    <span class="min-w-0">
+                      <span class="schedule-option-title">{{ meeting.title }}</span>
+                      <span class="schedule-option-date">{{
+                        formatDateTime(meeting.meetingDate)
+                      }}</span>
+                    </span>
+                  </label>
+                </div>
+                <p v-else class="schedule-empty">沒有可排入的會議</p>
+              </div>
+            </div>
+
+            <div class="schedule-actions">
+              <button
+                class="btn btn-primary schedule-save"
+                type="button"
+                :disabled="isSubmitting || sameMeetingSelection(bill)"
+                @click="scheduleBill(bill)"
+              >
+                儲存排案
+              </button>
+            </div>
+          </article>
         </div>
+        <p v-else class="schedule-empty py-6 text-center">尚無議案</p>
       </section>
     </div>
   </div>
@@ -943,8 +949,8 @@
 
 <style scoped>
   .admin-tabs {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.35rem;
     margin-bottom: 1.25rem;
     border: 1px solid #dcdce2;
@@ -954,7 +960,7 @@
   }
 
   .admin-tab {
-    min-width: 8rem;
+    min-width: 0;
     border-radius: 6px;
     padding: 0.55rem 0.9rem;
     color: #5a5a70;
@@ -972,12 +978,174 @@
     box-shadow: 0 6px 18px rgba(0, 0, 36, 0.08);
   }
 
+  @media (min-width: 768px) {
+    .admin-tabs {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .admin-tab {
+      min-width: 8rem;
+    }
+  }
+
   .admin-section {
     border: 1px solid #dcdce2;
     border-radius: 8px;
     background: #fff;
     padding: 1.25rem;
     box-shadow: 0 10px 32px rgba(0, 0, 36, 0.05);
+  }
+
+  .schedule-list {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .schedule-card {
+    min-width: 0;
+    border: 1px solid #dcdce2;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  .schedule-card-head,
+  .schedule-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .schedule-title {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .schedule-link {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .schedule-meta,
+  .schedule-empty,
+  .schedule-option-date {
+    color: #5a5a70;
+    font-size: 0.875rem;
+  }
+
+  .schedule-meta {
+    margin-top: 0.4rem;
+  }
+
+  .schedule-details {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .schedule-label {
+    margin-bottom: 0.5rem;
+    color: #5a5a70;
+    font-size: 0.75rem;
+    font-weight: 900;
+  }
+
+  .schedule-current {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .schedule-current li {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    border-radius: 6px;
+    background: #f5f5f7;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .schedule-options {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .schedule-option {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.65rem;
+    border: 1px solid #dcdce2;
+    border-radius: 8px;
+    padding: 0.65rem;
+    cursor: pointer;
+  }
+
+  .schedule-option:has(input:checked) {
+    border-color: #000024;
+    background: #f5f5f7;
+  }
+
+  .schedule-option:focus-within {
+    outline: 2px solid #000024;
+    outline-offset: 2px;
+  }
+
+  .schedule-option input {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.15rem;
+    accent-color: #000024;
+  }
+
+  .schedule-option-title,
+  .schedule-option-date {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  .schedule-option-title {
+    color: #12122b;
+    font-size: 0.875rem;
+    font-weight: 750;
+  }
+
+  .schedule-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+
+  .schedule-save {
+    width: 100%;
+  }
+
+  .schedule-save:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  @media (min-width: 640px) {
+    .schedule-save {
+      width: auto;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .schedule-details {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+      gap: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .schedule-options {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .section-head {
