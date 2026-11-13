@@ -1,22 +1,19 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <nav class="mb-6 print:hidden">
-      <ol class="flex items-center space-x-2 text-sm text-gray-600">
-        <li>
+    <nav class="mb-6 print:hidden" aria-label="麵包屑">
+      <ol class="breadcrumb-list text-sm text-gray-600">
+        <li class="breadcrumb-item">
           <NuxtLink to="/" class="hover:text-primary">首頁</NuxtLink>
         </li>
-        <li>/</li>
-        <li>
+        <li class="breadcrumb-item">
           <NuxtLink to="/bill" class="hover:text-primary">議案查詢</NuxtLink>
         </li>
-        <li>/</li>
-        <li v-if="bill">
+        <li v-if="bill" class="breadcrumb-item">
           <NuxtLink :to="`/bill/${bill.session}`" class="hover:text-primary">
             {{ formatTermLabel(bill.session) }}
           </NuxtLink>
         </li>
-        <li v-if="bill">/</li>
-        <li v-if="bill?.meetings.length">
+        <li v-if="bill?.meetings.length" class="breadcrumb-item">
           <NuxtLink
             :to="`/bill/${bill.session}/meetings/${bill.meetings[0]?.id}`"
             class="hover:text-primary"
@@ -24,8 +21,9 @@
             {{ bill.meetings[0]?.title }}
           </NuxtLink>
         </li>
-        <li v-if="bill?.meetings.length">/</li>
-        <li class="text-gray-900">議案詳情</li>
+        <li class="breadcrumb-item font-semibold text-gray-900">
+          <NuxtLink :to="`/bill/proposal/${id}`" aria-current="page">議案詳情</NuxtLink>
+        </li>
       </ol>
     </nav>
 
@@ -74,10 +72,11 @@
             <tr
               v-for="field in displayFields"
               :key="field.label"
-              class="block border-b last:border-b-0 sm:table-row"
+              class="relative block border-b last:border-b-0 sm:static sm:table-row"
             >
               <td
-                class="block bg-gray-50 px-6 py-4 text-sm font-medium text-gray-900 sm:table-cell sm:w-1/4"
+                class="block bg-gray-50 px-6 py-4 text-sm font-medium text-gray-900 sm:table-cell sm:w-1/4 sm:pr-6"
+                :class="isSecretariat && field.editable ? 'pr-28' : ''"
               >
                 {{ field.label }}
               </td>
@@ -218,13 +217,13 @@
               </td>
               <td
                 v-if="isSecretariat"
-                class="block px-3 py-3 text-right sm:table-cell sm:w-24 print:hidden"
+                class="absolute right-2 top-0 block p-1 text-right sm:static sm:table-cell sm:w-24 sm:px-3 sm:py-3 print:hidden"
               >
                 <div v-if="field.editable" class="flex justify-end gap-1">
                   <template v-if="editingField === field.editable">
                     <button
                       type="button"
-                      class="rounded-lg p-2 text-green-700 hover:bg-green-50 disabled:opacity-50"
+                      class="rounded-lg p-3 text-green-700 hover:bg-green-50 disabled:opacity-50 sm:p-2"
                       :disabled="isSaving"
                       :aria-label="`儲存${field.label}`"
                       @click="saveField"
@@ -233,7 +232,7 @@
                     </button>
                     <button
                       type="button"
-                      class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                      class="rounded-lg p-3 text-gray-600 hover:bg-gray-100 disabled:opacity-50 sm:p-2"
                       :disabled="isSaving"
                       :aria-label="`取消編輯${field.label}`"
                       @click="cancelEditing"
@@ -244,7 +243,7 @@
                   <button
                     v-else
                     type="button"
-                    class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    class="rounded-lg p-3 text-gray-600 hover:bg-gray-100 disabled:opacity-50 sm:p-2"
                     :disabled="
                       isSaving ||
                       editingField !== null ||
@@ -601,6 +600,42 @@
 <style scoped>
   .container {
     max-width: 960px;
+  }
+
+  .breadcrumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 0.5rem;
+    row-gap: 0.25rem;
+  }
+
+  .breadcrumb-item {
+    display: inline-flex;
+    align-items: baseline;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: '/';
+    content: '/' / '';
+    flex: none;
+    margin-inline-end: 0.5rem;
+  }
+
+  .breadcrumb-item > a {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .breadcrumb-item > a:is(:hover, :focus-visible) {
+    text-decoration: underline;
+  }
+
+  .breadcrumb-item > a:focus-visible {
+    outline: 2px solid #e60012;
+    outline-offset: 2px;
   }
 
   .edit-control {
