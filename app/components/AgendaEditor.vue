@@ -41,24 +41,33 @@
       >
         ＋插入選舉事項文字
       </button>
-      <ol class="space-y-3" aria-label="議程排序">
+      <ol
+        ref="listRef"
+        class="agenda-list space-y-3"
+        :class="{ 'drop-at-end': dropSlot === entries.length && dragIndex >= 0 }"
+        aria-label="議程排序"
+      >
         <li
           v-for="(entry, index) in entries"
           :key="entryKeys[index]"
-          class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
-          @dragover.prevent
-          @drop.prevent="moveEntry(dragIndex, index)"
+          :data-entry-key="entryKeys[index]"
+          class="agenda-entry rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+          :class="{ 'is-dragging': dragIndex === index, 'drop-before': dropSlot === index }"
+          :style="dragIndex === index ? { transform: `translateY(${dragOffsetY}px)` } : undefined"
         >
           <div class="flex items-start gap-3">
             <span
               v-if="entry.kind !== 'heading'"
-              draggable="true"
-              class="cursor-grab select-none pt-2 text-gray-500"
+              class="drag-handle pt-2 text-gray-500"
               aria-hidden="true"
-              @dragstart="startDrag($event, index)"
-              @dragend="dragIndex = -1"
-              >☰</span
+              @pointerdown="startDrag($event, index)"
+              @pointermove="dragMove"
+              @pointerup="endDrag"
+              @pointercancel="cancelDrag"
+              @lostpointercapture="cancelDrag"
             >
+              ☰
+            </span>
             <div class="min-w-0 flex-1">
               <span class="mb-1 block text-xs font-semibold text-gray-500">{{
                 entry.kind === 'proposal'
@@ -115,6 +124,7 @@
           </button>
         </li>
       </ol>
+      <p class="sr-only" role="status">{{ reorderNotice }}</p>
       <div class="mt-6 flex items-center gap-3">
         <button type="button" class="btn btn-primary" :disabled="saving" @click="queueSave()">
           {{ saving ? '儲存中...' : '立即儲存' }}
@@ -150,6 +160,17 @@
   const saveError = ref('');
   const saveNotice = ref('');
   const dragIndex = ref(-1);
+  const dragOffsetY = ref(0);
+  const dropSlot = ref(-1);
+  const reorderNotice = ref('');
+  const listRef = ref<HTMLOListElement | null>(null);
+  let dragPointerId: number | null = null;
+  let dragHandle: HTMLElement | null = null;
+  let dragStartY = 0;
+  let dragCurrentY = 0;
+  let dragStartScrollY = 0;
+  let dragFrame = 0;
+  let lastDragFrame = 0;
   let loadedMeetingId = 0;
   let savedSnapshot = '';
   let queuedSnapshot = '';
@@ -215,6 +236,7 @@
   );
 
   onBeforeUnmount(() => {
+    cancelDrag();
     clearTimeout(saveTimer);
     if (loadedMeetingId) void queueSave(loadedMeetingId);
   });
@@ -272,10 +294,78 @@
     entries.value.splice(index, 1);
     entryKeys.value.splice(index, 1);
   }
-  function startDrag(event: DragEvent, index: number) {
+  function startDrag(event: PointerEvent, index: number) {
+    if (event.button !== 0 || !event.isPrimary || dragPointerId !== null) return;
+    const handle = event.currentTarget;
+    if (!(handle instanceof HTMLElement)) return;
+    event.preventDefault();
+    dragPointerId = event.pointerId;
+    dragHandle = handle;
     dragIndex.value = index;
-    event.dataTransfer?.setData('text/plain', String(index));
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+    dragStartY = dragCurrentY = event.clientY;
+    dragStartScrollY = window.scrollY;
+    dragOffsetY.value = 0;
+    for (const row of Array.from(listRef.value?.children ?? [])) {
+      row.getAnimations().forEach((animation) => animation.finish());
+    }
+    handle.setPointerCapture(event.pointerId);
+    lastDragFrame = 0;
+    dragFrame = requestAnimationFrame(scrollWhileDragging);
+  }
+  function dragMove(event: PointerEvent) {
+    if (event.pointerId !== dragPointerId) return;
+    dragCurrentY = event.clientY;
+    updateDragPosition();
+  }
+  function updateDragPosition() {
+    dragOffsetY.value = dragCurrentY - dragStartY + window.scrollY - dragStartScrollY;
+    const rows = Array.from(listRef.value?.children ?? []);
+    let slot = rows.length;
+    for (let index = 0; index < rows.length; index++) {
+      if (index === dragIndex.value) continue;
+      const rect = rows[index]!.getBoundingClientRect();
+      if (dragCurrentY < rect.top + rect.height / 2) {
+        slot = index;
+        break;
+      }
+    }
+    dropSlot.value = slot === dragIndex.value || slot === dragIndex.value + 1 ? -1 : slot;
+  }
+  function scrollWhileDragging(time: number) {
+    if (dragPointerId === null) return;
+    const elapsed = lastDragFrame ? Math.min(time - lastDragFrame, 32) : 0;
+    lastDragFrame = time;
+    const edge = 80;
+    let speed = 0;
+    if (dragCurrentY < edge) speed = -Math.min(0.6, (edge - dragCurrentY) / 150);
+    if (dragCurrentY > window.innerHeight - edge)
+      speed = Math.min(0.6, (dragCurrentY - window.innerHeight + edge) / 150);
+    if (speed && elapsed) {
+      window.scrollBy(0, speed * elapsed);
+      updateDragPosition();
+    }
+    dragFrame = requestAnimationFrame(scrollWhileDragging);
+  }
+  function endDrag(event: PointerEvent) {
+    if (event.pointerId !== dragPointerId) return;
+    const from = dragIndex.value;
+    const slot = dropSlot.value;
+    cancelDrag();
+    if (slot < 0) return;
+    moveEntry(from, slot > from ? slot - 1 : slot);
+  }
+  function cancelDrag() {
+    const pointerId = dragPointerId;
+    dragPointerId = null;
+    if (dragFrame) cancelAnimationFrame(dragFrame);
+    dragFrame = 0;
+    if (pointerId !== null && dragHandle?.hasPointerCapture(pointerId)) {
+      dragHandle.releasePointerCapture(pointerId);
+    }
+    dragHandle = null;
+    dragIndex.value = -1;
+    dragOffsetY.value = 0;
+    dropSlot.value = -1;
   }
   function moveEntry(from: number, to: number) {
     if (
@@ -287,14 +377,39 @@
       entries.value[from]?.kind === 'heading'
     )
       return;
+    const previousPositions = new Map(
+      Array.from(listRef.value?.children ?? []).map((row) => [
+        (row as HTMLElement).dataset.entryKey,
+        row.getBoundingClientRect().top,
+      ]),
+    );
     entries.value.splice(to, 0, ...entries.value.splice(from, 1));
     entryKeys.value.splice(to, 0, ...entryKeys.value.splice(from, 1));
     dragIndex.value = -1;
+    reorderNotice.value = `已移至第 ${to + 1} 項`;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      void nextTick(() => {
+        for (const row of Array.from(listRef.value?.children ?? [])) {
+          const previousTop = previousPositions.get((row as HTMLElement).dataset.entryKey);
+          if (previousTop === undefined) continue;
+          const offset = previousTop - row.getBoundingClientRect().top;
+          if (Math.abs(offset) < 1) continue;
+          row.animate([{ transform: `translateY(${offset}px)` }, { transform: 'translateY(0)' }], {
+            duration: 180,
+            easing: 'ease-out',
+          });
+        }
+      });
+    }
   }
   function queueSave(id = loadedMeetingId): Promise<void> {
     const meeting = props.meetings.find((item) => item.id === id);
     if (!meeting || id !== loadedMeetingId) return saveQueue;
     clearTimeout(saveTimer);
+    if (dragPointerId !== null) {
+      saveTimer = setTimeout(() => void queueSave(id), 800);
+      return saveQueue;
+    }
     const draft = entries.value.map((entry) => ({ ...entry }));
     const draftSnapshot = JSON.stringify(draft);
     if (draftSnapshot === queuedSnapshot) return saveQueue;
@@ -355,5 +470,54 @@
   .control:focus {
     border-color: #e60012;
     outline: 3px solid rgba(230, 0, 18, 0.18);
+  }
+  .agenda-list {
+    position: relative;
+  }
+  .agenda-entry {
+    position: relative;
+  }
+  .agenda-entry.is-dragging {
+    z-index: 1;
+    box-shadow: 0 14px 28px rgba(0, 0, 36, 0.18);
+  }
+  .agenda-entry.drop-before::before,
+  .agenda-list.drop-at-end::after {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    right: 0;
+    left: 0;
+    height: 3px;
+    border-radius: 3px;
+    background: #e60012;
+    pointer-events: none;
+  }
+  .agenda-entry.drop-before::before {
+    top: -8px;
+  }
+  .agenda-list.drop-at-end::after {
+    bottom: -8px;
+  }
+  .drag-handle {
+    display: inline-flex;
+    flex: none;
+    justify-content: center;
+    cursor: grab;
+    min-width: 28px;
+    min-height: 32px;
+    border-radius: 4px;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .is-dragging .drag-handle {
+    cursor: grabbing;
+  }
+  @media (forced-colors: active) {
+    .agenda-entry.drop-before::before,
+    .agenda-list.drop-at-end::after {
+      background: Highlight;
+    }
   }
 </style>
