@@ -9,13 +9,6 @@
     <div class="mb-8">
       <h1 class="mb-2 text-3xl font-bold text-gray-900">連署</h1>
       <p class="text-gray-600">議案排入會議前，議員可以連署其他人的討論案或選舉案。</p>
-      <p v-if="!session?.authenticated" class="mt-3 text-sm text-gray-600">
-        議員可<NuxtLink
-          to="/secretariat/login?redirect=/cosign"
-          class="font-semibold text-primary hover:underline"
-          >登入</NuxtLink
-        >後連署。
-      </p>
     </div>
 
     <div
@@ -101,6 +94,7 @@
   definePageMeta({
     title: '連署',
     description: '查看尚未排入會議、目前開放連署的學生議會議案。',
+    middleware: ['auth'],
   });
 
   const {

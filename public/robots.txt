@@ -1,2 +1,5 @@
-User-Agent: *
-Disallow:
+User-agent: *
+Disallow: /admin
+Disallow: /secretariat
+Disallow: /cosign
+Disallow: /bill/new

@@ -383,10 +383,7 @@
         name: 'description',
         content: bill.value?.subject ?? '查看議案詳細資料。',
       },
-      {
-        name: 'robots',
-        content: 'noindex, nofollow',
-      },
+      ...(!bill.value?.meetings.length ? [{ name: 'robots', content: 'noindex' }] : []),
     ],
   }));
 
