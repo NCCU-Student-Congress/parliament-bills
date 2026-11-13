@@ -30,6 +30,7 @@
 
       if (response.ok && typeof data.redirect === 'string') {
         sessionStorage.setItem('secretariat_authenticated', 'true');
+        // Keep the button busy until the browser has left this page.
         window.location.replace(data.redirect);
         return;
       }
@@ -38,9 +39,9 @@
     } catch (error) {
       console.error('登入驗證失敗:', error);
       errorMessage.value = '網路錯誤或伺服器無回應，請稍後再試。';
-    } finally {
-      isLoading.value = false;
     }
+
+    isLoading.value = false;
   };
 </script>
 
