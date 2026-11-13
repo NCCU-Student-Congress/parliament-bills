@@ -225,8 +225,8 @@
       await saveQueue;
       if (cancelled) return;
       const [bills, agenda] = await Promise.all([
-        $fetch<Proposal[]>(`/api/meetings/${id}/proposals`),
-        $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`),
+        $fetch<Proposal[]>(`/api/meetings/${id}/proposals`, FRESH_FETCH_OPTIONS),
+        $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`, FRESH_FETCH_OPTIONS),
       ]);
       if (cancelled) return;
       proposals.value = bills;

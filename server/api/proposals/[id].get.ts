@@ -1,4 +1,4 @@
-export default defineEventHandler(async (event) => {
+export default defineEdgeCachedEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '0', 10);
 
   if (!id || isNaN(id)) {

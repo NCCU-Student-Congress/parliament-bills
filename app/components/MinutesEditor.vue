@@ -261,8 +261,8 @@
     });
     try {
       const [meetingProposals, agenda, meetingMinutes] = await Promise.all([
-        $fetch<Proposal[]>(`/api/meetings/${id}/proposals`),
-        $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`),
+        $fetch<Proposal[]>(`/api/meetings/${id}/proposals`, FRESH_FETCH_OPTIONS),
+        $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`, FRESH_FETCH_OPTIONS),
         $fetch<MeetingMinutes>(`/api/meetings/${id}/minutes`),
       ]);
       if (cancelled) return;
@@ -327,8 +327,8 @@
     try {
       const id = meetingId.value;
       const [latestProposals, latestAgenda, latestMinutes] = await Promise.all([
-        $fetch<Proposal[]>(`/api/meetings/${id}/proposals`),
-        $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`),
+        $fetch<Proposal[]>(`/api/meetings/${id}/proposals`, FRESH_FETCH_OPTIONS),
+        $fetch<AgendaEntry[]>(`/api/meetings/${id}/agenda`, FRESH_FETCH_OPTIONS),
         $fetch<MeetingMinutes>(`/api/meetings/${id}/minutes`),
       ]);
       const { createMeetingMinutesPdf } = await import('~/utils/meetingMinutesPdf');

@@ -749,11 +749,11 @@
     { data: meetingsData, refresh: refreshMeetings },
     { data: billsData, refresh: refreshBills },
   ] = await Promise.all([
-    useFetch<Session[]>('/api/sessions'),
-    useFetch<Committee[]>('/api/committees'),
+    useFetch<Session[]>('/api/sessions', FRESH_FETCH_OPTIONS),
+    useFetch<Committee[]>('/api/committees', FRESH_FETCH_OPTIONS),
     useFetch<User[]>('/api/users'),
-    useFetch<Meeting[]>('/api/meetings'),
-    useFetch<Bill[]>('/api/bills'),
+    useFetch<Meeting[]>('/api/meetings', FRESH_FETCH_OPTIONS),
+    useFetch<Bill[]>('/api/bills', FRESH_FETCH_OPTIONS),
   ]);
 
   const sessions = computed(() => sessionsData.value ?? []);

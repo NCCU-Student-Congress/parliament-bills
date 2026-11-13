@@ -1,6 +1,6 @@
 import { parseTermCode } from '../../../shared/utils/term';
 
-export default defineEventHandler(async (event) => {
+export default defineEdgeCachedEventHandler(async (event) => {
   const query = getQuery(event);
   const committeeId = query.committeeId ? Number(query.committeeId) : undefined;
   const session = query.session ? parseTermCode(query.session) : undefined;

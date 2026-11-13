@@ -1,4 +1,4 @@
-export default defineEventHandler(async (event) => {
+export default defineEdgeCachedEventHandler(async (event) => {
   try {
     const db = useD1Database(event);
     const today = getTaipeiDateString();
