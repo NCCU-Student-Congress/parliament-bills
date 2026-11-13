@@ -23,7 +23,7 @@
       </div>
       <div class="mt-1 text-sm font-semibold text-[#12122b]">
         <p v-if="confirmedCosponsors.length">
-          <strong>連署人：</strong>{{ confirmedCosponsors.join('、') }}
+          <strong>連署人：</strong><NameList :names="confirmedCosponsors" />
         </p>
       </div>
     </div>

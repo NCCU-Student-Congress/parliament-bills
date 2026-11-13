@@ -193,7 +193,8 @@
                   <span v-else>無</span>
                 </div>
                 <div v-else-if="field.key === 'cosponsors'">
-                  {{ confirmedCosponsors.length ? confirmedCosponsors.join('、') : '無' }}
+                  <NameList v-if="confirmedCosponsors.length" :names="confirmedCosponsors" />
+                  <template v-else>無</template>
                 </div>
                 <div v-else-if="field.key === 'meetingTitles'" class="space-y-1">
                   <NuxtLink
@@ -386,7 +387,9 @@
   }
 
   const confirmedCosponsors = computed(() =>
-    (bill.value?.cosponsors ?? []).map((cosponsor) => cosponsor.userName).filter(Boolean),
+    (bill.value?.cosponsors ?? [])
+      .map((cosponsor) => cosponsor.userName)
+      .filter((name): name is string => Boolean(name)),
   );
 
   const displayFields: DisplayField[] = [

@@ -596,7 +596,13 @@
                 </div>
                 <div>
                   <dt class="schedule-label">連署人</dt>
-                  <dd class="schedule-person">{{ confirmedCosponsorNames(bill) || '無' }}</dd>
+                  <dd class="schedule-person">
+                    <NameList
+                      v-if="confirmedCosponsorNames(bill).length"
+                      :names="confirmedCosponsorNames(bill)"
+                    />
+                    <template v-else>無</template>
+                  </dd>
                 </div>
               </dl>
 
@@ -822,10 +828,7 @@
   }
 
   function confirmedCosponsorNames(bill: Bill) {
-    return bill.cosponsors
-      .filter((cosponsor) => cosponsor.userName)
-      .map((cosponsor) => cosponsor.userName)
-      .join('、');
+    return bill.cosponsors.flatMap((cosponsor) => (cosponsor.userName ? [cosponsor.userName] : []));
   }
 
   async function scheduleBill(bill: Bill, meetingId: number, event: Event) {
