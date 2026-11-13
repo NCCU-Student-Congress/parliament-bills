@@ -257,27 +257,41 @@
   });
 
   function insertEntry(index: number) {
+    const key = nextKey++;
     entries.value.splice(index, 0, {
       kind: 'text',
       content: '',
       proposalId: null,
       decisionKey: crypto.randomUUID(),
     });
-    entryKeys.value.splice(index, 0, nextKey++);
+    entryKeys.value.splice(index, 0, key);
+    focusInsertedText(key);
   }
   function addElectionText() {
     const discussionIndex = entries.value.findIndex(
       (entry) => entry.kind === 'heading' && entry.content.includes('討論事項'),
     );
     if (discussionIndex < 0) return;
+    const decisionKey = crypto.randomUUID();
     entries.value.splice(
       discussionIndex,
       0,
       { kind: 'heading', content: '選舉事項', proposalId: null },
-      { kind: 'text', content: '', proposalId: null, decisionKey: crypto.randomUUID() },
+      { kind: 'text', content: '', proposalId: null, decisionKey },
     );
     entries.value = normalizeAgenda(selectedMeeting.value!, proposals.value, entries.value);
     entryKeys.value = entries.value.map(() => nextKey++);
+    const textIndex = entries.value.findIndex((entry) => entry.decisionKey === decisionKey);
+    const key = entryKeys.value[textIndex];
+    if (key !== undefined) focusInsertedText(key);
+  }
+  function focusInsertedText(key: number) {
+    showInsertActions.value = false;
+    void nextTick(() => {
+      listRef.value
+        ?.querySelector<HTMLTextAreaElement>(`[data-entry-key="${key}"] textarea`)
+        ?.focus();
+    });
   }
   function removeEntry(index: number) {
     if (entries.value[index]?.kind !== 'text') return;
