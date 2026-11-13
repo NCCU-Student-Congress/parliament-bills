@@ -106,6 +106,18 @@ export function normalizeAgenda(
       groups[section].push(entry);
     }
   }
+  const includedIds = new Set(
+    entries.filter((entry) => entry.kind === 'proposal').map((entry) => entry.proposalId),
+  );
+  for (const proposal of proposals) {
+    if (!includedIds.has(proposal.id)) {
+      groups[proposal.proposalType].push({
+        kind: 'proposal',
+        content: '',
+        proposalId: proposal.id,
+      });
+    }
+  }
   return fixedAgenda(meeting, groups);
 }
 

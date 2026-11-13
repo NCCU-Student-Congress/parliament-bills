@@ -18,22 +18,8 @@
     <p v-if="loading" class="py-6 text-gray-600">載入議程中...</p>
     <p v-else-if="loadError" class="py-4 text-red-700">{{ loadError }}</p>
     <template v-else-if="selectedMeeting">
-      <p v-if="newProposals.length" class="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-        有 {{ newProposals.length }} 筆已排入的議案尚未加入議程，可在此加入並拖曳至適當位置。
-      </p>
-      <div v-if="newProposals.length" class="mb-5 flex flex-wrap gap-2">
-        <button
-          v-for="proposal in newProposals"
-          :key="proposal.id"
-          type="button"
-          class="rounded border border-amber-500 px-3 py-1 text-sm hover:bg-amber-50"
-          @click="addProposal(proposal.id)"
-        >
-          ＋ {{ proposal.subject }}
-        </button>
-      </div>
       <p class="mb-4 text-sm text-gray-600">
-        段落標題固定；議案僅能在同一段落排序，可在各段落下方插入文字。
+        已排入的議案會自動列入對應段落；議案僅能在同一段落排序，可在各段落下方插入文字。
       </p>
       <button
         v-if="!hasElectionSection"
@@ -108,9 +94,10 @@
                 ↓
               </button>
               <button
+                v-if="entry.kind === 'text'"
                 type="button"
                 class="text-red-700"
-                aria-label="移除"
+                aria-label="移除文字項目"
                 @click="removeEntry(index)"
               >
                 ×
@@ -178,9 +165,6 @@
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let saveQueue: Promise<void> = Promise.resolve();
   const proposalMap = computed(() => new Map(proposals.value.map((item) => [item.id, item])));
-  const newProposals = computed(() =>
-    proposals.value.filter((item) => !entries.value.some((entry) => entry.proposalId === item.id)),
-  );
   const hasElectionSection = computed(() =>
     entries.value.some((entry) => entry.kind === 'heading' && entry.content.includes('選舉事項')),
   );
@@ -260,38 +244,8 @@
     entries.value = normalizeAgenda(selectedMeeting.value!, proposals.value, entries.value);
     entryKeys.value = entries.value.map(() => nextKey++);
   }
-  function addProposal(proposalId: number) {
-    const proposal = proposalMap.value.get(proposalId);
-    if (!proposal || !selectedMeeting.value) return;
-    const headingName = { report: '報告事項', election: '選舉事項', discussion: '討論事項' }[
-      proposal.proposalType
-    ];
-    let headingIndex = entries.value.findIndex(
-      (entry) => entry.kind === 'heading' && entry.content.includes(headingName),
-    );
-    if (headingIndex < 0 && proposal.proposalType === 'election') {
-      headingIndex = entries.value.findIndex(
-        (entry) => entry.kind === 'heading' && entry.content.includes('討論事項'),
-      );
-      entries.value.splice(headingIndex, 0, {
-        kind: 'heading',
-        content: '選舉事項',
-        proposalId: null,
-      });
-    }
-    const nextHeading = entries.value.findIndex(
-      (entry, index) => index > headingIndex && entry.kind === 'heading',
-    );
-    entries.value.splice(nextHeading < 0 ? entries.value.length : nextHeading, 0, {
-      kind: 'proposal',
-      content: '',
-      proposalId,
-    });
-    entries.value = normalizeAgenda(selectedMeeting.value, proposals.value, entries.value);
-    entryKeys.value = entries.value.map(() => nextKey++);
-  }
   function removeEntry(index: number) {
-    if (entries.value[index]?.kind === 'heading') return;
+    if (entries.value[index]?.kind !== 'text') return;
     entries.value.splice(index, 1);
     entryKeys.value.splice(index, 1);
   }

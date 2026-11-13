@@ -48,6 +48,9 @@ export default defineEventHandler(async (event) => {
       entries.push({ kind: item.kind, content: item.content.trim(), proposalId: null });
     }
   }
+  if (usedIds.size !== scheduledIds.size) {
+    throw createError({ statusCode: 400, statusMessage: '議程必須包含所有已排入的議案' });
+  }
   await db.batch([
     db.prepare('DELETE FROM meeting_agenda_entries WHERE meeting_id = ?').bind(id),
     ...entries.map((entry, position) =>
