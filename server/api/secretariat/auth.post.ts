@@ -97,7 +97,7 @@ export default defineEventHandler(async (event) => {
   }
   const redirectPath = getSafeRedirectPath(
     body?.redirect,
-    user.permission_role === 'secretariat_admin' ? '/admin' : '/bill',
+    user.permission_role === 'secretariat_admin' ? '/admin' : '/sessions',
   );
 
   const token = createRandomToken();
@@ -143,7 +143,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const origin = getRequestURL(event).origin;
-  const loginUrl = `${origin}/secretariat/verify?token=${encodeURIComponent(token)}`;
+  const loginUrl = `${origin}/login/verify?token=${encodeURIComponent(token)}`;
 
   if (isBypassLogin) {
     console.info(`[auth] Bypass admin login link: ${loginUrl}`);

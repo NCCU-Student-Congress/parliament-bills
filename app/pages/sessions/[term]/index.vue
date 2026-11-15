@@ -3,7 +3,7 @@
     <nav class="mb-6 text-sm text-gray-600" aria-label="麵包屑">
       <NuxtLink to="/" class="hover:text-primary">首頁</NuxtLink>
       <span class="mx-2">/</span>
-      <NuxtLink to="/bill" class="hover:text-primary">議案查詢</NuxtLink>
+      <NuxtLink to="/sessions" class="hover:text-primary">議案查詢</NuxtLink>
       <span class="mx-2">/</span>
       <span class="text-gray-900">{{ termLabel }}</span>
     </nav>
@@ -17,7 +17,7 @@
       v-if="isOutOfRange"
       class="rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-800"
     >
-      找不到這個會期。<NuxtLink to="/bill" class="underline">返回議案查詢</NuxtLink>
+      找不到這個會期。<NuxtLink to="/sessions" class="underline">返回議案查詢</NuxtLink>
     </div>
     <div
       v-else-if="meetingsError"
@@ -36,7 +36,7 @@
           <NuxtLink
             v-for="meeting in group.meetings"
             :key="meeting.id"
-            :to="`/bill/${term}/meetings/${meeting.id}`"
+            :to="`/sessions/${term}/meetings/${meeting.id}`"
             class="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-primary hover:shadow-md"
           >
             <h4 class="mb-3 text-lg font-bold text-gray-900">{{ meeting.title }}</h4>

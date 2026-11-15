@@ -1,4 +1,4 @@
-<!-- pages/secretariat/verify.vue -->
+<!-- pages/login/verify.vue -->
 <script setup lang="ts">
   import { ref } from 'vue';
   import { useRoute } from 'vue-router';
@@ -76,10 +76,7 @@
       </p>
 
       <div class="mt-6 border-t border-[#dcdce2] pt-4 text-sm sm:mt-8 sm:pt-5">
-        <NuxtLink
-          to="/secretariat/login"
-          class="font-bold text-primary hover:text-[#e60012] hover:underline"
-        >
+        <NuxtLink to="/login" class="font-bold text-primary hover:text-[#e60012] hover:underline">
           重新申請登入連結
         </NuxtLink>
       </div>

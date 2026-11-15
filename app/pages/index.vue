@@ -14,8 +14,8 @@
           查詢議案，並提供秘書處草擬議事文件的日常工作入口。
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
-          <NuxtLink to="/bill" class="btn btn-primary">議案查詢</NuxtLink>
-          <NuxtLink to="/bill/new" class="btn btn-secondary">新增議案</NuxtLink>
+          <NuxtLink to="/sessions" class="btn btn-primary">議案查詢</NuxtLink>
+          <NuxtLink to="/proposals/new" class="btn btn-secondary">新增議案</NuxtLink>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 User-agent: *
 Disallow: /admin
-Disallow: /secretariat
+Disallow: /login
 Disallow: /cosign
-Disallow: /bill/new
+Disallow: /proposals/new

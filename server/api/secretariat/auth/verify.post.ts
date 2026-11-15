@@ -99,7 +99,7 @@ export default defineEventHandler(async (event) => {
   return {
     redirect: getSafeRedirectPath(
       row.redirect_path,
-      row.permission_role === 'secretariat_admin' ? '/admin' : '/bill',
+      row.permission_role === 'secretariat_admin' ? '/admin' : '/sessions',
     ),
   };
 });

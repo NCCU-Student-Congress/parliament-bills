@@ -4,7 +4,7 @@
       <h1 class="mb-2 text-3xl font-bold text-gray-900">議案查詢</h1>
       <p class="text-gray-600">點選會期，再選擇已排案的會議查看議案。</p>
       <NuxtLink
-        to="/bill/new"
+        to="/proposals/new"
         class="mt-4 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-600"
       >
         新增議案
@@ -27,7 +27,7 @@
       <NuxtLink
         v-for="(session, index) in scheduledSessions"
         :key="session.id"
-        :to="`/bill/${session.id}`"
+        :to="`/sessions/${session.id}`"
         :prefetch="index === 0"
         class="rounded-lg bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg"
       >

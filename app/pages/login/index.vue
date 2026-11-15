@@ -1,4 +1,4 @@
-<!-- pages/secretariat/login.vue -->
+<!-- pages/login/index.vue -->
 <script setup lang="ts">
   import { onBeforeUnmount, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';

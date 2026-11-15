@@ -150,7 +150,7 @@
       <p class="sr-only" role="status">{{ reorderNotice }}</p>
       <div class="mt-6 flex items-center gap-3">
         <NuxtLink
-          :to="`/bill/${selectedMeeting.session}/meetings/${selectedMeeting.id}`"
+          :to="`/sessions/${selectedMeeting.session}/meetings/${selectedMeeting.id}`"
           class="text-primary hover:underline"
           >查看會議頁</NuxtLink
         >

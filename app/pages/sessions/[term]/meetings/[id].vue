@@ -3,9 +3,9 @@
     <nav class="mb-6 text-sm text-gray-600" aria-label="麵包屑">
       <NuxtLink to="/" class="hover:text-primary">首頁</NuxtLink>
       <span class="mx-2">/</span>
-      <NuxtLink to="/bill" class="hover:text-primary">議案查詢</NuxtLink>
+      <NuxtLink to="/sessions" class="hover:text-primary">議案查詢</NuxtLink>
       <span class="mx-2">/</span>
-      <NuxtLink :to="`/bill/${term}`" class="hover:text-primary">{{ termLabel }}</NuxtLink>
+      <NuxtLink :to="`/sessions/${term}`" class="hover:text-primary">{{ termLabel }}</NuxtLink>
       <span class="mx-2">/</span>
       <span class="text-gray-900">{{ meeting?.title || '會議' }}</span>
     </nav>
@@ -26,7 +26,7 @@
       v-else-if="!meeting"
       class="rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-800"
     >
-      找不到這場會議。<NuxtLink :to="`/bill/${term}`" class="underline">返回會期會議</NuxtLink>
+      找不到這場會議。<NuxtLink :to="`/sessions/${term}`" class="underline">返回會期會議</NuxtLink>
     </div>
     <template v-else>
       <header class="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -92,7 +92,7 @@
           >
             <NuxtLink
               v-if="line.entry.kind === 'proposal'"
-              :to="`/bill/proposal/${line.entry.proposalId}`"
+              :to="`/proposals/${line.entry.proposalId}`"
               class="block rounded hover:bg-gray-100"
             >
               <AgendaHangingText :text="line.text" />

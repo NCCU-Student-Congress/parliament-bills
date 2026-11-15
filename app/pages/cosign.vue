@@ -43,10 +43,7 @@
             </p>
             <ProposalTypePill :proposal-type="bill.proposalType" class="mb-2" />
             <h2 class="text-xl font-bold text-gray-900">
-              <NuxtLink
-                :to="`/bill/proposal/${bill.id}`"
-                class="hover:text-primary hover:underline"
-              >
+              <NuxtLink :to="`/proposals/${bill.id}`" class="hover:text-primary hover:underline">
                 {{ bill.subject }}
               </NuxtLink>
             </h2>

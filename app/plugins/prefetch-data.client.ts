@@ -2,9 +2,9 @@ import { parseTermCode } from '~~/shared/utils/term';
 
 // The API calls each public page makes on load, so they can start while its link is only visible.
 function apiUrlsForPage(pathname: string): string[] {
-  if (pathname === '/bill') return ['/api/meetings/scheduled'];
+  if (pathname === '/sessions') return ['/api/meetings/scheduled'];
 
-  const meeting = pathname.match(/^\/bill\/([^/]+)\/meetings\/(\d+)$/);
+  const meeting = pathname.match(/^\/sessions\/([^/]+)\/meetings\/(\d+)$/);
   if (meeting) {
     const term = parseTermCode(meeting[1]);
     const id = Number(meeting[2]);
@@ -16,13 +16,13 @@ function apiUrlsForPage(pathname: string): string[] {
     ];
   }
 
-  const proposal = pathname.match(/^\/bill\/proposal\/(\d+)$/);
+  const proposal = pathname.match(/^\/proposals\/(\d+)$/);
   if (proposal) {
     const id = Number.parseInt(proposal[1]!, 10);
     return id ? [`/api/proposals/${id}`] : [];
   }
 
-  const session = pathname.match(/^\/bill\/([^/]+)$/);
+  const session = pathname.match(/^\/sessions\/([^/]+)$/);
   if (session) {
     const term = parseTermCode(session[1]);
     return term ? [`/api/meetings/scheduled?session=${term}`] : [];
@@ -33,10 +33,10 @@ function apiUrlsForPage(pathname: string): string[] {
 
 // Session and committee names, which useSessions and useCommittees keep for the whole tab.
 function referenceDataForPage(pathname: string): Record<string, string> {
-  if (pathname.startsWith('/bill/proposal/') || pathname === '/bill/new') {
+  if (pathname.startsWith('/proposals/')) {
     return { sessions: '/api/sessions', committees: '/api/committees' };
   }
-  if (pathname === '/bill' || /^\/bill\/[^/]+$/.test(pathname)) {
+  if (pathname === '/sessions' || /^\/sessions\/[^/]+$/.test(pathname)) {
     return { sessions: '/api/sessions' };
   }
   return {};

@@ -200,7 +200,7 @@ export function isAuthBypassEnabled(event: H3Event) {
 
 const REDIRECT_BASE = 'http://redirect.invalid';
 
-export function getSafeRedirectPath(value: unknown, fallback = '/bill') {
+export function getSafeRedirectPath(value: unknown, fallback = '/sessions') {
   if (typeof value !== 'string') return fallback;
   // Browsers read a backslash as "/" and drop tabs and newlines, so "/\host" would leave the site.
   if (/[\\\u0000-\u001f\u007f]/.test(value)) return fallback;

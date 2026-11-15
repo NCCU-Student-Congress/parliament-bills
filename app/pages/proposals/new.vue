@@ -7,7 +7,7 @@
         </li>
         <li>/</li>
         <li>
-          <NuxtLink to="/bill" class="hover:text-primary">議案查詢</NuxtLink>
+          <NuxtLink to="/sessions" class="hover:text-primary">議案查詢</NuxtLink>
         </li>
         <li>/</li>
         <li class="text-gray-900">新增議案</li>
@@ -218,7 +218,7 @@
           送出提案
         </LoadingButton>
         <NuxtLink
-          to="/bill"
+          to="/sessions"
           class="inline-flex items-center rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
         >
           返回議案查詢
@@ -328,8 +328,8 @@
 
   const selectedCommitteeId = computed(() => Number(form.committeeId) || null);
   const billLink = computed(() => {
-    if (!savedBill.value) return '/bill';
-    return `/bill/proposal/${savedBill.value.id}`;
+    if (!savedBill.value) return '/sessions';
+    return `/proposals/${savedBill.value.id}`;
   });
 
   function addAttachmentRow() {

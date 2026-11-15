@@ -16,9 +16,9 @@
   - 區塊化首頁設計，提供主要服務之快速連結。
   - 具備夜間模式 (Dark Mode) 切換功能的頭部導覽列。
   - 底部頁腳包含單位名稱及版權資訊。
-- **議案查詢系統** (`/bill`)
+- **議案查詢系統** (`/sessions`)
   - 會期議案列表：可顯示特定會期的所有議案。
-  - 單一議案顯示 (`/bill/proposal/:id`)：提供單一議案的完整資訊、附件連結，不需支援列印排版。
+  - 單一議案顯示 (`/proposals/:id`)：提供單一議案的完整資訊、附件連結，不需支援列印排版。
 - **後台資料管理**
   - 管理會期、委員會、人員、會議與提案資料，並由秘書處為議案安排會議及編排議程。
   - 製作會議記錄：依議程填寫、儲存每案決議並下載 PDF。
@@ -44,6 +44,17 @@
 - **套件管理**：pnpm (Node.js 環境)
 - **版本控制**：Git / GitHub
 
+## 網站路由
+
+| 用途               | 網址                                                           |
+| ------------------ | -------------------------------------------------------------- |
+| 會期列表與會議     | `/sessions`、`/sessions/:term`、`/sessions/:term/meetings/:id` |
+| 議案詳情與新增議案 | `/proposals/:id`、`/proposals/new`                             |
+| 連署與後台         | `/cosign`、`/admin`                                            |
+| 登入與登入連結確認 | `/login`、`/login/verify`                                      |
+
+舊版 `/bill`、`/bill/*` 與 `/secretariat/login`、`/secretariat/verify` 頁面網址會永久導向新網址，並保留查詢參數。API 網址不受影響。
+
 ## 本機執行
 
 請先安裝 Node.js 與 pnpm（專案的 `packageManager` 設定為 `pnpm@11.9.0`）。在專案根目錄執行：
@@ -56,7 +67,7 @@ pnpm dev
 
 啟動後開啟 <http://localhost:3000>。`pnpm dev` 會先將 `migrations/` 套用至 `.wrangler/state` 中的本機 Cloudflare D1 資料庫，再啟動 Nuxt；新建的本機資料庫沒有議案資料。
 
-若要登入後台，請先在 `.dev.vars` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/secretariat/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結，並按下頁面上的登入按鈕。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
+若要登入後台，請先在 `.dev.vars` 設定一組足夠長的 `AUTH_SECRET`，並將 `AUTH_BYPASS` 改為 `true`。開啟 <http://localhost:3000/login>、在電子郵件欄輸入 `admin`，再開啟終端機印出的一次性登入連結，並按下頁面上的登入按鈕。本機登入流程詳見 [D1 開發文件](./docs/d1-bills.md#local-auth-login)。`AUTH_BYPASS` 僅供本機開發使用。
 
 登入頁使用 Cloudflare Turnstile 人機驗證，伺服器會先向 siteverify 驗證 token（須通過、action 為 `login`，且 hostname 符合 `TURNSTILE_HOSTNAMES`，未設定時則須與請求的 hostname 相同），才查詢資料庫或寄信。正式環境須將 Turnstile widget 的 secret key 設為 Worker secret `TURNSTILE_SECRET`；未設定時，登入請求會回傳錯誤。本機要測試登入表單時，可在 `.dev.vars` 填入 Cloudflare 的測試 secret（見 `.dev.vars.example`），伺服器只在 localhost 接受測試 secret 的結果。site key 由 `NUXT_PUBLIC_TURNSTILE_SITE_KEY` 提供：正式環境與 `pnpm preview` 使用 `wrangler.toml` 的 `[vars]`，`pnpm dev` 則使用測試 site key `1x00000000000000000000AA`。上述的 `admin` 本機登入不需通過 Turnstile。
 

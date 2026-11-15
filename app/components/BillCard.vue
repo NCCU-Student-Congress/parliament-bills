@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink :to="`/bill/proposal/${bill.id}`">
+  <NuxtLink :to="`/proposals/${bill.id}`">
     <div class="bill-card cursor-pointer">
       <h3>
         {{ bill.subject }}

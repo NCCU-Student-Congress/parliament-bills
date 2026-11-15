@@ -80,7 +80,7 @@ AUTH_BYPASS_ADMIN_EMAIL=test@test.test
 After starting the local Nuxt server, open:
 
 ```text
-/secretariat/login
+/login
 ```
 
 Enter this value in the email field:
@@ -93,7 +93,7 @@ When `AUTH_BYPASS=true`, the server creates or updates a local `secretariat_admi
 `AUTH_BYPASS_ADMIN_EMAIL` and prints a one-time login link to the server terminal:
 
 ```text
-[auth] Bypass admin login link: http://localhost:3000/secretariat/verify?token=...
+[auth] Bypass admin login link: http://localhost:3000/login/verify?token=...
 ```
 
 Open that link in the browser and press the login button. The page POSTs the token to
@@ -193,12 +193,12 @@ Cosigning is idempotent, and the UI shows `已連署` after signing. There is no
 
 `PUT /api/proposals/:id/meeting` accepts `{ meetingIds: number[] }`. Use an empty array to clear all assignments. Each meeting must match the proposal's session and committee. The proposal response includes its assigned `meetings` array.
 
-The public query pages follow `/bill` → `/bill/:term` → `/bill/:term/meetings/:id` → proposal detail. `GET /api/meetings/scheduled` lists only meetings with assigned proposals and includes `proposalCount`; it accepts an optional `session` query. `GET /api/meetings/:id/proposals` returns the proposals assigned to one meeting.
+The public query pages follow `/sessions` → `/sessions/:term` → `/sessions/:term/meetings/:id` → `/proposals/:id`. `GET /api/meetings/scheduled` lists only meetings with assigned proposals and includes `proposalCount`; it accepts an optional `session` query. `GET /api/meetings/:id/proposals` returns the proposals assigned to one meeting.
 
 The protected write UI is:
 
 ```text
-/bill/new
+/proposals/new
 ```
 
 The reference data admin is available only to secretariat accounts:

@@ -6,23 +6,23 @@
           <NuxtLink to="/" class="hover:text-primary">首頁</NuxtLink>
         </li>
         <li class="breadcrumb-item">
-          <NuxtLink to="/bill" class="hover:text-primary">議案查詢</NuxtLink>
+          <NuxtLink to="/sessions" class="hover:text-primary">議案查詢</NuxtLink>
         </li>
         <li v-if="bill" class="breadcrumb-item">
-          <NuxtLink :to="`/bill/${bill.session}`" class="hover:text-primary">
+          <NuxtLink :to="`/sessions/${bill.session}`" class="hover:text-primary">
             {{ formatTermLabel(bill.session) }}
           </NuxtLink>
         </li>
         <li v-if="bill?.meetings.length" class="breadcrumb-item">
           <NuxtLink
-            :to="`/bill/${bill.session}/meetings/${bill.meetings[0]?.id}`"
+            :to="`/sessions/${bill.session}/meetings/${bill.meetings[0]?.id}`"
             class="hover:text-primary"
           >
             {{ bill.meetings[0]?.title }}
           </NuxtLink>
         </li>
         <li class="breadcrumb-item font-semibold text-gray-900">
-          <NuxtLink :to="`/bill/proposal/${id}`" aria-current="page">議案詳情</NuxtLink>
+          <NuxtLink :to="`/proposals/${id}`" aria-current="page">議案詳情</NuxtLink>
         </li>
       </ol>
     </nav>
@@ -214,7 +214,7 @@
                   <NuxtLink
                     v-for="meeting in bill.meetings"
                     :key="meeting.id"
-                    :to="`/bill/${bill.session}/meetings/${meeting.id}`"
+                    :to="`/sessions/${bill.session}/meetings/${meeting.id}`"
                     class="block text-primary hover:underline"
                   >
                     {{ meeting.title }}
@@ -293,8 +293,8 @@
         <NuxtLink
           :to="
             bill.meetings.length
-              ? `/bill/${bill.session}/meetings/${bill.meetings[0]?.id}`
-              : `/bill/${bill.session}`
+              ? `/sessions/${bill.session}/meetings/${bill.meetings[0]?.id}`
+              : `/sessions/${bill.session}`
           "
           class="inline-flex items-center rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
         >
@@ -597,7 +597,7 @@
         method: 'DELETE',
         credentials: 'same-origin',
       });
-      window.location.assign(`/bill/${target.session}`);
+      window.location.assign(`/sessions/${target.session}`);
     } catch (error) {
       const response = error as { data?: { message?: string; statusMessage?: string } };
       actionError.value =

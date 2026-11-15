@@ -7,7 +7,9 @@
         <p class="text-sm font-black text-[#e60012]">後台</p>
         <h1 class="mt-1 text-3xl font-black text-[#12122b]">資料管理</h1>
       </div>
-      <NuxtLink to="/bill/new" class="btn btn-primary self-start md:self-auto">新增議案</NuxtLink>
+      <NuxtLink to="/proposals/new" class="btn btn-primary self-start md:self-auto"
+        >新增議案</NuxtLink
+      >
     </div>
 
     <div
@@ -580,7 +582,7 @@
               <div class="min-w-0">
                 <h3 class="schedule-title">
                   <ProposalTypePill :proposal-type="bill.proposalType" class="shrink-0" />
-                  <NuxtLink :to="`/bill/proposal/${bill.id}`" class="text-button schedule-link">
+                  <NuxtLink :to="`/proposals/${bill.id}`" class="text-button schedule-link">
                     {{ bill.subject }}
                   </NuxtLink>
                 </h3>

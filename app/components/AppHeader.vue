@@ -21,9 +21,9 @@
 
         <!-- 桌面版導覽選單 -->
         <nav class="hidden items-center gap-1 xl:flex">
-          <NuxtLink to="/bill" class="nav-link"> 議案查詢 </NuxtLink>
+          <NuxtLink to="/sessions" class="nav-link"> 議案查詢 </NuxtLink>
           <NuxtLink to="/cosign" class="nav-link"> 連署 </NuxtLink>
-          <NuxtLink to="/bill/new" class="nav-link nav-link-accent"> 新增議案 </NuxtLink>
+          <NuxtLink to="/proposals/new" class="nav-link nav-link-accent"> 新增議案 </NuxtLink>
           <NuxtLink v-if="isSecretariat" to="/admin" class="nav-link"> 後台 </NuxtLink>
           <a
             :href="EXTERNAL_LINKS.mainWebsite"
@@ -36,7 +36,7 @@
           <button v-if="isAuthenticated" type="button" class="auth-link" @click="handleLogout">
             登出
           </button>
-          <NuxtLink v-else to="/secretariat/login" class="auth-link"> 登入 </NuxtLink>
+          <NuxtLink v-else to="/login" class="auth-link"> 登入 </NuxtLink>
         </nav>
 
         <!-- 行動版選單按鈕 -->
@@ -81,7 +81,7 @@
           </div>
 
           <div class="mobile-menu-primary">
-            <NuxtLink to="/bill" class="mobile-menu-link" @click="closeMobileMenu">
+            <NuxtLink to="/sessions" class="mobile-menu-link" @click="closeMobileMenu">
               <span class="mobile-menu-link-copy">
                 <strong>議案查詢</strong>
                 <small>瀏覽會議與議案</small>
@@ -109,7 +109,7 @@
             </NuxtLink>
           </div>
 
-          <NuxtLink to="/bill/new" class="mobile-menu-action" @click="closeMobileMenu">
+          <NuxtLink to="/proposals/new" class="mobile-menu-action" @click="closeMobileMenu">
             <span>
               <strong>新增議案</strong>
               <small>提出你的提案</small>
@@ -126,7 +126,7 @@
               >前往會網 <span aria-hidden="true">↗</span></a
             >
             <button v-if="isAuthenticated" type="button" @click="handleLogout">登出</button>
-            <NuxtLink v-else to="/secretariat/login" @click="closeMobileMenu">登入</NuxtLink>
+            <NuxtLink v-else to="/login" @click="closeMobileMenu">登入</NuxtLink>
           </div>
         </nav>
       </Transition>

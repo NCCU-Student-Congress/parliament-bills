@@ -7,10 +7,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const session = await getRecentSessionCheck();
 
   if (!session.authenticated) {
-    return navigateTo({ path: '/secretariat/login', query: { redirect: to.fullPath } });
+    return navigateTo({ path: '/login', query: { redirect: to.fullPath } });
   }
 
   if (session.role !== 'secretariat_admin') {
-    return navigateTo('/bill');
+    return navigateTo('/sessions');
   }
 });

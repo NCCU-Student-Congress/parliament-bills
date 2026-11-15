@@ -10,6 +10,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (!session.authenticated) {
-    return navigateTo({ path: '/secretariat/login', query: { redirect: to.fullPath } });
+    return navigateTo({ path: '/login', query: { redirect: to.fullPath } });
   }
 });
